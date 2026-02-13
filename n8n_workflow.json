@@ -1,0 +1,228 @@
+{
+    "name": "Student Report Automation (100% Free)",
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "minutes",
+                            "value": 5
+                        }
+                    ]
+                }
+            },
+            "name": "Every 5 Minutes",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1,
+            "position": [
+                0,
+                300
+            ],
+            "id": "schedule-1"
+        },
+        {
+            "parameters": {
+                "url": "https://viswam-report-card.vercel.app/api/reports/automation/queue",
+                "options": {}
+            },
+            "name": "Fetch Queue",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                200,
+                300
+            ],
+            "id": "fetch-queue-1"
+        },
+        {
+            "parameters": {
+                "fieldToSplitOut": "={{ $json }}",
+                "options": {}
+            },
+            "name": "Split Reports",
+            "type": "n8n-nodes-base.itemLists",
+            "typeVersion": 1,
+            "position": [
+                400,
+                300
+            ],
+            "id": "split-1"
+        },
+        {
+            "parameters": {
+                "command": "=${ $env[\"CHROME_PATH\"] || \"C:\\\\Program Files\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe\" } --headless --disable-gpu --print-to-pdf=\"{{ $env[\"TEMP\"] || \"/tmp\" }}/report_{{ $json[\"id\"] }}.pdf\" https://viswam-report-card.vercel.app/api/reports/{{ $json[\"id\"] }}/render"
+            },
+            "name": "Generate PDF (Chrome)",
+            "type": "n8n-nodes-base.executeCommand",
+            "typeVersion": 1,
+            "position": [
+                600,
+                300
+            ],
+            "id": "chrome-1"
+        },
+        {
+            "parameters": {
+                "resource": "message",
+                "operation": "send",
+                "content": "<h1>Student Report Card</h1><p>Dear Principal,</p><p>Please find attached the report card for <b>{{ $node[\"Split Reports\"].json[\"studentName\"] }}</b> (Roll No: {{ $node[\"Split Reports\"].json[\"rollNo\"] }}).</p><p>Best Regards,<br>Viswam Team</p>",
+                "emailTo": "={{ $node[\"Split Reports\"].json[\"principalEmail\"] }}",
+                "subject": "=Report Card: {{ $node[\"Split Reports\"].json[\"studentName\"] }}",
+                "options": {
+                    "appendAttachements": "={{ $node[\"Read PDF\"].binary.data }}"
+                }
+            },
+            "name": "Gmail",
+            "type": "n8n-nodes-base.gmail",
+            "typeVersion": 2,
+            "position": [
+                1000,
+                300
+            ],
+            "id": "gmail-1"
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://viswam-report-card.vercel.app/api/reports/automation/mark-sent",
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "ids",
+                            "value": "={{ $node[\"Aggregate IDs\"].json[\"ids\"] }}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "name": "Mark as Sent",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                1400,
+                300
+            ],
+            "id": "mark-sent-1"
+        },
+        {
+            "parameters": {
+                "operation": "aggregateItems",
+                "fieldsToAggregate": {
+                    "primaryFields": [
+                        {
+                            "field": "id"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "name": "Aggregate IDs",
+            "type": "n8n-nodes-base.itemLists",
+            "typeVersion": 1,
+            "position": [
+                1200,
+                300
+            ],
+            "id": "aggregate-1"
+        },
+        {
+            "parameters": {
+                "fileSelector": "={{ $env[\"TEMP\"] || \"/tmp\" }}/report_{{ $node[\"Split Reports\"].json[\"id\"] }}.pdf"
+            },
+            "name": "Read PDF",
+            "type": "n8n-nodes-base.readBinaryFile",
+            "typeVersion": 1,
+            "position": [
+                800,
+                300
+            ],
+            "id": "read-pdf-1"
+        }
+    ],
+    "connections": {
+        "Every 5 Minutes": {
+            "main": [
+                [
+                    {
+                        "node": "Fetch Queue",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fetch Queue": {
+            "main": [
+                [
+                    {
+                        "node": "Split Reports",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Split Reports": {
+            "main": [
+                [
+                    {
+                        "node": "Generate PDF (Chrome)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Generate PDF (Chrome)": {
+            "main": [
+                [
+                    {
+                        "node": "Read PDF",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Read PDF": {
+            "main": [
+                [
+                    {
+                        "node": "Gmail",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Gmail": {
+            "main": [
+                [
+                    {
+                        "node": "Aggregate IDs",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Aggregate IDs": {
+            "main": [
+                [
+                    {
+                        "node": "Mark as Sent",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "active": false,
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "versionId": "f7d75a8a-7b3b-4c3e-8d2e-9d8c3b1a2b3c"
+}

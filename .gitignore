@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+dist/
+
+# Database
+database.sqlite
+
+# Environment variables
+.env
+.env.local
+
+# Docker
+Dockerfile
+Dockerfile.n8n
+docker-compose.yml
+.dockerignore
+
+# Temporary files
+test_report.html
+*.log
+*.tmp
+temp/
+/tmp/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Vercel
+.vercel
+
+# IDEs
+.vscode/
+.idea/
+.gemini/
