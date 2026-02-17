@@ -57,6 +57,7 @@ const UploadPage = () => {
     const [studentFile, setStudentFile] = useState(null);
     const [schoolFile, setSchoolFile] = useState(null);
     const [assessmentName, setAssessmentName] = useState('');
+    const [qp, setQp] = useState('');
     const [schoolName, setSchoolName] = useState('');
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
@@ -92,6 +93,7 @@ const UploadPage = () => {
             setError('');
             formData.append('assessmentName', assessmentName || 'Sodhana 1');
             formData.append('schoolName', schoolName || 'Vignyan');
+            formData.append('qp', qp);
 
             const res = await api.post('/upload/students', formData, config);
             setMessage(res.data.message);
@@ -210,6 +212,20 @@ const UploadPage = () => {
                     </select>
                 </div>
                 <div className="flex flex-col gap-2">
+                    <label className="text-sm font-bold text-slate-700 ml-1">QP (Question Paper)</label>
+                    <select
+                        className="px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all bg-white font-medium"
+                        value={qp}
+                        onChange={(e) => setQp(e.target.value)}
+                    >
+                        <option value="">Select QP</option>
+                        <option value="SCERT 1">SCERT 1</option>
+                        <option value="SCERT 2">SCERT 2</option>
+                        <option value="NCERT 1">NCERT 1</option>
+                        <option value="NCERT 2">NCERT 2</option>
+                    </select>
+                </div>
+                <div className="flex flex-col gap-2">
                     <label className="text-sm font-bold text-slate-700 ml-1">School Name</label>
                     <input
                         type="text"
@@ -280,7 +296,7 @@ const UploadPage = () => {
 
                             {reports.length > 0 && (
                                 <a
-                                    href={`/report/${reports[0].id}?view=principal&school=${encodeURIComponent(schoolName || reports[0].schoolName)}&assessment=${encodeURIComponent(assessmentName || reports[0].assessmentName)}`}
+                                    href={`/report/${reports[0].id}?view=principal&school=${encodeURIComponent(schoolName || reports[0].schoolName)}&assessment=${encodeURIComponent(assessmentName || reports[0].assessmentName)}&qp=${encodeURIComponent(qp || reports[0].qp || '')}`}
                                     target="_blank"
                                     className="bg-teal-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-teal-200 hover:bg-teal-700 transition-all flex items-center gap-2"
                                 >
@@ -317,14 +333,14 @@ const UploadPage = () => {
                                         <td className="px-6 py-4">
                                             <div className="flex justify-center gap-3">
                                                 <a
-                                                    href={`/report/${report.id}?view=student&school=${encodeURIComponent(schoolName)}&assessment=${encodeURIComponent(assessmentName)}`}
+                                                    href={`/report/${report.id}?view=student&school=${encodeURIComponent(schoolName)}&assessment=${encodeURIComponent(assessmentName)}&qp=${encodeURIComponent(qp || report.qp || '')}`}
                                                     target="_blank"
                                                     className="px-4 py-2 bg-indigo-50 text-indigo-600 rounded-lg font-bold hover:bg-indigo-100 transition-colors text-sm"
                                                 >
                                                     Student View
                                                 </a>
                                                 <a
-                                                    href={`/report/${report.id}?view=principal&school=${encodeURIComponent(schoolName)}&assessment=${encodeURIComponent(assessmentName)}`}
+                                                    href={`/report/${report.id}?view=principal&school=${encodeURIComponent(schoolName)}&assessment=${encodeURIComponent(assessmentName)}&qp=${encodeURIComponent(qp || report.qp || '')}`}
                                                     target="_blank"
                                                     className="px-4 py-2 bg-teal-50 text-teal-600 rounded-lg font-bold hover:bg-teal-100 transition-colors text-sm"
                                                 >

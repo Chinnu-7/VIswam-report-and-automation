@@ -74,8 +74,9 @@ const ProtectedRoute = ({ user, allowedRoles, children }) => {
   return children;
 };
 
-function App() {
+function AppContent() {
   const [user, setUser] = useState(JSON.parse(localStorage.getItem('userInfo')));
+  const location = useLocation();
 
   const handleLogout = () => {
     localStorage.removeItem('userInfo');
@@ -83,32 +84,39 @@ function App() {
   };
 
   return (
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
+      <Navigation user={user} onLogout={handleLogout} />
+
+      <main className={user ? (location.pathname.startsWith('/report') ? "" : "pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto") : ""}>
+
+        <Routes>
+          <Route path="/login" element={<LoginPage onLogin={setUser} />} />
+
+          <Route path="/upload" element={
+            <ProtectedRoute user={user} allowedRoles={['principal']}>
+              <UploadPage />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin" element={
+            <ProtectedRoute user={user} allowedRoles={['admin']}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/report/:id" element={<ReportViewer />} />
+
+          <Route path="/" element={<Navigate to={user ? (user.role === 'admin' ? '/admin' : '/upload') : '/login'} replace />} />
+        </Routes>
+      </main>
+    </div>
+  );
+}
+
+function App() {
+  return (
     <BrowserRouter>
-      <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
-        <Navigation user={user} onLogout={handleLogout} />
-
-        <main className={user ? (location.pathname.startsWith('/report') ? "" : "pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto") : ""}>
-          <Routes>
-            <Route path="/login" element={<LoginPage onLogin={setUser} />} />
-
-            <Route path="/upload" element={
-              <ProtectedRoute user={user} allowedRoles={['principal']}>
-                <UploadPage />
-              </ProtectedRoute>
-            } />
-
-            <Route path="/admin" element={
-              <ProtectedRoute user={user} allowedRoles={['admin']}>
-                <AdminDashboard />
-              </ProtectedRoute>
-            } />
-
-            <Route path="/report/:id" element={<ReportViewer />} />
-
-            <Route path="/" element={<Navigate to={user ? (user.role === 'admin' ? '/admin' : '/upload') : '/login'} replace />} />
-          </Routes>
-        </main>
-      </div>
+      <AppContent />
     </BrowserRouter>
   );
 }

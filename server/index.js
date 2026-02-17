@@ -58,7 +58,7 @@ const distPath = path.join(__dirname, '../dist');
 app.use(express.static(distPath));
 
 // Catch-all to serve index.html for SPA
-app.get('*', (req, res) => {
+app.get('*all', (req, res) => {
     if (!req.path.startsWith('/api')) {
         res.sendFile(path.join(distPath, 'index.html'));
     }

@@ -100,6 +100,7 @@ const ReportViewer = () => {
 
     const finalSchoolName = report?.schoolName || defaultSchool;
     const finalAssessmentName = report?.assessmentName || defaultAssessment;
+    const finalQp = queryParams.get('qp') || report?.qp || '';
     const isDownload = queryParams.get('download') === 'true';
 
     return (
@@ -138,7 +139,7 @@ const ReportViewer = () => {
                 <div className="flex items-center gap-3">
                     <div className="flex flex-col items-end text-[10px] text-slate-400 leading-tight">
                         <span className="uppercase font-bold tracking-tighter">{finalSchoolName}</span>
-                        <span>{finalAssessmentName}</span>
+                        <span>{finalAssessmentName}{finalQp ? ` - ${finalQp}` : ''}</span>
                     </div>
                 </div>
             </div>
@@ -151,6 +152,7 @@ const ReportViewer = () => {
                         viewMode={viewMode}
                         schoolName={finalSchoolName}
                         assessmentName={finalAssessmentName}
+                        qp={finalQp}
                     />
                 </div>
             </div>

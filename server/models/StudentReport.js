@@ -27,6 +27,10 @@ const StudentReport = db.define('student_report', {
         type: Sequelize.STRING,
         allowNull: true
     },
+    qp: {
+        type: Sequelize.STRING,
+        allowNull: true
+    },
     class: {
         type: Sequelize.STRING,
         allowNull: true

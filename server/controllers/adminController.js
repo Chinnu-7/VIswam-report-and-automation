@@ -5,7 +5,7 @@ import { Op } from 'sequelize';
 import * as gradingService from '../services/gradingService.js';
 
 // Helper for internal use (upload/approval)
-export const performRecalculate = async (schoolId, assessmentName) => {
+export const performRecalculate = async (schoolId, assessmentName, qp = null) => {
     if (!schoolId || !assessmentName) {
         console.warn('performRecalculate called with missing schoolId or assessmentName');
         return 0;
@@ -13,17 +13,21 @@ export const performRecalculate = async (schoolId, assessmentName) => {
 
     const schoolIdUpper = schoolId.toUpperCase();
 
-    const reports = await StudentReport.findAll({
-        where: {
-            [Op.or]: [
-                { schoolId: schoolId },
-                { schoolName: schoolId },
-                { schoolId: schoolIdUpper },
-                { schoolName: schoolIdUpper }
-            ],
-            assessmentName: assessmentName
-        }
-    });
+    const where = {
+        [Op.or]: [
+            { schoolId: schoolId },
+            { schoolName: schoolId },
+            { schoolId: schoolIdUpper },
+            { schoolName: schoolIdUpper }
+        ],
+        assessmentName: assessmentName
+    };
+
+    if (qp) {
+        where.qp = qp;
+    }
+
+    const reports = await StudentReport.findAll({ where });
 
     if (reports.length === 0) return 0;
 
@@ -41,16 +45,16 @@ export const performRecalculate = async (schoolId, assessmentName) => {
 };
 
 export const recalculateGrades = async (req, res) => {
-    const { schoolId, assessmentName } = req.body;
+    const { schoolId, assessmentName, qp } = req.body;
 
     if (!schoolId || !assessmentName) {
         return res.status(400).json({ message: 'School Id and Assessment Name are required' });
     }
 
-    console.log(`Recalculating grades for School: ${schoolId}, Assessment: ${assessmentName}`);
+    console.log(`Recalculating grades for School: ${schoolId}, Assessment: ${assessmentName}${qp ? `, QP: ${qp}` : ''}`);
 
     try {
-        const count = await performRecalculate(schoolId, assessmentName);
+        const count = await performRecalculate(schoolId, assessmentName, qp);
 
         if (count === 0) {
             console.log(`No reports found for cohort: ${schoolId} / ${assessmentName}`);
@@ -68,12 +72,13 @@ export const recalculateGrades = async (req, res) => {
 
 export const getReports = async (req, res) => {
     try {
-        const { status, id, schoolId, assessmentName } = req.query;
+        const { status, id, schoolId, assessmentName, qp } = req.query;
         const where = {};
         if (status) where.status = status;
         if (id) where.id = id;
         if (schoolId) where.schoolId = schoolId;
         if (assessmentName) where.assessmentName = assessmentName;
+        if (qp) where.qp = qp;
 
         const reports = await StudentReport.findAll({ where });
         res.json(reports);

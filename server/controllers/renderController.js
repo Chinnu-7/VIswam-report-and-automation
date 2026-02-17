@@ -44,23 +44,23 @@ export const renderReportHtml = async (req, res) => {
         const getGradeColor = (grade) => {
             if (!grade) return '#64748B';
             const g = grade.toUpperCase();
-            if (['S+', 'S', 'A+', 'A'].includes(g)) return '#15803d';
-            if (['B+', 'B', 'C+'].includes(g)) return '#ea580c';
-            if (g === 'C') return '#dc2626';
+            if (['O', 'A+', 'A', 'B+'].includes(g)) return '#15803d'; // Greenish
+            if (['B', 'C+', 'C'].includes(g)) return '#ea580c'; // Orange
+            if (g === 'D') return '#dc2626'; // Red
             return '#64748B';
         };
 
         const getGradeBg = (grade) => {
             if (!grade) return '#F1F5F9';
             const g = grade.toUpperCase();
-            if (g === 'S+') return '#dcfce7';
-            if (g === 'S') return '#bbf7d0';
-            if (g === 'A+') return '#86efac';
-            if (g === 'A') return '#4ade80';
-            if (g === 'B+') return '#ffedd5';
-            if (g === 'B') return '#fed7aa';
-            if (g === 'C+') return '#fdba74';
-            if (g === 'C') return '#fee2e2';
+            if (g === 'O') return '#dcfce7';
+            if (g === 'A+') return '#bbf7d0';
+            if (g === 'A') return '#86efac';
+            if (g === 'B+') return '#4ade80';
+            if (g === 'B') return '#ffedd5';
+            if (g === 'C+') return '#fed7aa';
+            if (g === 'C') return '#fdba74';
+            if (g === 'D') return '#fee2e2';
             return '#F1F5F9';
         };
 
@@ -205,14 +205,14 @@ export const renderReportHtml = async (req, res) => {
             <h4>GRADING SCALE</h4>
             <div class="ranges-grid">
                 ${[
-                { g: 'S+', p: '91-100%', d: 'Outstanding' },
-                { g: 'S', p: '80-90%', d: 'Excellent' },
-                { g: 'A+', p: '70-79%', d: 'Very Good' },
-                { g: 'A', p: '60-69%', d: 'Good' },
-                { g: 'B+', p: '50-59%', d: 'Above Avg' },
-                { g: 'B', p: '40-49%', d: 'Average' },
-                { g: 'C+', p: '30-39%', d: 'Below Avg' },
-                { g: 'C', p: '< 30%', d: 'Needs Imp.' }
+                { g: 'O', p: '91-100%', d: 'Outstanding' },
+                { g: 'A+', p: '80-90%', d: 'Excellent' },
+                { g: 'A', p: '70-79%', d: 'Very Good' },
+                { g: 'B+', p: '60-69%', d: 'Good' },
+                { g: 'B', p: '50-59%', d: 'Above Avg' },
+                { g: 'C+', p: '40-49%', d: 'Average' },
+                { g: 'C', p: '30-39%', d: 'Below Avg' },
+                { g: 'D', p: '< 30%', d: 'Needs Imp.' }
             ].map(r => `
                     <div class="range-item" style="background: ${getGradeBg(r.g)}; color: ${getGradeColor(r.g)}">
                         <div class="g">${r.g}</div>

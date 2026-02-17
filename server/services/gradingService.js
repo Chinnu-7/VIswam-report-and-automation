@@ -4,21 +4,21 @@
  */
 
 export const GRADES = [
-    { minZ: 1.5, grade: 'S+' },
-    { minZ: 0.9, grade: 'S' },
-    { minZ: 0.4, grade: 'A+' },
-    { minZ: -0.1, grade: 'A' },
-    { minZ: -0.6, grade: 'B+' },
-    { minZ: -1.1, grade: 'B' },
-    { minZ: -1.6, grade: 'C+' },
-    { minZ: -Infinity, grade: 'C' }
+    { minZ: 1.5, grade: 'O' },
+    { minZ: 0.9, grade: 'A+' },
+    { minZ: 0.4, grade: 'A' },
+    { minZ: -0.1, grade: 'B+' },
+    { minZ: -0.6, grade: 'B' },
+    { minZ: -1.1, grade: 'C+' },
+    { minZ: -1.6, grade: 'C' },
+    { minZ: -Infinity, grade: 'D' }
 ];
 
 export const calculateGrade = (zScore) => {
     for (const threshold of GRADES) {
         if (zScore >= threshold.minZ) return threshold.grade;
     }
-    return 'C';
+    return 'D';
 };
 
 export const computeCohortStats = (reports) => {

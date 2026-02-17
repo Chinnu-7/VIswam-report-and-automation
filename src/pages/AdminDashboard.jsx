@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/axios';
-import { CheckCircle, XCircle, Trash2, Search, Filter, AlertCircle, FileText, Upload, FileSpreadsheet, FileUp, RefreshCw, Eye, Download } from 'lucide-react';
+import { CheckCircle, XCircle, Trash2, Search, Filter, AlertCircle, FileText, Upload, FileSpreadsheet, FileUp, RefreshCw, Eye, Download, LayoutDashboard } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import * as xlsx from 'xlsx';
 
@@ -13,6 +13,7 @@ const AdminDashboard = () => {
     const [filter, setFilter] = useState('PENDING');
 
     const [assessmentName, setAssessmentName] = useState('');
+    const [qp, setQp] = useState('');
     const [schoolName, setSchoolName] = useState('');
     const [studentFile, setStudentFile] = useState(null);
     const [uploading, setUploading] = useState(false);
@@ -49,6 +50,7 @@ const AdminDashboard = () => {
         try {
             const res = await api.post('/reports/recalculate', {
                 assessmentName,
+                qp,
                 schoolId: schoolName.toUpperCase() // Assuming schoolName maps to schoolId for simplicity or we need a proper mapping
             }, config);
             setMessage(res.data.message);
@@ -135,6 +137,7 @@ const AdminDashboard = () => {
         const formData = new FormData();
         formData.append('file', studentFile);
         formData.append('assessmentName', assessmentName || 'Sodhana 1');
+        formData.append('qp', qp);
         formData.append('schoolName', schoolName || 'Vignyan');
 
         setUploading(true);
@@ -195,7 +198,7 @@ const AdminDashboard = () => {
             </div>
 
             {/* Quick Upload Section for Admins */}
-            <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8 grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+            <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8 grid grid-cols-1 md:grid-cols-5 gap-6 items-end">
                 <div className="md:col-span-1">
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Student File</label>
                     <div className="relative group">
@@ -232,6 +235,20 @@ const AdminDashboard = () => {
                         <option value="Sodhana 2">Sodhana 2</option>
                         <option value="Sodhana 3">Sodhana 3</option>
                         <option value="Sodhana 4">Sodhana 4</option>
+                    </select>
+                </div>
+                <div>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">QP</label>
+                    <select
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-primary"
+                        value={qp}
+                        onChange={(e) => setQp(e.target.value)}
+                    >
+                        <option value="">Select QP</option>
+                        <option value="SCERT 1">SCERT 1</option>
+                        <option value="SCERT 2">SCERT 2</option>
+                        <option value="NCERT 1">NCERT 1</option>
+                        <option value="NCERT 2">NCERT 2</option>
                     </select>
                 </div>
                 <div>
@@ -373,7 +390,7 @@ const AdminDashboard = () => {
                                     <td className="px-6 py-4">
                                         <div className="flex justify-center">
                                             <Link
-                                                to={`/report/${report.id}?view=student`}
+                                                to={`/report/${report.id}?view=student&qp=${encodeURIComponent(report.qp || '')}`}
                                                 target="_blank"
                                                 className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"
                                                 title="Student Preview"
@@ -381,7 +398,15 @@ const AdminDashboard = () => {
                                                 <Eye size={20} />
                                             </Link>
                                             <Link
-                                                to={`/report/${report.id}?view=principal&download=true`}
+                                                to={`/report/${report.id}?view=principal&qp=${encodeURIComponent(report.qp || '')}`}
+                                                target="_blank"
+                                                className="p-2 text-slate-400 hover:text-teal-600 transition-colors"
+                                                title="Principal Preview"
+                                            >
+                                                <LayoutDashboard size={20} />
+                                            </Link>
+                                            <Link
+                                                to={`/report/${report.id}?view=principal&download=true&qp=${encodeURIComponent(report.qp || '')}`}
                                                 target="_blank"
                                                 className="p-2 text-slate-400 hover:text-primary transition-colors"
                                                 title="Download Principal Report"

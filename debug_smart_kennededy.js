@@ -3,7 +3,7 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const xlsx = require('xlsx');
 
-const filePath = "c:\\Users\\Admin\\Desktop\\Viswam Data and Automation\\Viswam Report card\\Smart Kennededy.xlsx";
+const filePath = "Smart Kennededy.xlsx";
 
 try {
     const workbook = xlsx.readFile(filePath);

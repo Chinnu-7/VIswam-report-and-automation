@@ -22,14 +22,17 @@ if (process.env.DATABASE_URL) {
         }
     });
 } else {
-    console.log('Using local SQLite database...');
-    const storagePath = path.join(__dirname, '../../database.sqlite');
-    sequelize = new Sequelize({
-        dialect: 'sqlite',
-        dialectModule: sqlite3,
-        storage: storagePath,
-        logging: false
-    });
+    console.log('Connecting to local MySQL database...');
+    sequelize = new Sequelize(
+        process.env.DB_NAME || 'viswam_reports',
+        process.env.DB_USER || 'root',
+        process.env.DB_PASS || '2500',
+        {
+            host: process.env.DB_HOST || 'localhost',
+            dialect: 'mysql',
+            logging: false
+        }
+    );
 }
 
 export default sequelize;
