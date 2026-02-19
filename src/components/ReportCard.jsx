@@ -32,7 +32,7 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
         maths: Number(s.reportData?.maths_score) || 0,
         science: Number(s.reportData?.science_score) || 0,
         relative_grading: s.reportData?.relative_grading || null
-    })) : [];
+    })).sort((a, b) => Number(a.rollNo) - Number(b.rollNo)) : [];
 
     const subLabels = {
         english: 'English',
@@ -613,7 +613,7 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                 viewMode === 'principal' && (
                     /* Helper to chunk the data */
                     (() => {
-                        const itemsPerPage = 8; // Reduced to 8 for perpetual safety
+                        const itemsPerPage = 7; // Reduced to 7 for perpetual safety
                         const chunks = [];
                         if (studentData.length === 0) {
                             chunks.push([]);
