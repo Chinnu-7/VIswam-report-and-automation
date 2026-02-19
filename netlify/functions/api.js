@@ -10,7 +10,17 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.get('/api/ping', (req, res) => res.json({ message: 'pong', time: new Date().toISOString() }));
+import sequelize from '../../server/config/database.js';
+
+app.get('/api/ping', async (req, res) => {
+    try {
+        await sequelize.authenticate();
+        res.json({ message: 'pong - DB Connected', time: new Date().toISOString() });
+    } catch (err) {
+        res.status(500).json({ message: 'pong - DB Error', error: err.message, time: new Date().toISOString() });
+    }
+});
+
 
 export const handler = serverless(app);
 
