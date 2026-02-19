@@ -46,6 +46,11 @@ const initializeDb = async () => {
 };
 
 
+// Health check (isolate from DB middleware)
+app.get('/api', (req, res) => {
+    res.send('Viswam Report Card Automation API is running');
+});
+
 // Middleware to ensure DB is ready
 app.use(async (req, res, next) => {
     // Basic timeout to prevent 502 crash if DB hangs
@@ -63,13 +68,6 @@ app.use(async (req, res, next) => {
     }
 });
 
-
-// Routes
-app.use('/api', apiRoutes);
-
-app.get('/api', (req, res) => {
-    res.send('Viswam Report Card Automation API is running');
-});
 
 // Serve static files in production
 const distPath = path.resolve('dist');
