@@ -11,8 +11,11 @@ let sequelize;
 const dbUrl = process.env.DATABASE_URL || process.env.NETLIFY_DATABASE_URL;
 
 if (dbUrl) {
+    const maskedUrl = dbUrl.replace(/:([^@]+)@/, ':****@');
+    console.log(`Connecting to DB via URL: ${maskedUrl.substring(0, 15)}...`);
 
     const isPostgres = dbUrl.startsWith('postgres');
+
 
     console.log(`Connecting to ${isPostgres ? 'PostgreSQL' : 'MySQL'} via URL...`);
 

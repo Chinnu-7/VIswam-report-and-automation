@@ -49,9 +49,21 @@ const initializeDb = async () => {
 
 // Middleware to ensure DB is ready
 app.use(async (req, res, next) => {
-    await initializeDb();
-    next();
+    // Basic timeout to prevent 502 crash if DB hangs
+    const timeout = setTimeout(() => {
+        if (!isDbInitialized) console.log('DB Init still pending...');
+    }, 5000);
+
+    try {
+        await initializeDb();
+    } catch (err) {
+        console.error('Middleware Error:', err);
+    } finally {
+        clearTimeout(timeout);
+        next();
+    }
 });
+
 
 // Routes
 app.use('/api', apiRoutes);
