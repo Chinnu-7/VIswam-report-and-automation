@@ -77,7 +77,7 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
     ];
 
     // Aggregated LO Logic for Principal View or Individual for Student View
-    const getDynamicLOs = (studentOrStudents, subjectKey, isStrength = true) => {
+    const getDynamicLOs = (studentOrStudents, subjectKey, isStrength = true, limit = 5) => {
         const studentsList = Array.isArray(studentOrStudents) ? studentOrStudents : (studentOrStudents ? [studentOrStudents] : []);
         if (studentsList.length === 0) return [];
 
@@ -100,7 +100,7 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
             }))
             .filter(({ avgScore }) => isStrength ? avgScore >= 0.75 : (avgScore < 0.5 && avgScore >= 0))
             .sort((a, b) => isStrength ? b.avgScore - a.avgScore : a.avgScore - b.avgScore)
-            .slice(0, 5)
+            .slice(0, limit)
             .map(({ code, avgScore }) => {
                 const text = mapping[code] || code;
                 return `${text}`;
@@ -112,9 +112,9 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
     const mathStrengths = getDynamicLOs(students, 'maths', true);
     const scienceStrengths = getDynamicLOs(students, 'science', true);
 
-    const englishImprovements = getDynamicLOs(students, 'english', false);
-    const mathImprovements = getDynamicLOs(students, 'maths', false);
-    const scienceImprovements = getDynamicLOs(students, 'science', false);
+    const englishImprovements = getDynamicLOs(students, 'english', false, 7);
+    const mathImprovements = getDynamicLOs(students, 'maths', false, 7);
+    const scienceImprovements = getDynamicLOs(students, 'science', false, 7);
 
     const renderTopicList = (title, items, color, isStrength = false) => {
         if (!items || items.length === 0) return null;

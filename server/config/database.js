@@ -9,17 +9,21 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 let sequelize;
 
 if (process.env.DATABASE_URL) {
-    console.log('Connecting to Supabase/PostgreSQL...');
-    sequelize = new Sequelize(process.env.DATABASE_URL, {
-        dialect: 'postgres',
-        dialectModule: pg,
+    const dbUrl = process.env.DATABASE_URL;
+    const isPostgres = dbUrl.startsWith('postgres');
+
+    console.log(`Connecting to ${isPostgres ? 'PostgreSQL' : 'MySQL'} via URL...`);
+
+    sequelize = new Sequelize(dbUrl, {
+        dialect: isPostgres ? 'postgres' : 'mysql',
+        dialectModule: isPostgres ? pg : undefined,
         logging: false,
-        dialectOptions: {
+        dialectOptions: isPostgres ? {
             ssl: {
                 require: true,
                 rejectUnauthorized: false
             }
-        }
+        } : {}
     });
 } else {
     console.log('Connecting to local MySQL database...');

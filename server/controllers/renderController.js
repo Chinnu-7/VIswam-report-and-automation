@@ -81,7 +81,7 @@ export const renderReportHtml = async (req, res) => {
             }));
 
             const strengths = items.filter(i => i.score >= 75).sort((a, b) => b.score - a.score).slice(0, 5);
-            const improvements = items.filter(i => i.score < 50 && i.score >= 0).sort((a, b) => a.score - b.score).slice(0, 5);
+            const improvements = items.filter(i => i.score < 50 && i.score >= 0).sort((a, b) => a.score - b.score).slice(0, 7);
 
             let html = '';
             if (strengths.length > 0) {

@@ -65,7 +65,7 @@ app.get('*all', (req, res) => {
 });
 
 // Conditionally listen for local development
-if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL && !process.env.NETLIFY) {
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 }
 
