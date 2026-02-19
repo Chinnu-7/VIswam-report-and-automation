@@ -1,18 +1,9 @@
 import Sequelize from 'sequelize';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import sqlite3 from 'sqlite3';
-import pg from 'pg';
-
-let __dirname;
-try {
-    __dirname = path.dirname(fileURLToPath(import.meta.url));
-} catch (e) {
-    __dirname = process.cwd();
-}
-
+import mysql2 from 'mysql2';
 
 let sequelize;
+
+
 
 const dbUrl = process.env.DATABASE_URL || process.env.NETLIFY_DATABASE_URL;
 

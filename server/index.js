@@ -15,14 +15,6 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-let __filename, __dirname;
-try {
-    __filename = fileURLToPath(import.meta.url);
-    __dirname = path.dirname(__filename);
-} catch (e) {
-    __filename = path.join(process.cwd(), 'index.js');
-    __dirname = process.cwd();
-}
 
 
 // Middleware
@@ -80,7 +72,7 @@ app.get('/api', (req, res) => {
 });
 
 // Serve static files in production
-const distPath = path.join(__dirname, '../dist');
+const distPath = path.resolve('dist');
 app.use(express.static(distPath));
 
 // Catch-all to serve index.html for SPA
@@ -89,6 +81,7 @@ app.get('*all', (req, res) => {
         res.sendFile(path.join(distPath, 'index.html'));
     }
 });
+
 
 // Conditionally listen for local development
 if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL && !process.env.NETLIFY) {

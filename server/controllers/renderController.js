@@ -1,23 +1,14 @@
 import StudentReport from '../models/StudentReport.js';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
-
-let __filename, __dirname;
-try {
-    __filename = fileURLToPath(import.meta.url);
-    __dirname = path.dirname(__filename);
-} catch (e) {
-    __filename = path.join(process.cwd(), 'renderController.js');
-    __dirname = process.cwd();
-}
-
 
 // Helper to get base64 logo
 const getBase64Image = (fileName) => {
     try {
-        const filePath = path.join(__dirname, '../../src/assets', fileName);
+        const filePath = path.resolve('src', 'assets', fileName);
         if (fs.existsSync(filePath)) {
+
+
             const data = fs.readFileSync(filePath);
             const extension = path.extname(fileName).slice(1);
             return `data:image/${extension === 'jpg' ? 'jpeg' : extension};base64,${data.toString('base64')}`;
