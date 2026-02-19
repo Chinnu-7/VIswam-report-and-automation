@@ -203,7 +203,7 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                             padding: '1px 2px',
                             borderRadius: '3px',
                             backgroundColor: r.bg,
-                            border: `0.5px solid ${r.color}40`
+                            border: `2px solid ${r.color}60`
                         }}>
                             <span style={{ fontWeight: 'bold', color: r.color, fontSize: '0.7rem' }}>{r.grade}</span>
                             <span style={{ fontSize: '0.5rem', color: '#1e293b', fontWeight: '600' }}>{r.range}</span>
@@ -443,15 +443,14 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
 
                             {/* Participation - Gauge Style */}
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                <h3 style={{ fontSize: '1rem', margin: '0 0 0.3rem 0', color: primaryColor, borderLeft: `8px solid ${primaryColor}`, paddingLeft: '0.6rem' }}>Participation</h3>
-
+                                <h3 style={{ fontSize: '1rem', margin: '0 0 0.3rem 0', color: primaryColor, borderLeft: `10px solid ${primaryColor}`, paddingLeft: '0.6rem' }}>Participation</h3>
                                 <div style={{
                                     backgroundColor: '#F8FAFC',
                                     borderRadius: '8px',
                                     padding: '0.4rem',
                                     border: '2px solid #E2E8F0',
                                     textAlign: 'center',
-                                    height: '120px',
+                                    height: '95px',
                                     display: 'flex',
                                     flexDirection: 'column',
                                     justifyContent: 'center'
@@ -495,13 +494,13 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
 
                             {/* Student Performance Breakdown - Grade Distribution Graph */}
                             <div>
-                                <h3 style={{ fontSize: '1rem', margin: '0 0 0.5rem 0', color: primaryColor, borderLeft: `8px solid ${primaryColor}`, paddingLeft: '0.6rem' }}>Overall Grade Distribution</h3>
+                                <h3 style={{ fontSize: '1rem', margin: '0 0 0.5rem 0', color: primaryColor, borderLeft: `10px solid ${primaryColor}`, paddingLeft: '0.6rem' }}>Overall Grade Distribution</h3>
                                 <div style={{
                                     border: '2px solid #e2e8f0',
                                     borderRadius: '8px',
-                                    height: '120px',
+                                    height: '95px',
                                     backgroundColor: 'white',
-                                    padding: '0.2rem'
+                                    padding: '0.1rem'
                                 }}>
                                     {(() => {
                                         const gradeDistribution = studentData.reduce((acc, curr) => {
@@ -525,11 +524,12 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <BarChart
                                                     data={distributionData}
-                                                    margin={{ top: 30, right: 10, left: -20, bottom: 0 }}
+                                                    margin={{ top: 25, right: 10, left: -20, bottom: 0 }}
+                                                    style={{ pointerEvents: 'none' }}
                                                 >
                                                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                                    <XAxis dataKey="grade" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-                                                    <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                                                    <XAxis dataKey="grade" tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
+                                                    <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} allowDecimals={false} />
                                                     <Bar dataKey="count" radius={[4, 4, 0, 0]} barSize={35} legendType="none" isAnimationActive={false}>
                                                         <LabelList dataKey="count" position="top" fontSize={12} fontWeight="bold" />
                                                         {
@@ -549,13 +549,13 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
 
                         {/* Focus Areas */}
                         <div>
-                            <h3 style={{ fontSize: '1rem', margin: '0 0 0.5rem 0', color: primaryColor, borderLeft: `8px solid ${primaryColor}`, paddingLeft: '0.6rem' }}>Focus Areas & Remarks</h3>
+                            <h3 style={{ fontSize: '1rem', margin: '0 0 0.5rem 0', color: primaryColor, borderLeft: `10px solid ${primaryColor}`, paddingLeft: '0.6rem' }}>Focus Areas & Remarks</h3>
 
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', alignItems: 'start' }}>
 
                                 {/* English */}
                                 <div>
-                                    <div style={{ textAlign: 'center', marginBottom: '0.4rem', paddingBottom: '0.2rem', borderBottom: `6px solid ${colors.english}` }}>
+                                    <div style={{ textAlign: 'center', marginBottom: '0.4rem', paddingBottom: '0.2rem', borderBottom: `10px solid ${colors.english}` }}>
                                         <h4 style={{ margin: 0, color: colors.english, textTransform: 'uppercase', fontSize: '0.8rem' }}>English</h4>
                                     </div>
                                     <div style={{ border: '1px solid #F1F5F9', borderRadius: '8px', padding: '0.4rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
@@ -567,7 +567,7 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
 
                                 {/* Math */}
                                 <div>
-                                    <div style={{ textAlign: 'center', marginBottom: '0.4rem', paddingBottom: '0.2rem', borderBottom: `6px solid ${colors.maths}` }}>
+                                    <div style={{ textAlign: 'center', marginBottom: '0.4rem', paddingBottom: '0.2rem', borderBottom: `10px solid ${colors.maths}` }}>
                                         <h4 style={{ margin: 0, color: colors.maths, textTransform: 'uppercase', fontSize: '0.8rem' }}>Mathematics</h4>
                                     </div>
                                     <div style={{ border: '1px solid #F1F5F9', borderRadius: '8px', padding: '0.4rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
@@ -579,7 +579,7 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
 
                                 {/* Science */}
                                 <div>
-                                    <div style={{ textAlign: 'center', marginBottom: '0.4rem', paddingBottom: '0.2rem', borderBottom: `6px solid ${colors.science}` }}>
+                                    <div style={{ textAlign: 'center', marginBottom: '0.4rem', paddingBottom: '0.2rem', borderBottom: `10px solid ${colors.science}` }}>
                                         <h4 style={{ margin: 0, color: colors.science, textTransform: 'uppercase', fontSize: '0.8rem' }}>Science</h4>
                                     </div>
                                     <div style={{ border: '1px solid #F1F5F9', borderRadius: '8px', padding: '0.4rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
