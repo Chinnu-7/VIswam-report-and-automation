@@ -191,7 +191,12 @@ export const uploadStudentData = async (req, res) => {
 
             // Handle School ID Logic
             let schoolIdVal = '';
-            if (idxSchoolId !== -1) {
+
+            // SECURITY/DATA INTEGRITY: If the user is a principal, ALWAYS use their schoolId
+            // This prevents typos in the Excel sheet from detaching students.
+            if (req.user && req.user.role === 'principal' && req.user.schoolId) {
+                schoolIdVal = req.user.schoolId;
+            } else if (idxSchoolId !== -1) {
                 schoolIdVal = String(row[idxSchoolId] || '').trim();
             } else if (idxSchoolName !== -1) {
                 schoolIdVal = String(row[idxSchoolName] || '').trim().toUpperCase();

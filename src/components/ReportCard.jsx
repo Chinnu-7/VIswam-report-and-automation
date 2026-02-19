@@ -186,7 +186,7 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
         ];
 
         return (
-            <div style={{ marginTop: compact ? '0.4rem' : '0.8rem' }}>
+            <div style={{ marginTop: compact ? '1rem' : '1.5rem', marginBottom: compact ? '0.5rem' : '1rem' }}>
                 <h4 style={{ fontSize: compact ? '0.65rem' : '0.8rem', color: primaryColor, marginBottom: '0.3rem', fontWeight: 'bold' }}>
                     GRADING SCALE
                 </h4>
@@ -415,74 +415,52 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                     <div className="page-content">
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.8rem', marginBottom: '0.8rem' }}>
 
-                            {/* Participation - Key Metrics Style */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                <h3 style={{ fontSize: '1rem', margin: '0 0 0.5rem 0', color: primaryColor, borderLeft: `4px solid ${primaryColor}`, paddingLeft: '0.5rem' }}>Participation</h3>
+                            {/* Participation - Gauge Style */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                <h3 style={{ fontSize: '1rem', margin: '0 0 0.3rem 0', color: primaryColor, borderLeft: `4px solid ${primaryColor}`, paddingLeft: '0.5rem' }}>Participation</h3>
 
                                 <div style={{
-                                    display: 'grid',
-                                    gridTemplateColumns: '1fr',
-                                    gap: '0.8rem'
+                                    backgroundColor: '#F8FAFC',
+                                    borderRadius: '8px',
+                                    padding: '1.2rem',
+                                    border: '1px solid #E2E8F0',
+                                    textAlign: 'center',
+                                    height: '180px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    justifyContent: 'center'
                                 }}>
-                                    <div style={{
-                                        backgroundColor: '#F8FAFC',
-                                        borderRadius: '8px',
-                                        padding: '1rem',
-                                        border: '1px solid #E2E8F0',
-                                        textAlign: 'center'
-                                    }}>
-                                        <div style={{ height: '85px', width: '100%', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <PieChart>
-                                                    <Pie
-                                                        data={[{ value: 100 }]}
-                                                        cx="50%"
-                                                        cy="100%"
-                                                        startAngle={180}
-                                                        endAngle={0}
-                                                        innerRadius={60}
-                                                        outerRadius={80}
-                                                        fill={primaryColor}
-                                                        stroke="none"
-                                                        dataKey="value"
-                                                    />
-                                                </PieChart>
-                                            </ResponsiveContainer>
-                                            <div style={{
-                                                position: 'absolute',
-                                                top: '50%',
-                                                left: '50%',
-                                                transform: 'translate(-50%, -20%)',
-                                                textAlign: 'center',
-                                                width: '100%'
-                                            }}>
-                                                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: primaryColor, lineHeight: '1' }}>100%</div>
-                                                <div style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold' }}>Attendance</div>
-                                            </div>
+                                    <div style={{ height: '100px', width: '100%', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={[{ value: 100 }]}
+                                                    cx="50%"
+                                                    cy="100%"
+                                                    startAngle={180}
+                                                    endAngle={0}
+                                                    innerRadius={65}
+                                                    outerRadius={85}
+                                                    fill={primaryColor}
+                                                    stroke="none"
+                                                    dataKey="value"
+                                                />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: '60%',
+                                            left: '50%',
+                                            transform: 'translate(-50%, -10%)',
+                                            textAlign: 'center',
+                                            width: '100%'
+                                        }}>
+                                            <div style={{ fontSize: '1.8rem', fontWeight: '900', color: primaryColor, lineHeight: '1' }}>{totalParticipated} / {totalRegistered}</div>
+                                            <div style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 'bold', marginTop: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Attendance</div>
                                         </div>
                                     </div>
-
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>
-                                        <div style={{
-                                            backgroundColor: '#FFF',
-                                            borderRadius: '8px',
-                                            padding: '0.8rem',
-                                            border: '1px solid #E2E8F0',
-                                            textAlign: 'center'
-                                        }}>
-                                            <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#1e293b' }}>{totalRegistered}</div>
-                                            <div style={{ fontSize: '0.7rem', color: '#64748B' }}>Registered</div>
-                                        </div>
-                                        <div style={{
-                                            backgroundColor: '#FFF',
-                                            borderRadius: '8px',
-                                            padding: '0.8rem',
-                                            border: '1px solid #E2E8F0',
-                                            textAlign: 'center'
-                                        }}>
-                                            <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#1e293b' }}>{totalParticipated}</div>
-                                            <div style={{ fontSize: '0.7rem', color: '#64748B' }}>Participated</div>
-                                        </div>
+                                    <div style={{ marginTop: '0.8rem', fontSize: '0.7rem', color: '#64748B', fontWeight: 'medium' }}>
+                                        Students successfully participated in this assessment
                                     </div>
                                 </div>
                             </div>
@@ -519,13 +497,13 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <BarChart
                                                     data={distributionData}
-                                                    margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+                                                    margin={{ top: 30, right: 10, left: -20, bottom: 0 }}
                                                 >
                                                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                                     <XAxis dataKey="grade" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
                                                     <YAxis tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
                                                     <Tooltip cursor={{ fill: 'transparent' }} />
-                                                    <Bar dataKey="count" radius={[4, 4, 0, 0]} barSize={35}>
+                                                    <Bar dataKey="count" radius={[4, 4, 0, 0]} barSize={35} legendType="none">
                                                         <LabelList dataKey="count" position="top" fontSize={12} fontWeight="bold" />
                                                         {
                                                             distributionData.map((entry, index) => (
