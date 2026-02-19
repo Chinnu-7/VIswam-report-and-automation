@@ -431,15 +431,15 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                                 <div style={{
                                     backgroundColor: '#F8FAFC',
                                     borderRadius: '8px',
-                                    padding: '1.2rem',
+                                    padding: '1rem',
                                     border: '1px solid #E2E8F0',
                                     textAlign: 'center',
-                                    height: '180px',
+                                    height: '170px',
                                     display: 'flex',
                                     flexDirection: 'column',
                                     justifyContent: 'center'
                                 }}>
-                                    <div style={{ height: '100px', width: '100%', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                    <div style={{ height: '90px', width: '100%', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                         <ResponsiveContainer width="100%" height="100%">
                                             <PieChart>
                                                 <Pie
@@ -480,7 +480,7 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                                 <div style={{
                                     border: '1px solid #e2e8f0',
                                     borderRadius: '8px',
-                                    height: '150px',
+                                    height: '170px',
                                     backgroundColor: 'white',
                                     padding: '0.8rem'
                                 }}>
@@ -509,8 +509,8 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                                                     margin={{ top: 30, right: 10, left: -20, bottom: 0 }}
                                                 >
                                                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                                    <XAxis dataKey="grade" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
-                                                    <YAxis tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
+                                                    <XAxis dataKey="grade" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                                                    <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
                                                     <Tooltip cursor={{ fill: 'transparent' }} />
                                                     <Bar dataKey="count" radius={[4, 4, 0, 0]} barSize={35} legendType="none">
                                                         <LabelList dataKey="count" position="top" fontSize={12} fontWeight="bold" />
