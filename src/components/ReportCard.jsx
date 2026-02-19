@@ -473,9 +473,6 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                                             <div style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 'bold', marginTop: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Attendance</div>
                                         </div>
                                     </div>
-                                    <div style={{ marginTop: '0.8rem', fontSize: '0.7rem', color: '#64748B', fontWeight: 'medium' }}>
-                                        Students successfully participated in this assessment
-                                    </div>
                                 </div>
                             </div>
 
