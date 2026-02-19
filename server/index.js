@@ -15,8 +15,15 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+let __filename, __dirname;
+try {
+    __filename = fileURLToPath(import.meta.url);
+    __dirname = path.dirname(__filename);
+} catch (e) {
+    __filename = path.join(process.cwd(), 'index.js');
+    __dirname = process.cwd();
+}
+
 
 // Middleware
 app.use(cors());

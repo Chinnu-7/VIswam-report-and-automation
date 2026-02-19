@@ -7,8 +7,15 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+let __filename, __dirname;
+try {
+    __filename = fileURLToPath(import.meta.url);
+    __dirname = path.dirname(__filename);
+} catch (e) {
+    __filename = path.join(process.cwd(), 'uploadController.js');
+    __dirname = process.cwd();
+}
+
 
 // Helper to load answer key from file (e.g., SCERT 1.xlsx)
 const loadAnswerKey = (qp) => {

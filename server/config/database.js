@@ -4,7 +4,13 @@ import { fileURLToPath } from 'url';
 import sqlite3 from 'sqlite3';
 import pg from 'pg';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+let __dirname;
+try {
+    __dirname = path.dirname(fileURLToPath(import.meta.url));
+} catch (e) {
+    __dirname = process.cwd();
+}
+
 
 let sequelize;
 
