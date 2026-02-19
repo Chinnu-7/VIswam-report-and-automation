@@ -30,15 +30,22 @@ const initializeDb = async () => {
     if (isDbInitialized) return;
     try {
         await sequelize.authenticate();
-        console.log('Database connected...');
-        await sequelize.sync({ alter: true });
+        console.log('Database connected successfully');
+
+        // Sync models (only sync without alter in production for safety/speed)
+        const syncOptions = process.env.NODE_ENV === 'production' ? {} : { alter: true };
+        await sequelize.sync(syncOptions);
         console.log('Models synced');
+
         await seedAdmin();
         isDbInitialized = true;
     } catch (err) {
-        console.error('Database initialization error:', err);
+        console.error('CRITICAL: Database initialization failed:', err);
+        // Do not block the entire app if DB is briefly down, let next request retry
+        isDbInitialized = false;
     }
 };
+
 
 // Middleware to ensure DB is ready
 app.use(async (req, res, next) => {

@@ -19,14 +19,15 @@ if (dbUrl) {
     sequelize = new Sequelize(dbUrl, {
         dialect: isPostgres ? 'postgres' : 'mysql',
         dialectModule: isPostgres ? pg : undefined,
-        logging: false,
-        dialectOptions: isPostgres ? {
+        logging: console.log, // Log to Netlify logs for debugging
+        dialectOptions: {
             ssl: {
                 require: true,
                 rejectUnauthorized: false
             }
-        } : {}
+        }
     });
+
 } else {
     console.log('Connecting to local MySQL database...');
     sequelize = new Sequelize(
