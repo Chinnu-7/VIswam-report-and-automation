@@ -3,13 +3,11 @@ import mysql2 from 'mysql2';
 
 let sequelize;
 
-
-
 const dbUrl = process.env.DATABASE_URL || process.env.NETLIFY_DATABASE_URL;
 
-let sequelize;
 
 if (dbUrl) {
+
     const isPostgres = dbUrl.startsWith('postgres');
 
     sequelize = new Sequelize(dbUrl, {
