@@ -5,9 +5,10 @@ import ReportCard from '../components/ReportCard';
 import { ArrowLeft, Loader, AlertTriangle } from 'lucide-react';
 
 const ReportViewer = () => {
-    const { id } = useParams();
+    const { id, '*': extra } = useParams();
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
+    const decodedExtra = extra ? decodeURIComponent(extra) : '';
 
     const [report, setReport] = useState(null);
     const [allSchoolReports, setAllSchoolReports] = useState([]);
@@ -100,7 +101,7 @@ const ReportViewer = () => {
 
     const finalSchoolName = report?.schoolName || defaultSchool;
     const finalAssessmentName = report?.assessmentName || defaultAssessment;
-    const finalQp = queryParams.get('qp') || report?.qp || '';
+    const finalQp = decodedExtra || queryParams.get('qp') || report?.qp || '';
     const isDownload = queryParams.get('download') === 'true';
 
     return (

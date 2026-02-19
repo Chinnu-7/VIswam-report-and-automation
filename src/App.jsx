@@ -104,7 +104,7 @@ function AppContent() {
             </ProtectedRoute>
           } />
 
-          <Route path="/report/:id" element={<ReportViewer />} />
+          <Route path="/report/:id/*" element={<ReportViewer />} />
 
           <Route path="/" element={<Navigate to={user ? (user.role === 'admin' ? '/admin' : '/upload') : '/login'} replace />} />
         </Routes>

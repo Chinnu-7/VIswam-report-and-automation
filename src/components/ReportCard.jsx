@@ -215,6 +215,12 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
         );
     };
 
+    const PageBreaker = () => (
+        <div className="page-breaker">
+            <span className="page-breaker-label">Page Break</span>
+        </div>
+    );
+
 
     return (
         <div className="report-wrapper" style={{
@@ -316,7 +322,7 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                 }
                 .page-content {
                     flex: 1;
-                    padding: 8mm 10mm 35mm 10mm; /* More relaxed screen padding */
+                    padding: 4mm 10mm 15mm 10mm; /* Extra compact padding for A4 fit */
                     box-sizing: border-box;
                 }
                 .page-footer {
@@ -333,6 +339,43 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                     align-items: flex-end;
                     z-index: 100;
                     box-sizing: border-box;
+                }
+
+                @media screen {
+                    .page-breaker {
+                        width: 100%;
+                        max-width: 210mm;
+                        margin: 2rem auto;
+                        border-top: 2px dashed #94a3b8;
+                        position: relative;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        z-index: 10;
+                    }
+                    .page-breaker-label {
+                        position: absolute;
+                        background: #334155;
+                        color: white;
+                        padding: 4px 12px;
+                        font-size: 0.7rem;
+                        border-radius: 999px;
+                        text-transform: uppercase;
+                        font-weight: 700;
+                        letter-spacing: 0.05em;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    }
+                }
+
+                @media print {
+                    .page-breaker {
+                        break-after: page;
+                        page-break-after: always;
+                        visibility: hidden;
+                        height: 0;
+                        margin: 0;
+                        padding: 0;
+                    }
                 }
             `}</style>
 
@@ -404,10 +447,10 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                         <div style={{
                             display: 'flex',
                             justifyContent: 'center',
-                            gap: '1.5rem',
-                            fontSize: '0.85rem',
+                            gap: '0.4rem',
+                            fontSize: '0.8rem',
                             color: '#64748B',
-                            marginTop: '0.5rem',
+                            marginTop: '0.1rem',
                             flexWrap: 'wrap'
                         }}>
                             <span><strong>School:</strong> {schoolName}</span>
@@ -422,7 +465,7 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
 
                     {/* Overview Section */}
                     <div className="page-content">
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.8rem', marginBottom: '0.8rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.4rem', marginBottom: '0.3rem' }}>
 
                             {/* Participation - Gauge Style */}
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -431,15 +474,15 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                                 <div style={{
                                     backgroundColor: '#F8FAFC',
                                     borderRadius: '8px',
-                                    padding: '1rem',
+                                    padding: '0.4rem',
                                     border: '1px solid #E2E8F0',
                                     textAlign: 'center',
-                                    height: '170px',
+                                    height: '120px',
                                     display: 'flex',
                                     flexDirection: 'column',
                                     justifyContent: 'center'
                                 }}>
-                                    <div style={{ height: '90px', width: '100%', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                    <div style={{ height: '80px', width: '100%', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                         <ResponsiveContainer width="100%" height="100%">
                                             <PieChart>
                                                 <Pie
@@ -448,8 +491,8 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                                                     cy="100%"
                                                     startAngle={180}
                                                     endAngle={0}
-                                                    innerRadius={65}
-                                                    outerRadius={85}
+                                                    innerRadius={50}
+                                                    outerRadius={70}
                                                     fill={primaryColor}
                                                     stroke="none"
                                                     dataKey="value"
@@ -482,9 +525,9 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                                 <div style={{
                                     border: '1px solid #e2e8f0',
                                     borderRadius: '8px',
-                                    height: '170px',
+                                    height: '120px',
                                     backgroundColor: 'white',
-                                    padding: '0.8rem'
+                                    padding: '0.2rem'
                                 }}>
                                     {(() => {
                                         const gradeDistribution = studentData.reduce((acc, curr) => {
@@ -536,40 +579,40 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                         <div>
                             <h3 style={{ fontSize: '1rem', margin: '0 0 0.5rem 0', color: primaryColor, borderLeft: `4px solid ${primaryColor}`, paddingLeft: '0.5rem' }}>Focus Areas & Remarks</h3>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.8rem', alignItems: 'start' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', alignItems: 'start' }}>
 
                                 {/* English */}
                                 <div>
-                                    <div style={{ textAlign: 'center', marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: `2px solid ${colors.english}` }}>
-                                        <h4 style={{ margin: 0, color: colors.english, textTransform: 'uppercase', fontSize: '0.9rem' }}>English</h4>
+                                    <div style={{ textAlign: 'center', marginBottom: '0.4rem', paddingBottom: '0.2rem', borderBottom: `2px solid ${colors.english}` }}>
+                                        <h4 style={{ margin: 0, color: colors.english, textTransform: 'uppercase', fontSize: '0.8rem' }}>English</h4>
                                     </div>
-                                    <div style={{ border: '1px solid #F1F5F9', borderRadius: '8px', padding: '0.8rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+                                    <div style={{ border: '1px solid #F1F5F9', borderRadius: '8px', padding: '0.4rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
                                         {renderTopicList('✅ Strengths', englishStrengths, colors.english, true)}
-                                        {englishStrengths.length > 0 && englishImprovements.length > 0 && <div style={{ height: '1.5rem' }}></div>}
+                                        {englishStrengths.length > 0 && englishImprovements.length > 0 && <div style={{ height: '0.3rem' }}></div>}
                                         {renderTopicList('⚠️ Areas for Development (AOD)', englishImprovements, colors.english, false)}
                                     </div>
                                 </div>
 
                                 {/* Math */}
                                 <div>
-                                    <div style={{ textAlign: 'center', marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: `2px solid ${colors.maths}` }}>
-                                        <h4 style={{ margin: 0, color: colors.maths, textTransform: 'uppercase', fontSize: '0.9rem' }}>Mathematics</h4>
+                                    <div style={{ textAlign: 'center', marginBottom: '0.4rem', paddingBottom: '0.2rem', borderBottom: `2px solid ${colors.maths}` }}>
+                                        <h4 style={{ margin: 0, color: colors.maths, textTransform: 'uppercase', fontSize: '0.8rem' }}>Mathematics</h4>
                                     </div>
-                                    <div style={{ border: '1px solid #F1F5F9', borderRadius: '8px', padding: '0.8rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+                                    <div style={{ border: '1px solid #F1F5F9', borderRadius: '8px', padding: '0.4rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
                                         {renderTopicList('✅ Strengths', mathStrengths, colors.maths, true)}
-                                        {mathStrengths.length > 0 && mathImprovements.length > 0 && <div style={{ height: '1.5rem' }}></div>}
+                                        {mathStrengths.length > 0 && mathImprovements.length > 0 && <div style={{ height: '0.3rem' }}></div>}
                                         {renderTopicList('⚠️ Areas for Development (AOD)', mathImprovements, colors.maths, false)}
                                     </div>
                                 </div>
 
                                 {/* Science */}
                                 <div>
-                                    <div style={{ textAlign: 'center', marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: `2px solid ${colors.science}` }}>
-                                        <h4 style={{ margin: 0, color: colors.science, textTransform: 'uppercase', fontSize: '0.9rem' }}>Science</h4>
+                                    <div style={{ textAlign: 'center', marginBottom: '0.4rem', paddingBottom: '0.2rem', borderBottom: `2px solid ${colors.science}` }}>
+                                        <h4 style={{ margin: 0, color: colors.science, textTransform: 'uppercase', fontSize: '0.8rem' }}>Science</h4>
                                     </div>
-                                    <div style={{ border: '1px solid #F1F5F9', borderRadius: '8px', padding: '0.8rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+                                    <div style={{ border: '1px solid #F1F5F9', borderRadius: '8px', padding: '0.4rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
                                         {renderTopicList('✅ Strengths', scienceStrengths, colors.science, true)}
-                                        {scienceStrengths.length > 0 && scienceImprovements.length > 0 && <div style={{ height: '1.5rem' }}></div>}
+                                        {scienceStrengths.length > 0 && scienceImprovements.length > 0 && <div style={{ height: '0.3rem' }}></div>}
                                         {renderTopicList('⚠️ Areas for Development (AOD)', scienceImprovements, colors.science, false)}
                                     </div>
                                 </div>
@@ -713,6 +756,7 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                                         </div>
                                     </div>
                                 ))}
+                                {/* The IIFE and conditional block continue to include the Students Needing Attention section */}
 
                                 {/* Dedicated "Students Needing Attention" Page at the very end */}
                                 <div className="page">
@@ -988,7 +1032,6 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                     </div>
                 ))
             }
-
         </div>
     );
-}
+};
