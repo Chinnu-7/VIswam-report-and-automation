@@ -8,8 +8,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 let sequelize;
 
-if (process.env.DATABASE_URL) {
-    const dbUrl = process.env.DATABASE_URL;
+const dbUrl = process.env.DATABASE_URL || process.env.NETLIFY_DATABASE_URL;
+
+if (dbUrl) {
+
     const isPostgres = dbUrl.startsWith('postgres');
 
     console.log(`Connecting to ${isPostgres ? 'PostgreSQL' : 'MySQL'} via URL...`);
