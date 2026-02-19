@@ -186,7 +186,11 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
         ];
 
         return (
-            <div style={{ marginTop: compact ? '1rem' : '1.5rem', marginBottom: compact ? '0.5rem' : '1rem' }}>
+            <div className="no-break" style={{
+                marginTop: compact ? '1rem' : '1.5rem',
+                marginBottom: compact ? '0.5rem' : '1rem',
+                width: '100%'
+            }}>
                 <h4 style={{ fontSize: compact ? '0.65rem' : '0.8rem', color: primaryColor, marginBottom: '0.3rem', fontWeight: 'bold' }}>
                     GRADING SCALE
                 </h4>
@@ -255,6 +259,11 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                         width: 100% !important;
                         height: auto !important;
                         overflow: visible !important;
+                    }
+                    .no-break {
+                        break-inside: avoid !important;
+                        page-break-inside: avoid !important;
+                        display: block !important;
                     }
                     .page {
                         width: 210mm !important;
