@@ -458,11 +458,16 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                                         </ResponsiveContainer>
                                         <div style={{
                                             position: 'absolute',
-                                            top: '60%',
+                                            top: '55%',
                                             left: '50%',
-                                            transform: 'translate(-50%, -10%)',
+                                            transform: 'translateX(-50%)',
                                             textAlign: 'center',
-                                            width: '100%'
+                                            width: 'auto',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            zIndex: 10
                                         }}>
                                             <div style={{ fontSize: '1.8rem', fontWeight: '900', color: primaryColor, lineHeight: '1' }}>{totalParticipated} / {totalRegistered}</div>
                                             <div style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 'bold', marginTop: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Attendance</div>
@@ -512,6 +517,7 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                                                     <XAxis dataKey="grade" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
                                                     <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
                                                     <Tooltip cursor={{ fill: 'transparent' }} />
+                                                    <Legend verticalAlign="top" height={0} iconSize={0} style={{ display: 'none' }} />
                                                     <Bar dataKey="count" radius={[4, 4, 0, 0]} barSize={35} legendType="none">
                                                         <LabelList dataKey="count" position="top" fontSize={12} fontWeight="bold" />
                                                         {
