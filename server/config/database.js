@@ -1,7 +1,9 @@
 import Sequelize from 'sequelize';
 import mysql2 from 'mysql2';
+import pg from 'pg';
 
 let sequelize;
+
 
 const dbUrl = process.env.DATABASE_URL || process.env.NETLIFY_DATABASE_URL;
 
@@ -12,20 +14,16 @@ if (dbUrl) {
 
     sequelize = new Sequelize(dbUrl, {
         dialect: isPostgres ? 'postgres' : 'mysql',
-        dialectModule: mysql2, // Use mysql2 for everything if possible, or handle postgres separately
+        dialectModule: isPostgres ? pg : mysql2,
         logging: false,
-        dialectOptions: isPostgres ? {
-            ssl: {
-                require: true,
-                rejectUnauthorized: false
-            }
-        } : {
+        dialectOptions: {
             ssl: {
                 require: true,
                 rejectUnauthorized: false
             }
         }
     });
+
 } else {
     sequelize = new Sequelize(
         process.env.DB_NAME || 'viswam_reports',
