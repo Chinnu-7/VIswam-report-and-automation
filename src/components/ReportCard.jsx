@@ -475,9 +475,9 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                                         </ResponsiveContainer>
                                         <div style={{
                                             position: 'absolute',
-                                            top: '55%',
+                                            top: '50%',
                                             left: '50%',
-                                            transform: 'translateX(-50%)',
+                                            transform: 'translate(-50%, -50%)',
                                             textAlign: 'center',
                                             width: 'auto',
                                             display: 'flex',
@@ -486,8 +486,8 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                                             justifyContent: 'center',
                                             zIndex: 10
                                         }}>
-                                            <div style={{ fontSize: '1.8rem', fontWeight: '900', color: primaryColor, lineHeight: '1' }}>{totalParticipated} / {totalRegistered}</div>
-                                            <div style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 'bold', marginTop: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Attendance</div>
+                                            <div style={{ fontSize: '1.8rem', fontWeight: '900', color: primaryColor, lineHeight: '1.1' }}>{totalParticipated} / {totalRegistered}</div>
+                                            <div style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 'bold', marginTop: '0.1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Attendance</div>
                                         </div>
                                     </div>
                                 </div>
@@ -531,7 +531,6 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                                                     <XAxis dataKey="grade" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
                                                     <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
                                                     <Tooltip cursor={{ fill: 'transparent' }} />
-                                                    <Legend verticalAlign="top" height={0} iconSize={0} style={{ display: 'none' }} />
                                                     <Bar dataKey="count" radius={[4, 4, 0, 0]} barSize={35} legendType="none">
                                                         <LabelList dataKey="count" position="top" fontSize={12} fontWeight="bold" />
                                                         {
