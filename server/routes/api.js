@@ -38,4 +38,22 @@ router.post('/reports/automation/mark-sent', adminController.markAsSent);
 // Render Route (Public for n8n/Api2Pdf, or could be protected if needed)
 router.get('/reports/:id/render', renderController.renderReportHtml);
 
+// TEMP: Diagnostic route
+router.get('/db-status', async (req, res) => {
+    try {
+        const User = (await import('../models/User.js')).default;
+        const count = await User.count();
+        const admin = await User.findOne({ where: { email: 'admin@viswam.com' } });
+        res.json({
+            status: 'connected',
+            userCount: count,
+            adminExists: !!admin,
+            envUrlPresent: !!(process.env.DATABASE_URL || process.env.NETLIFY_DATABASE_URL)
+        });
+    } catch (err) {
+        res.status(500).json({ status: 'error', message: err.message });
+    }
+});
+
+
 export default router;
