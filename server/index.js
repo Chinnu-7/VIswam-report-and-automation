@@ -9,6 +9,8 @@ import apiRoutes from './routes/api.js';
 
 import { seedAdmin } from './controllers/authController.js';
 import User from './models/User.js';
+import StudentReport from './models/StudentReport.js';
+import SchoolInfo from './models/SchoolInfo.js';
 
 dotenv.config();
 
@@ -46,17 +48,13 @@ const initializeDb = async () => {
 };
 
 
-// Health check (isolate from DB middleware)
+// Health check (isolate from DB middleware) - No DB required
 app.get('/api', (req, res) => {
     res.send('Viswam Report Card Automation API is running');
 });
 
-// App Routes
-app.use('/api', apiRoutes);
-
-// Middleware to ensure DB is ready
+// Middleware to ensure DB is ready - REQUIRED for all subsequent routes
 app.use(async (req, res, next) => {
-
     // Basic timeout to prevent 502 crash if DB hangs
     const timeout = setTimeout(() => {
         if (!isDbInitialized) console.log('DB Init still pending...');
@@ -71,6 +69,10 @@ app.use(async (req, res, next) => {
         next();
     }
 });
+
+// App Routes (Needs DB)
+app.use('/api', apiRoutes);
+
 
 
 // Serve static files in production

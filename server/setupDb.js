@@ -1,6 +1,8 @@
 import sequelize from './config/database.js';
 import './models/StudentReport.js';
 import './models/SchoolInfo.js';
+import './models/User.js';
+
 
 async function setupDatabase() {
     try {
