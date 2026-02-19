@@ -3,7 +3,7 @@ import nsfLogo from '../assets/NSF logo 2.jpeg';
 import viswamLogo from '../assets/Viswam.png';
 import GradeCard from './GradeCard';
 import { Printer } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList, PieChart, Pie } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList, PieChart, Pie, Legend } from 'recharts';
 
 export default function ReportCard({ students, viewMode = 'principal', schoolName = 'Vignyan', assessmentName = 'Sodhana 1', qp = '' }) {
     const primaryColor = '#1e3a8a'; // Navy Blue
