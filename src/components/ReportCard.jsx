@@ -239,7 +239,7 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                 @media print {
                     @page {
                         size: A4 portrait;
-                        margin: 0;
+                        margin: 10mm; /* Single source of truth for print margins */
                     }
                     html, body {
                         margin: 0 !important;
@@ -262,96 +262,81 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                         margin: 0 !important;
                         background-color: white !important;
                         display: block !important;
-                        width: 100% !important;
-                        height: auto !important;
-                        overflow: visible !important;
-                    }
-                    .no-break {
-                        break-inside: avoid !important;
-                        page-break-inside: avoid !important;
-                        display: block !important;
                     }
                     .page {
-                        width: 210mm !important;
-                        min-height: 295mm !important;
-                        box-sizing: border-box !important;
-                        display: flex !important;
-                        flex-direction: column !important;
+                        width: 100% !important;
                         margin: 0 !important;
-                        padding: 10mm !important;
-                        position: relative !important;
-                        background: white !important;
-                        overflow: visible !important;
+                        padding: 0 !important; /* Let @page margin handle it */
+                        box-shadow: none !important;
                         page-break-after: always !important;
                         break-after: always !important;
+                        min-height: 0 !important;
                     }
                     .page-content {
-                        flex: 1 !important;
-                        padding-bottom: 35mm !important;
+                        padding: 0 !important;
                         overflow: visible !important;
-                        box-sizing: border-box !important;
                     }
                     .page-footer {
                         position: absolute !important;
-                        bottom: 10mm !important;
-                        left: 10mm !important;
-                        right: 10mm !important;
-                        height: 25mm !important;
-                        background: white !important;
+                        bottom: 0 !important;
+                        left: 0 !important;
+                        right: 0 !important;
+                        height: 20mm !important;
                         border-top: 1px solid #e2e8f0 !important;
-                        padding-top: 2mm !important;
                         display: flex !important;
-                        flex-direction: row !important;
                         justify-content: space-between !important;
                         align-items: flex-end !important;
-                        z-index: 100 !important;
-                        box-sizing: border-box !important;
                         page-break-inside: avoid !important;
                     }
-                }
-                .page {
-                    width: 210mm;
-                    min-height: 296mm;
-                    background-color: white;
-                    box-shadow: 0 0 20px rgba(0,0,0,0.3);
-                    margin: 10px auto;
-                    position: relative;
-                    box-sizing: border-box;
-                    display: flex;
-                    flex-direction: column;
-                }
-                .page-content {
-                    flex: 1;
-                    padding: 4mm 10mm 15mm 10mm; /* Extra compact padding for A4 fit */
-                    box-sizing: border-box;
-                }
-                .page-footer {
-                    position: absolute;
-                    bottom: 8mm;
-                    left: 10mm;
-                    right: 10mm;
-                    height: 25mm;
-                    background: white;
-                    border-top: 1px solid #e2e8f0;
-                    padding-top: 2mm;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: flex-end;
-                    z-index: 100;
-                    box-sizing: border-box;
+                    .page-breaker { display: none !important; }
                 }
 
                 @media screen {
+                    .report-wrapper {
+                        background-color: #525659;
+                        min-height: 100vh;
+                        display: flex;
+                        flex-direction: column;
+                        alignItems: center;
+                        padding: 2rem;
+                        gap: 2rem;
+                    }
+                    .page {
+                        width: 210mm;
+                        min-height: 297mm;
+                        background-color: white;
+                        box-shadow: 0 0 20px rgba(0,0,0,0.3);
+                        margin: 0 auto;
+                        position: relative;
+                        box-sizing: border-box;
+                        display: flex;
+                        flex-direction: column;
+                        padding: 10mm;
+                    }
+                    .page-content {
+                        flex: 1;
+                        display: flex;
+                        flex-direction: column;
+                    }
+                    .page-footer {
+                        height: 20mm;
+                        background: white;
+                        border-top: 1px solid #e2e8f0;
+                        padding-top: 2mm;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: flex-end;
+                        box-sizing: border-box;
+                    }
                     .page-breaker {
                         width: 100%;
                         max-width: 210mm;
-                        margin: 2rem auto;
+                        margin: 1rem auto;
                         border-top: 2px dashed #94a3b8;
                         position: relative;
                         display: flex;
                         justify-content: center;
                         align-items: center;
-                        z-index: 10;
                     }
                     .page-breaker-label {
                         position: absolute;
@@ -364,17 +349,6 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                         font-weight: 700;
                         letter-spacing: 0.05em;
                         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                    }
-                }
-
-                @media print {
-                    .page-breaker {
-                        break-after: page;
-                        page-break-after: always;
-                        visibility: hidden;
-                        height: 0;
-                        margin: 0;
-                        padding: 0;
                     }
                 }
             `}</style>
@@ -659,103 +633,107 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                         return (
                             <>
                                 {chunks.map((chunk, pageIndex) => (
-                                    <div key={`principal-page-${pageIndex}`} className="page">
-                                        <div className="page-content">
-                                            <header style={{ borderBottom: `2px solid ${primaryColor}`, paddingBottom: '0.4rem', marginBottom: '1rem', textAlign: 'center' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '0.2rem' }}>
-                                                    <img src={fdrLogo} alt="FDR Logo" style={{ height: '50px', objectFit: 'contain' }} />
-                                                    <h1 style={{ margin: 0, color: primaryColor, fontSize: '1.2rem', fontWeight: 'bold', textTransform: 'uppercase' }}>
-                                                        Foundation for Democratic Reforms
-                                                    </h1>
-                                                </div>
-                                                <h2 style={{ fontSize: '1.1rem', margin: '0.5rem 0', fontWeight: '600', color: '#475569' }}>Student Performance Report</h2>
-                                            </header>
+                                    <React.Fragment key={`principal-page-fragment-${pageIndex}`}>
+                                        <PageBreaker />
+                                        <div key={`principal-page-${pageIndex}`} className="page">
+                                            <div className="page-content">
+                                                <header style={{ borderBottom: `2px solid ${primaryColor}`, paddingBottom: '0.4rem', marginBottom: '1rem', textAlign: 'center' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '0.2rem' }}>
+                                                        <img src={fdrLogo} alt="FDR Logo" style={{ height: '50px', objectFit: 'contain' }} />
+                                                        <h1 style={{ margin: 0, color: primaryColor, fontSize: '1.2rem', fontWeight: 'bold', textTransform: 'uppercase' }}>
+                                                            Foundation for Democratic Reforms
+                                                        </h1>
+                                                    </div>
+                                                    <h2 style={{ fontSize: '1.1rem', margin: '0.5rem 0', fontWeight: '600', color: '#475569' }}>Student Performance Report</h2>
+                                                </header>
 
-                                            <h3 style={{ fontSize: '1rem', margin: '0 0 1rem 0', color: primaryColor, borderLeft: `4px solid ${primaryColor}`, paddingLeft: '0.5rem' }}>
-                                                Detailed Student Scores {chunks.length > 1 ? `(Page ${pageIndex + 1}/${chunks.length})` : ''}
-                                            </h3>
+                                                <h3 style={{ fontSize: '1rem', margin: '0 0 1rem 0', color: primaryColor, borderLeft: `4px solid ${primaryColor}`, paddingLeft: '0.5rem' }}>
+                                                    Detailed Student Scores {chunks.length > 1 ? `(Page ${pageIndex + 1}/${chunks.length})` : ''}
+                                                </h3>
 
-                                            <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', marginBottom: '1rem' }}>
-                                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-                                                    <thead>
-                                                        <tr style={{ backgroundColor: '#F1F5F9', color: '#1e293b', textAlign: 'left' }}>
-                                                            <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0' }}>Roll No</th>
-                                                            <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0' }}>Student Name</th>
-                                                            <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0', backgroundColor: '#FEF3C7' }}>Overall</th>
-                                                            <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0' }}>Eng Grade</th>
-                                                            <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0' }}>Math Grade</th>
-                                                            <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0' }}>Sci Grade</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {chunk.map((student, idx) => (
-                                                            <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                                                                <td style={{ padding: '0.6rem', fontSize: '0.75rem', color: '#64748B' }}>{student.rollNo}</td>
-                                                                <td style={{ padding: '0.6rem', fontWeight: '500' }}>{student.name}</td>
-                                                                <td style={{ padding: '0.6rem' }}>
-                                                                    <span style={{
-                                                                        backgroundColor: getGradeBg(student.relative_grading?.overall?.grade),
-                                                                        color: getGradeColor(student.relative_grading?.overall?.grade),
-                                                                        padding: '2px 8px',
-                                                                        borderRadius: '4px',
-                                                                        fontWeight: 'bold',
-                                                                        fontSize: '0.75rem',
-                                                                        border: `1px solid ${getGradeColor(student.relative_grading?.overall?.grade)}40`
-                                                                    }}>{student.relative_grading?.overall?.grade ?? '-'}</span>
-                                                                </td>
-                                                                <td style={{ padding: '0.6rem' }}>
-                                                                    <span style={{
-                                                                        backgroundColor: getGradeBg(student.relative_grading?.english?.grade),
-                                                                        color: getGradeColor(student.relative_grading?.english?.grade),
-                                                                        padding: '2px 8px',
-                                                                        borderRadius: '4px',
-                                                                        fontWeight: 'bold',
-                                                                        fontSize: '0.75rem',
-                                                                        border: `1px solid ${getGradeColor(student.relative_grading?.english?.grade)}40`
-                                                                    }}>{student.relative_grading?.english?.grade || '-'}</span>
-                                                                </td>
-                                                                <td style={{ padding: '0.6rem' }}>
-                                                                    <span style={{
-                                                                        backgroundColor: getGradeBg(student.relative_grading?.maths?.grade),
-                                                                        color: getGradeColor(student.relative_grading?.maths?.grade),
-                                                                        padding: '2px 8px',
-                                                                        borderRadius: '4px',
-                                                                        fontWeight: 'bold',
-                                                                        fontSize: '0.75rem',
-                                                                        border: `1px solid ${getGradeColor(student.relative_grading?.maths?.grade)}40`
-                                                                    }}>{student.relative_grading?.maths?.grade || '-'}</span>
-                                                                </td>
-                                                                <td style={{ padding: '0.6rem' }}>
-                                                                    <span style={{
-                                                                        backgroundColor: getGradeBg(student.relative_grading?.science?.grade),
-                                                                        color: getGradeColor(student.relative_grading?.science?.grade),
-                                                                        padding: '2px 8px',
-                                                                        borderRadius: '4px',
-                                                                        fontWeight: 'bold',
-                                                                        fontSize: '0.75rem',
-                                                                        border: `1px solid ${getGradeColor(student.relative_grading?.science?.grade)}40`
-                                                                    }}>{student.relative_grading?.science?.grade || '-'}</span>
-                                                                </td>
+                                                <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', marginBottom: '1rem' }}>
+                                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                                                        <thead>
+                                                            <tr style={{ backgroundColor: '#F1F5F9', color: '#1e293b', textAlign: 'left' }}>
+                                                                <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0' }}>Roll No</th>
+                                                                <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0' }}>Student Name</th>
+                                                                <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0', backgroundColor: '#FEF3C7' }}>Overall</th>
+                                                                <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0' }}>Eng Grade</th>
+                                                                <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0' }}>Math Grade</th>
+                                                                <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0' }}>Sci Grade</th>
                                                             </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
+                                                        </thead>
+                                                        <tbody>
+                                                            {chunk.map((student, idx) => (
+                                                                <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                                                                    <td style={{ padding: '0.6rem', fontSize: '0.75rem', color: '#64748B' }}>{student.rollNo}</td>
+                                                                    <td style={{ padding: '0.6rem', fontWeight: '500' }}>{student.name}</td>
+                                                                    <td style={{ padding: '0.6rem' }}>
+                                                                        <span style={{
+                                                                            backgroundColor: getGradeBg(student.relative_grading?.overall?.grade),
+                                                                            color: getGradeColor(student.relative_grading?.overall?.grade),
+                                                                            padding: '2px 8px',
+                                                                            borderRadius: '4px',
+                                                                            fontWeight: 'bold',
+                                                                            fontSize: '0.75rem',
+                                                                            border: `1px solid ${getGradeColor(student.relative_grading?.overall?.grade)}40`
+                                                                        }}>{student.relative_grading?.overall?.grade ?? '-'}</span>
+                                                                    </td>
+                                                                    <td style={{ padding: '0.6rem' }}>
+                                                                        <span style={{
+                                                                            backgroundColor: getGradeBg(student.relative_grading?.english?.grade),
+                                                                            color: getGradeColor(student.relative_grading?.english?.grade),
+                                                                            padding: '2px 8px',
+                                                                            borderRadius: '4px',
+                                                                            fontWeight: 'bold',
+                                                                            fontSize: '0.75rem',
+                                                                            border: `1px solid ${getGradeColor(student.relative_grading?.english?.grade)}40`
+                                                                        }}>{student.relative_grading?.english?.grade || '-'}</span>
+                                                                    </td>
+                                                                    <td style={{ padding: '0.6rem' }}>
+                                                                        <span style={{
+                                                                            backgroundColor: getGradeBg(student.relative_grading?.maths?.grade),
+                                                                            color: getGradeColor(student.relative_grading?.maths?.grade),
+                                                                            padding: '2px 8px',
+                                                                            borderRadius: '4px',
+                                                                            fontWeight: 'bold',
+                                                                            fontSize: '0.75rem',
+                                                                            border: `1px solid ${getGradeColor(student.relative_grading?.maths?.grade)}40`
+                                                                        }}>{student.relative_grading?.maths?.grade || '-'}</span>
+                                                                    </td>
+                                                                    <td style={{ padding: '0.6rem' }}>
+                                                                        <span style={{
+                                                                            backgroundColor: getGradeBg(student.relative_grading?.science?.grade),
+                                                                            color: getGradeColor(student.relative_grading?.science?.grade),
+                                                                            padding: '2px 8px',
+                                                                            borderRadius: '4px',
+                                                                            fontWeight: 'bold',
+                                                                            fontSize: '0.75rem',
+                                                                            border: `1px solid ${getGradeColor(student.relative_grading?.science?.grade)}40`
+                                                                        }}>{student.relative_grading?.science?.grade || '-'}</span>
+                                                                    </td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
                                             </div>
-                                        </div>
 
-                                        <div className="page-footer">
-                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
-                                                <span style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' }}>Assessment Partner</span>
-                                                <img src={nsfLogo} alt="NSF" style={{ height: '35px', objectFit: 'contain' }} />
-                                            </div>
-                                            <span style={{ fontSize: '0.7rem', color: '#94A3B8', fontWeight: 'bold' }}>Page {pageIndex + 2}</span>
-                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
-                                                <span style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' }}>Implementation Partner</span>
-                                                <img src={viswamLogo} alt="Viswam" style={{ height: '30px', objectFit: 'contain' }} />
+                                            <div className="page-footer">
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
+                                                    <span style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' }}>Assessment Partner</span>
+                                                    <img src={nsfLogo} alt="NSF" style={{ height: '35px', objectFit: 'contain' }} />
+                                                </div>
+                                                <span style={{ fontSize: '0.7rem', color: '#94A3B8', fontWeight: 'bold' }}>Page {pageIndex + 2}</span>
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                                                    <span style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' }}>Implementation Partner</span>
+                                                    <img src={viswamLogo} alt="Viswam" style={{ height: '30px', objectFit: 'contain' }} />
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    </React.Fragment>
                                 ))}
+                                <PageBreaker />
                                 {/* The IIFE and conditional block continue to include the Students Needing Attention section */}
 
                                 {/* Dedicated "Students Needing Attention" Page at the very end */}
@@ -904,8 +882,9 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
             {/* STUDENT VIEW: Individual Report Card */}
             {
                 viewMode === 'student' && students && students.map((student, sIdx) => (
-                    <div key={sIdx} className="page">
-                        <div className="page-content">
+                    <React.Fragment key={`student-page-fragment-${sIdx}`}>
+                        {sIdx > 0 && <PageBreaker />}
+                        <div key={sIdx} className="page">
                             <header style={{ borderBottom: `2px solid ${primaryColor}`, paddingBottom: '0.1rem', marginBottom: '0.4rem', textAlign: 'center', position: 'relative' }}>
                                 <button onClick={handlePrint} style={{ position: 'absolute', top: '0', right: '0', display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.8rem', backgroundColor: '#F1F5F9', color: primaryColor, borderRadius: '6px', cursor: 'pointer', border: `1px solid ${primaryColor}`, fontSize: '0.8rem', fontWeight: '600' }} className="no-print">
                                     <Printer size={14} /> Print
@@ -1016,20 +995,19 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                                 </div>
 
                             </div>
+                            <footer className="page-footer">
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
+                                    <span style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' }}>Assessment Partner</span>
+                                    <img src={nsfLogo} alt="NSF" style={{ height: '35px', objectFit: 'contain' }} />
+                                </div>
+                                <span style={{ fontSize: '0.7rem', color: '#94A3B8', fontWeight: 'bold' }}>Student View</span>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                                    <span style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' }}>Implementation Partner</span>
+                                    <img src={viswamLogo} alt="Viswam" style={{ height: '30px', objectFit: 'contain' }} />
+                                </div>
+                            </footer>
                         </div>
-
-                        <footer className="page-footer">
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
-                                <span style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' }}>Assessment Partner</span>
-                                <img src={nsfLogo} alt="NSF" style={{ height: '35px', objectFit: 'contain' }} />
-                            </div>
-                            <span style={{ fontSize: '0.7rem', color: '#94A3B8', fontWeight: 'bold' }}>Student View</span>
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
-                                <span style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' }}>Implementation Partner</span>
-                                <img src={viswamLogo} alt="Viswam" style={{ height: '30px', objectFit: 'contain' }} />
-                            </div>
-                        </footer>
-                    </div>
+                    </React.Fragment>
                 ))
             }
         </div>
