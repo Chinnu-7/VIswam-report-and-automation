@@ -51,8 +51,12 @@ app.get('/api', (req, res) => {
     res.send('Viswam Report Card Automation API is running');
 });
 
+// App Routes
+app.use('/api', apiRoutes);
+
 // Middleware to ensure DB is ready
 app.use(async (req, res, next) => {
+
     // Basic timeout to prevent 502 crash if DB hangs
     const timeout = setTimeout(() => {
         if (!isDbInitialized) console.log('DB Init still pending...');
