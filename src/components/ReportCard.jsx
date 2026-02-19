@@ -112,9 +112,9 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
     const mathStrengths = getDynamicLOs(students, 'maths', true);
     const scienceStrengths = getDynamicLOs(students, 'science', true);
 
-    const englishImprovements = getDynamicLOs(students, 'english', false, 7);
-    const mathImprovements = getDynamicLOs(students, 'maths', false, 7);
-    const scienceImprovements = getDynamicLOs(students, 'science', false, 7);
+    const englishImprovements = getDynamicLOs(students, 'english', false, 5);
+    const mathImprovements = getDynamicLOs(students, 'maths', false, 5);
+    const scienceImprovements = getDynamicLOs(students, 'science', false, 5);
 
     const renderTopicList = (title, items, color, isStrength = false) => {
         if (!items || items.length === 0) return null;
@@ -603,7 +603,7 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                 viewMode === 'principal' && (
                     /* Helper to chunk the data */
                     (() => {
-                        const itemsPerPage = 5; // Reduced to 5 for better layout safety
+                        const itemsPerPage = 7; // Restored to 7
                         const chunks = [];
                         if (studentData.length === 0) {
                             chunks.push([]);
