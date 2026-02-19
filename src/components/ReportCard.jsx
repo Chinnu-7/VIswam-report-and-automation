@@ -7,7 +7,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 
 export default function ReportCard({ students, viewMode = 'principal', schoolName = 'Vignyan', assessmentName = 'Sodhana 1', qp = '' }) {
     const primaryColor = '#1e3a8a'; // Navy Blue
-    const accentColor = '#dc2626'; // Red
+    const accentColor = '#dc2626'; // Red 
 
     const handlePrint = () => {
         window.print();
