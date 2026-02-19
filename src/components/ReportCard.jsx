@@ -603,7 +603,7 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                 viewMode === 'principal' && (
                     /* Helper to chunk the data */
                     (() => {
-                        const itemsPerPage = 7; // Reduced to 7 for perpetual safety
+                        const itemsPerPage = 5; // Reduced to 5 for better layout safety
                         const chunks = [];
                         if (studentData.length === 0) {
                             chunks.push([]);
