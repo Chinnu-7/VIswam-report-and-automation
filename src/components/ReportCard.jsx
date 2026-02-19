@@ -443,13 +443,13 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
 
                             {/* Participation - Gauge Style */}
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                <h3 style={{ fontSize: '1rem', margin: '0 0 0.3rem 0', color: primaryColor, borderLeft: `4px solid ${primaryColor}`, paddingLeft: '0.5rem' }}>Participation</h3>
+                                <h3 style={{ fontSize: '1rem', margin: '0 0 0.3rem 0', color: primaryColor, borderLeft: `8px solid ${primaryColor}`, paddingLeft: '0.6rem' }}>Participation</h3>
 
                                 <div style={{
                                     backgroundColor: '#F8FAFC',
                                     borderRadius: '8px',
                                     padding: '0.4rem',
-                                    border: '1px solid #E2E8F0',
+                                    border: '2px solid #E2E8F0',
                                     textAlign: 'center',
                                     height: '120px',
                                     display: 'flex',
@@ -495,9 +495,9 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
 
                             {/* Student Performance Breakdown - Grade Distribution Graph */}
                             <div>
-                                <h3 style={{ fontSize: '1rem', margin: '0 0 0.5rem 0', color: primaryColor, borderLeft: `4px solid ${primaryColor}`, paddingLeft: '0.5rem' }}>Overall Grade Distribution</h3>
+                                <h3 style={{ fontSize: '1rem', margin: '0 0 0.5rem 0', color: primaryColor, borderLeft: `8px solid ${primaryColor}`, paddingLeft: '0.6rem' }}>Overall Grade Distribution</h3>
                                 <div style={{
-                                    border: '1px solid #e2e8f0',
+                                    border: '2px solid #e2e8f0',
                                     borderRadius: '8px',
                                     height: '120px',
                                     backgroundColor: 'white',
@@ -530,8 +530,7 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                                                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                                     <XAxis dataKey="grade" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
                                                     <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
-                                                    <Tooltip cursor={{ fill: 'transparent' }} />
-                                                    <Bar dataKey="count" radius={[4, 4, 0, 0]} barSize={35} legendType="none">
+                                                    <Bar dataKey="count" radius={[4, 4, 0, 0]} barSize={35} legendType="none" isAnimationActive={false}>
                                                         <LabelList dataKey="count" position="top" fontSize={12} fontWeight="bold" />
                                                         {
                                                             distributionData.map((entry, index) => (
@@ -550,13 +549,13 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
 
                         {/* Focus Areas */}
                         <div>
-                            <h3 style={{ fontSize: '1rem', margin: '0 0 0.5rem 0', color: primaryColor, borderLeft: `4px solid ${primaryColor}`, paddingLeft: '0.5rem' }}>Focus Areas & Remarks</h3>
+                            <h3 style={{ fontSize: '1rem', margin: '0 0 0.5rem 0', color: primaryColor, borderLeft: `8px solid ${primaryColor}`, paddingLeft: '0.6rem' }}>Focus Areas & Remarks</h3>
 
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', alignItems: 'start' }}>
 
                                 {/* English */}
                                 <div>
-                                    <div style={{ textAlign: 'center', marginBottom: '0.4rem', paddingBottom: '0.2rem', borderBottom: `2px solid ${colors.english}` }}>
+                                    <div style={{ textAlign: 'center', marginBottom: '0.4rem', paddingBottom: '0.2rem', borderBottom: `6px solid ${colors.english}` }}>
                                         <h4 style={{ margin: 0, color: colors.english, textTransform: 'uppercase', fontSize: '0.8rem' }}>English</h4>
                                     </div>
                                     <div style={{ border: '1px solid #F1F5F9', borderRadius: '8px', padding: '0.4rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
@@ -568,7 +567,7 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
 
                                 {/* Math */}
                                 <div>
-                                    <div style={{ textAlign: 'center', marginBottom: '0.4rem', paddingBottom: '0.2rem', borderBottom: `2px solid ${colors.maths}` }}>
+                                    <div style={{ textAlign: 'center', marginBottom: '0.4rem', paddingBottom: '0.2rem', borderBottom: `6px solid ${colors.maths}` }}>
                                         <h4 style={{ margin: 0, color: colors.maths, textTransform: 'uppercase', fontSize: '0.8rem' }}>Mathematics</h4>
                                     </div>
                                     <div style={{ border: '1px solid #F1F5F9', borderRadius: '8px', padding: '0.4rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
@@ -580,7 +579,7 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
 
                                 {/* Science */}
                                 <div>
-                                    <div style={{ textAlign: 'center', marginBottom: '0.4rem', paddingBottom: '0.2rem', borderBottom: `2px solid ${colors.science}` }}>
+                                    <div style={{ textAlign: 'center', marginBottom: '0.4rem', paddingBottom: '0.2rem', borderBottom: `6px solid ${colors.science}` }}>
                                         <h4 style={{ margin: 0, color: colors.science, textTransform: 'uppercase', fontSize: '0.8rem' }}>Science</h4>
                                     </div>
                                     <div style={{ border: '1px solid #F1F5F9', borderRadius: '8px', padding: '0.4rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
@@ -934,7 +933,7 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                                 </div>
 
                                 <div style={{ marginBottom: '0.4rem' }}>
-                                    <h3 style={{ fontSize: '0.85rem', margin: '0 0 0.2rem 0', color: primaryColor, borderLeft: `5px solid ${primaryColor}`, paddingLeft: '0.8rem', fontWeight: 'bold' }}>Subject Performance</h3>
+                                    <h3 style={{ fontSize: '0.85rem', margin: '0 0 0.2rem 0', color: primaryColor, borderLeft: `10px solid ${primaryColor}`, paddingLeft: '0.8rem', fontWeight: 'bold' }}>Subject Performance</h3>
                                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem' }}>
                                         {[
                                             { key: 'english', label: 'English', score: student.reportData?.english_score || 0, color: colors.english },
@@ -964,7 +963,7 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
                                 </div>
 
                                 <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                                    <h3 style={{ fontSize: '0.85rem', margin: '0 0 0.2rem 0', color: primaryColor, borderLeft: `5px solid ${primaryColor}`, paddingLeft: '0.8rem', fontWeight: 'bold' }}>Learning Outcomes & Skills</h3>
+                                    <h3 style={{ fontSize: '0.85rem', margin: '0 0 0.2rem 0', color: primaryColor, borderLeft: `10px solid ${primaryColor}`, paddingLeft: '0.8rem', fontWeight: 'bold' }}>Learning Outcomes & Skills</h3>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.4rem', flex: 1, minHeight: 0 }}>
                                         {['english', 'maths', 'science'].map(subKey => (
                                             <div key={subKey} style={{ border: '1px solid #F1F5F9', borderRadius: '10px', padding: '0.3rem', backgroundColor: 'white', overflow: 'hidden' }}>
