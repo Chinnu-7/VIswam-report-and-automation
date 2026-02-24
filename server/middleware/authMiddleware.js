@@ -8,13 +8,23 @@ export const protect = async (req, res, next) => {
         try {
             token = req.headers.authorization.split(' ')[1];
             const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret123');
+
             req.user = await User.findByPk(decoded.id, {
                 attributes: { exclude: ['password'] }
             });
+
+            if (!req.user) {
+                console.error(`Auth Error: User not found for ID ${decoded.id}`);
+                return res.status(401).json({ message: 'Not authorized, user not found' });
+            }
+
             next();
         } catch (error) {
-            console.error(error);
-            res.status(401).json({ message: 'Not authorized, token failed' });
+            console.error('Auth Error:', error.message);
+            const message = error.name === 'TokenExpiredError'
+                ? 'Not authorized, token expired'
+                : 'Not authorized, token failed';
+            res.status(401).json({ message });
         }
     }
 
