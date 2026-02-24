@@ -1,5 +1,5 @@
 {
-    "name": "Student Report Automation (100% Free)",
+    "name": "Viswam Enhanced Automation",
     "nodes": [
         {
             "parameters": {
@@ -23,7 +23,7 @@
         },
         {
             "parameters": {
-                "url": "https://viswam-report-card.vercel.app/api/reports/automation/queue",
+                "url": "https://viswam-reports-automation.netlify.app/api/reports/automation/queue",
                 "options": {}
             },
             "name": "Fetch Queue",
@@ -51,7 +51,7 @@
         },
         {
             "parameters": {
-                "command": "=${ $env[\"CHROME_PATH\"] || \"C:\\\\Program Files\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe\" } --headless --disable-gpu --print-to-pdf=\"{{ $env[\"TEMP\"] || \"/tmp\" }}/report_{{ $json[\"id\"] }}.pdf\" https://viswam-report-card.vercel.app/api/reports/{{ $json[\"id\"] }}/render"
+                "command": "=${ $env[\"CHROME_PATH\"] || \"/usr/bin/chromium-browser\" } --headless --disable-gpu --print-to-pdf=\"/tmp/report_{{ $json[\"id\"] }}.pdf\" https://viswam-reports-automation.netlify.app/api/reports/{{ $json[\"id\"] }}/render"
             },
             "name": "Generate PDF (Chrome)",
             "type": "n8n-nodes-base.executeCommand",
@@ -85,7 +85,7 @@
         {
             "parameters": {
                 "method": "POST",
-                "url": "https://viswam-report-card.vercel.app/api/reports/automation/mark-sent",
+                "url": "https://viswam-reports-automation.netlify.app/api/reports/automation/mark-sent",
                 "sendBody": true,
                 "bodyParameters": {
                     "parameters": [
@@ -101,7 +101,7 @@
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
             "position": [
-                1400,
+                1450,
                 300
             ],
             "id": "mark-sent-1"
@@ -122,14 +122,14 @@
             "type": "n8n-nodes-base.itemLists",
             "typeVersion": 1,
             "position": [
-                1200,
+                1250,
                 300
             ],
             "id": "aggregate-1"
         },
         {
             "parameters": {
-                "fileSelector": "={{ $env[\"TEMP\"] || \"/tmp\" }}/report_{{ $node[\"Split Reports\"].json[\"id\"] }}.pdf"
+                "fileSelector": "=/tmp/report_{{ $node[\"Split Reports\"].json[\"id\"] }}.pdf"
             },
             "name": "Read PDF",
             "type": "n8n-nodes-base.readBinaryFile",
@@ -139,6 +139,95 @@
                 300
             ],
             "id": "read-pdf-1"
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://api.whatsapp.com/send",
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "phone",
+                            "value": "={{ $node[\"Split Reports\"].json[\"whatsappNo\"] }}"
+                        },
+                        {
+                            "name": "message",
+                            "value": "=Hi, here is the report card for {{ $node[\"Split Reports\"].json[\"studentName\"] }}: https://viswam-reports-automation.netlify.app/api/reports/{{ $node[\"Split Reports\"].json[\"id\"] }}/render"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "name": "Send WhatsApp",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                1000,
+                450
+            ],
+            "id": "whatsapp-1"
+        },
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "hours",
+                            "value": 1
+                        }
+                    ]
+                }
+            },
+            "name": "Sync Every Hour",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1,
+            "position": [
+                200,
+                100
+            ],
+            "id": "sync-trigger-1"
+        },
+        {
+            "parameters": {
+                "resource": "spreadsheet",
+                "operation": "get",
+                "spreadsheetId": "ENTER_YOUR_SHEET_ID_HERE",
+                "range": "A:E",
+                "options": {}
+            },
+            "name": "Read Google Sheet",
+            "type": "n8n-nodes-base.googleSheets",
+            "typeVersion": 3,
+            "position": [
+                400,
+                100
+            ],
+            "id": "sheets-1"
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://viswam-reports-automation.netlify.app/api/schools/sync",
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "schools",
+                            "value": "={{ $json.map(row => ({ schoolId: row['School Id'], schoolName: row['School Name'], principalEmail: row['Email'], whatsappNo: row['WhatsApp'] })) }}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "name": "Sync to Backend",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                600,
+                100
+            ],
+            "id": "sync-http-1"
         }
     ],
     "connections": {
@@ -193,11 +282,27 @@
                         "node": "Gmail",
                         "type": "main",
                         "index": 0
+                    },
+                    {
+                        "node": "Send WhatsApp",
+                        "type": "main",
+                        "index": 0
                     }
                 ]
             ]
         },
         "Gmail": {
+            "main": [
+                [
+                    {
+                        "node": "Aggregate IDs",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Send WhatsApp": {
             "main": [
                 [
                     {
@@ -218,11 +323,32 @@
                     }
                 ]
             ]
+        },
+        "Sync Every Hour": {
+            "main": [
+                [
+                    {
+                        "node": "Read Google Sheet",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Read Google Sheet": {
+            "main": [
+                [
+                    {
+                        "node": "Sync to Backend",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
         }
     },
     "active": false,
     "settings": {
         "executionOrder": "v1"
-    },
-    "versionId": "f7d75a8a-7b3b-4c3e-8d2e-9d8c3b1a2b3c"
+    }
 }

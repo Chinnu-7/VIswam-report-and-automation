@@ -1,66 +1,6 @@
 {
-    "name": "Viswam Full Automation (Sheets + Email + WhatsApp)",
+    "name": "Viswam Enhanced Automation",
     "nodes": [
-        {
-            "parameters": {
-                "rule": {
-                    "interval": [
-                        {
-                            "field": "minutes",
-                            "value": 30
-                        }
-                    ]
-                }
-            },
-            "name": "Every 30 Mins (Sync)",
-            "type": "n8n-nodes-base.scheduleTrigger",
-            "typeVersion": 1,
-            "position": [
-                0,
-                100
-            ],
-            "id": "schedule-sync"
-        },
-        {
-            "parameters": {
-                "operation": "getAll",
-                "spreadsheetId": "ENTER_YOUR_SHEET_ID_HERE",
-                "range": "A:E",
-                "options": {}
-            },
-            "name": "Read Google Sheet",
-            "type": "n8n-nodes-base.googleSheets",
-            "typeVersion": 3,
-            "position": [
-                200,
-                100
-            ],
-            "id": "sheets-1"
-        },
-        {
-            "parameters": {
-                "method": "POST",
-                "url": "https://viswam-reports-automation.netlify.app/api/schools/sync",
-                "sendBody": true,
-                "bodyParameters": {
-                    "parameters": [
-                        {
-                            "name": "schools",
-                            "value": "={{ $json.map(row => ({ schoolId: row['School Id'], schoolName: row['School Name'], principalEmail: row['Email'], whatsappNo: row['WhatsApp'] })) }}"
-                        }
-                    ]
-                },
-                "options": {}
-            },
-            "name": "Sync to Backend",
-            "type": "n8n-nodes-base.httpRequest",
-            "typeVersion": 4.1,
-            "position": [
-                400,
-                100
-            ],
-            "id": "http-sync"
-        },
         {
             "parameters": {
                 "rule": {
@@ -72,14 +12,14 @@
                     ]
                 }
             },
-            "name": "Every 5 Mins (Send)",
+            "name": "Every 5 Minutes",
             "type": "n8n-nodes-base.scheduleTrigger",
             "typeVersion": 1,
             "position": [
                 0,
-                400
+                300
             ],
-            "id": "schedule-send"
+            "id": "schedule-1"
         },
         {
             "parameters": {
@@ -91,9 +31,9 @@
             "typeVersion": 4.1,
             "position": [
                 200,
-                400
+                300
             ],
-            "id": "http-fetch"
+            "id": "fetch-queue-1"
         },
         {
             "parameters": {
@@ -105,7 +45,7 @@
             "typeVersion": 1,
             "position": [
                 400,
-                400
+                300
             ],
             "id": "split-1"
         },
@@ -113,14 +53,79 @@
             "parameters": {
                 "command": "=${ $env[\"CHROME_PATH\"] || \"/usr/bin/chromium-browser\" } --headless --disable-gpu --print-to-pdf=\"/tmp/report_{{ $json[\"id\"] }}.pdf\" https://viswam-reports-automation.netlify.app/api/reports/{{ $json[\"id\"] }}/render"
             },
-            "name": "Generate PDF",
+            "name": "Generate PDF (Chrome)",
             "type": "n8n-nodes-base.executeCommand",
             "typeVersion": 1,
             "position": [
                 600,
-                400
+                300
             ],
-            "id": "exec-1"
+            "id": "chrome-1"
+        },
+        {
+            "parameters": {
+                "resource": "message",
+                "operation": "send",
+                "content": "<h1>Student Report Card</h1><p>Dear Principal,</p><p>Please find attached the report card for <b>{{ $node[\"Split Reports\"].json[\"studentName\"] }}</b> (Roll No: {{ $node[\"Split Reports\"].json[\"rollNo\"] }}).</p><p>Best Regards,<br>Viswam Team</p>",
+                "emailTo": "={{ $node[\"Split Reports\"].json[\"principalEmail\"] }}",
+                "subject": "=Report Card: {{ $node[\"Split Reports\"].json[\"studentName\"] }}",
+                "options": {
+                    "appendAttachements": "={{ $node[\"Read PDF\"].binary.data }}"
+                }
+            },
+            "name": "Gmail",
+            "type": "n8n-nodes-base.gmail",
+            "typeVersion": 2,
+            "position": [
+                1000,
+                300
+            ],
+            "id": "gmail-1"
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://viswam-reports-automation.netlify.app/api/reports/automation/mark-sent",
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "ids",
+                            "value": "={{ $node[\"Aggregate IDs\"].json[\"ids\"] }}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "name": "Mark as Sent",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                1450,
+                300
+            ],
+            "id": "mark-sent-1"
+        },
+        {
+            "parameters": {
+                "operation": "aggregateItems",
+                "fieldsToAggregate": {
+                    "primaryFields": [
+                        {
+                            "field": "id"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "name": "Aggregate IDs",
+            "type": "n8n-nodes-base.itemLists",
+            "typeVersion": 1,
+            "position": [
+                1250,
+                300
+            ],
+            "id": "aggregate-1"
         },
         {
             "parameters": {
@@ -131,29 +136,9 @@
             "typeVersion": 1,
             "position": [
                 800,
-                400
+                300
             ],
-            "id": "read-1"
-        },
-        {
-            "parameters": {
-                "resource": "message",
-                "operation": "send",
-                "emailTo": "={{ $node[\"Split Reports\"].json[\"principalEmail\"] }}",
-                "subject": "=Report Card: {{ $node[\"Split Reports\"].json[\"studentName\"] }}",
-                "html": "<h1>Student Report Card</h1><p>Dear Principal,</p><p>Please find attached the report card for <b>{{ $node[\"Split Reports\"].json[\"studentName\"] }}</b> (Roll No: {{ $node[\"Split Reports\"].json[\"rollNo\"] }}).</p><p>Best Regards,<br>Viswam Team</p>",
-                "options": {
-                    "appendAttachements": "={{ $node[\"Read PDF\"].binary.data }}"
-                }
-            },
-            "name": "Send Email",
-            "type": "n8n-nodes-base.gmail",
-            "typeVersion": 2,
-            "position": [
-                1000,
-                400
-            ],
-            "id": "gmail-1"
+            "id": "read-pdf-1"
         },
         {
             "parameters": {
@@ -179,80 +164,74 @@
             "typeVersion": 4.1,
             "position": [
                 1000,
-                550
+                450
             ],
-            "id": "http-whatsapp"
+            "id": "whatsapp-1"
         },
         {
             "parameters": {
-                "operation": "aggregateItems",
-                "fieldsToAggregate": {
-                    "primaryFields": [
+                "rule": {
+                    "interval": [
                         {
-                            "field": "id"
+                            "field": "hours",
+                            "value": 1
                         }
                     ]
-                },
-                "options": {}
+                }
             },
-            "name": "Aggregate IDs",
-            "type": "n8n-nodes-base.itemLists",
+            "name": "Sync Every Hour",
+            "type": "n8n-nodes-base.scheduleTrigger",
             "typeVersion": 1,
             "position": [
-                1200,
-                400
+                200,
+                100
             ],
-            "id": "aggregate-1"
+            "id": "sync-trigger-1"
+        },
+        {
+            "parameters": {
+                "resource": "spreadsheet",
+                "operation": "get",
+                "spreadsheetId": "ENTER_YOUR_SHEET_ID_HERE",
+                "range": "A:E",
+                "options": {}
+            },
+            "name": "Read Google Sheet",
+            "type": "n8n-nodes-base.googleSheets",
+            "typeVersion": 3,
+            "position": [
+                400,
+                100
+            ],
+            "id": "sheets-1"
         },
         {
             "parameters": {
                 "method": "POST",
-                "url": "https://viswam-reports-automation.netlify.app/api/reports/automation/mark-sent",
+                "url": "https://viswam-reports-automation.netlify.app/api/schools/sync",
                 "sendBody": true,
                 "bodyParameters": {
                     "parameters": [
                         {
-                            "name": "ids",
-                            "value": "={{ $json[\"id\"] }}"
+                            "name": "schools",
+                            "value": "={{ $json.map(row => ({ schoolId: row['School Id'], schoolName: row['School Name'], principalEmail: row['Email'], whatsappNo: row['WhatsApp'] })) }}"
                         }
                     ]
                 },
                 "options": {}
             },
-            "name": "Mark as Sent",
+            "name": "Sync to Backend",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
             "position": [
-                1400,
-                400
+                600,
+                100
             ],
-            "id": "http-mark"
+            "id": "sync-http-1"
         }
     ],
     "connections": {
-        "Every 30 Mins (Sync)": {
-            "main": [
-                [
-                    {
-                        "node": "Read Google Sheet",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "Read Google Sheet": {
-            "main": [
-                [
-                    {
-                        "node": "Sync to Backend",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "Every 5 Mins (Send)": {
+        "Every 5 Minutes": {
             "main": [
                 [
                     {
@@ -278,14 +257,14 @@
             "main": [
                 [
                     {
-                        "node": "Generate PDF",
+                        "node": "Generate PDF (Chrome)",
                         "type": "main",
                         "index": 0
                     }
                 ]
             ]
         },
-        "Generate PDF": {
+        "Generate PDF (Chrome)": {
             "main": [
                 [
                     {
@@ -300,7 +279,7 @@
             "main": [
                 [
                     {
-                        "node": "Send Email",
+                        "node": "Gmail",
                         "type": "main",
                         "index": 0
                     },
@@ -312,7 +291,7 @@
                 ]
             ]
         },
-        "Send Email": {
+        "Gmail": {
             "main": [
                 [
                     {
@@ -339,6 +318,28 @@
                 [
                     {
                         "node": "Mark as Sent",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Sync Every Hour": {
+            "main": [
+                [
+                    {
+                        "node": "Read Google Sheet",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Read Google Sheet": {
+            "main": [
+                [
+                    {
+                        "node": "Sync to Backend",
                         "type": "main",
                         "index": 0
                     }
