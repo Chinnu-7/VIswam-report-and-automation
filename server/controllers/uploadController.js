@@ -11,8 +11,6 @@ const loadAnswerKey = (qp) => {
     if (!qp) return null;
     const keyFile = path.resolve(`${qp}.xlsx`);
 
-
-
     if (!fs.existsSync(keyFile)) {
         console.log(`Answer Key file not found: ${keyFile}`);
         return null;
@@ -23,19 +21,38 @@ const loadAnswerKey = (qp) => {
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
         const rows = xlsx.utils.sheet_to_json(sheet, { header: 1 });
 
-        const key = { maths: {}, science: {}, english: {} };
-        // Row 0-14 correspond to Q1-15
-        for (let i = 0; i < 15; i++) {
-            if (rows[i]) {
-                key.maths[i + 1] = String(rows[i][1] || '').trim().toUpperCase();
-                key.science[i + 1] = String(rows[i][3] || '').trim().toUpperCase();
-                key.english[i + 1] = String(rows[i][5] || '').trim().toUpperCase();
+        const key = {
+            maths: {},
+            science: {},
+            english: {},
+            loDescriptions: { maths: {}, science: {}, english: {} }
+        };
+
+        // Row 0 is header. Data starts from Row 1 to Row 15.
+        // The structure is: 
+        // Maths: Col 0 (Subj), Col 1 (Key), Col 2 (Lo)
+        // Science: Col 3 (Subj), Col 4 (Key), Col 5 (Lo)
+        // English: Col 6 (Subj), Col 7 (Key), Col 8 (Lo)
+        for (let i = 1; i <= 15; i++) {
+            const row = rows[i];
+            if (row) {
+                // Maths
+                key.maths[i] = String(row[1] || '').trim().toUpperCase();
+                key.loDescriptions.maths[`m${i}`] = String(row[2] || '').trim();
+
+                // Science
+                key.science[i] = String(row[4] || '').trim().toUpperCase();
+                key.loDescriptions.science[`s${i}`] = String(row[5] || '').trim();
+
+                // English
+                key.english[i] = String(row[7] || '').trim().toUpperCase();
+                key.loDescriptions.english[`E${i}`] = String(row[8] || '').trim();
             }
         }
-        console.log(`Loaded Answer Key for ${qp}`);
+        console.log(`Loaded Answer Key and LOs from ${qp}.xlsx`);
         return key;
     } catch (err) {
-        console.error(`Error loading Answer Key for ${qp}:`, err);
+        console.error(`Error loading Answer Key from ${qp}.xlsx:`, err);
         return null;
     }
 };
@@ -165,6 +182,14 @@ export const uploadStudentData = async (req, res) => {
         // If no embedded key, try loading external vertical key
         if (!answerKey) {
             answerKey = loadAnswerKey(qp);
+        }
+
+        // --- OVERRIDE LOs FROM EXTERNAL FILE ---
+        if (answerKey && answerKey.loDescriptions) {
+            Object.assign(loMapping.maths, answerKey.loDescriptions.maths);
+            Object.assign(loMapping.science, answerKey.loDescriptions.science);
+            Object.assign(loMapping.english, answerKey.loDescriptions.english);
+            console.log('Applied LO descriptions from external answer key file');
         }
 
         const reportsToCreate = [];
