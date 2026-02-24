@@ -19,13 +19,12 @@
                 0,
                 100
             ],
-            "id": "trigger-sync"
+            "id": "schedule-sync"
         },
         {
             "parameters": {
-                "resource": "sheet",
                 "operation": "getAll",
-                "sheetId": "ENTER_YOUR_SHEET_ID_HERE",
+                "spreadsheetId": "ENTER_YOUR_SHEET_ID_HERE",
                 "range": "A:E",
                 "options": {}
             },
@@ -36,7 +35,7 @@
                 200,
                 100
             ],
-            "id": "read-sheet"
+            "id": "sheets-1"
         },
         {
             "parameters": {
@@ -60,7 +59,7 @@
                 400,
                 100
             ],
-            "id": "sync-backend"
+            "id": "http-sync"
         },
         {
             "parameters": {
@@ -80,7 +79,7 @@
                 0,
                 400
             ],
-            "id": "trigger-send"
+            "id": "schedule-send"
         },
         {
             "parameters": {
@@ -94,7 +93,7 @@
                 200,
                 400
             ],
-            "id": "fetch-queue"
+            "id": "http-fetch"
         },
         {
             "parameters": {
@@ -108,7 +107,7 @@
                 400,
                 400
             ],
-            "id": "split-reports"
+            "id": "split-1"
         },
         {
             "parameters": {
@@ -121,7 +120,7 @@
                 600,
                 400
             ],
-            "id": "gen-pdf"
+            "id": "exec-1"
         },
         {
             "parameters": {
@@ -134,7 +133,7 @@
                 800,
                 400
             ],
-            "id": "read-pdf"
+            "id": "read-1"
         },
         {
             "parameters": {
@@ -154,7 +153,7 @@
                 1000,
                 400
             ],
-            "id": "send-email"
+            "id": "gmail-1"
         },
         {
             "parameters": {
@@ -182,7 +181,7 @@
                 1000,
                 550
             ],
-            "id": "send-whatsapp"
+            "id": "http-whatsapp"
         },
         {
             "parameters": {
@@ -203,7 +202,7 @@
                 1200,
                 400
             ],
-            "id": "aggregate-ids"
+            "id": "aggregate-1"
         },
         {
             "parameters": {
@@ -227,7 +226,7 @@
                 1400,
                 400
             ],
-            "id": "mark-sent"
+            "id": "http-mark"
         }
     ],
     "connections": {
