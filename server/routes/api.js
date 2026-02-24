@@ -35,6 +35,9 @@ router.delete('/reports', protect, adminOnly, adminController.deleteReports); //
 router.get('/reports/automation/queue', adminController.getAutomationQueue);
 router.post('/reports/automation/mark-sent', adminController.markAsSent);
 
+// School Sync
+router.post('/schools/sync', adminController.updateSchoolsBatch);
+
 // Render Route (Public for n8n/Api2Pdf, or could be protected if needed)
 router.get('/reports/:id/render', renderController.renderReportHtml);
 

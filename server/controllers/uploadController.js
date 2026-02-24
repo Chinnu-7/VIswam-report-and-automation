@@ -337,22 +337,24 @@ export const uploadSchoolData = async (req, res) => {
         const schoolsToUpsert = [];
 
         for (const row of data) {
-            const schoolId = row['School Id'] || row['SCHOOL ID']; // Adjust based on actual header
+            const schoolId = row['School Id'] || row['SCHOOL ID'] || row['ID'];
             const email = row['Principal Email'] || row['Email'] || row['EMAIL'];
-            const name = row['School Name'] || row['SCHOOL NAME'];
+            const name = row['School Name'] || row['SCHOOL NAME'] || row['NAME'];
+            const whatsapp = row['WhatsApp'] || row['WhatsApp No'] || row['WHATSAPP'];
 
             if (schoolId && email) {
                 schoolsToUpsert.push({
                     schoolId,
                     principalEmail: email,
-                    schoolName: name
+                    schoolName: name,
+                    whatsappNo: whatsapp
                 });
             }
         }
 
         // Upsert (update if exists)
         await SchoolInfo.bulkCreate(schoolsToUpsert, {
-            updateOnDuplicate: ['principalEmail', 'schoolName']
+            updateOnDuplicate: ['principalEmail', 'schoolName', 'whatsappNo']
         });
 
         // Create/Update User Accounts for Principals

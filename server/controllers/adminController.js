@@ -226,7 +226,8 @@ export const getAutomationQueue = async (req, res) => {
             const school = await SchoolInfo.findOne({ where: { schoolId: report.schoolId } });
             queue.push({
                 ...report.get({ plain: true }),
-                principalEmail: school ? school.principalEmail : null
+                principalEmail: school ? school.principalEmail : null,
+                whatsappNo: school ? school.whatsappNo : null
             });
         }
 
@@ -252,5 +253,39 @@ export const markAsSent = async (req, res) => {
     } catch (error) {
         console.error('Error marking reports as sent:', error);
         res.status(500).json({ message: 'Error updating records' });
+    }
+};
+
+export const updateSchoolsBatch = async (req, res) => {
+    const { schools } = req.body; // Array of { schoolId, schoolName, principalEmail, whatsappNo }
+    if (!schools || !Array.isArray(schools)) {
+        return res.status(400).json({ message: 'Invalid schools data' });
+    }
+
+    try {
+        await SchoolInfo.bulkCreate(schools, {
+            updateOnDuplicate: ['schoolName', 'principalEmail', 'whatsappNo']
+        });
+
+        // Also ensure user accounts exist for these principals
+        for (const school of schools) {
+            const [user, created] = await User.findOrCreate({
+                where: { email: school.principalEmail },
+                defaults: {
+                    password: `${school.schoolId}@123`,
+                    role: 'principal',
+                    schoolId: school.schoolId
+                }
+            });
+            if (!created) {
+                user.schoolId = school.schoolId;
+                await user.save();
+            }
+        }
+
+        res.json({ message: `Successfully synced ${schools.length} schools from Google Sheets` });
+    } catch (error) {
+        console.error('Error syncing schools:', error);
+        res.status(500).json({ message: 'Error syncing schools', error: error.message });
     }
 };

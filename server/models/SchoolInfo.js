@@ -14,6 +14,10 @@ const SchoolInfo = db.define('school_info', {
     principalEmail: {
         type: Sequelize.STRING,
         allowNull: false
+    },
+    whatsappNo: {
+        type: Sequelize.STRING,
+        allowNull: true
     }
 });
 
