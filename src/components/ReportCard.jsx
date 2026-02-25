@@ -507,10 +507,8 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                                         <div style={{
                                             position: 'absolute',
                                             bottom: '0',
-                                            left: '50%',
-                                            transform: 'translateX(-50%)',
-                                            textAlign: 'center',
-                                            width: 'auto',
+                                            left: '0',
+                                            width: '100%',
                                             display: 'flex',
                                             flexDirection: 'column',
                                             alignItems: 'center',
