@@ -69,27 +69,24 @@
         },
         {
             "parameters": {
-                "command": "=${ $env[\"CHROME_PATH\"] || \"/usr/bin/chromium-browser\" } --headless --disable-gpu --print-to-pdf=\"/tmp/report_{{ $node[\"Split Reports\"].json[\"id\"] }}.pdf\" https://viswam-reports-automation.netlify.app/api/reports/{{ $node[\"Split Reports\"].json[\"id\"] }}/render"
+                "operation": "htmlToPdf",
+                "url": "=https://viswam-reports-automation.netlify.app/api/reports/{{ $node[\"Split Reports\"].json[\"id\"] }}/render",
+                "options": {
+                    "fileName": "report_card.pdf",
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0,
+                    "landscape": false,
+                    "printBackground": true
+                }
             },
             "id": "44444444-4444-4444-4444-444444444444",
             "name": "Generate PDF",
-            "type": "n8n-nodes-base.executeCommand",
+            "type": "n8n-nodes-base.api2pdf",
             "typeVersion": 1,
             "position": [
                 1100,
-                240
-            ]
-        },
-        {
-            "parameters": {
-                "fileSelector": "=/tmp/report_{{ $node[\"Split Reports\"].json[\"id\"] }}.pdf"
-            },
-            "id": "55555555-5555-5555-5555-555555555555",
-            "name": "Read PDF",
-            "type": "n8n-nodes-base.readBinaryFile",
-            "typeVersion": 1,
-            "position": [
-                1320,
                 240
             ]
         },
@@ -100,7 +97,7 @@
                 "message": "<h1>Student Report Card</h1><p>Dear Principal,</p><p>Please find attached the report card for <b>{{ $node[\"Split Reports\"].json[\"studentName\"] }}</b>.</p>",
                 "toEmail": "={{ $node[\"Google Sheets\"].json[\"Email\"] }}",
                 "appendAttachements": true,
-                "attachments": "={{ $node[\"Read PDF\"].binary.data }}"
+                "attachments": "={{ $binary.data }}"
             },
             "id": "66666666-6666-6666-6666-666666666666",
             "name": "Send Email",
@@ -232,17 +229,6 @@
             ]
         },
         "Generate PDF": {
-            "main": [
-                [
-                    {
-                        "node": "Read PDF",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "Read PDF": {
             "main": [
                 [
                     {
