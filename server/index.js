@@ -33,8 +33,8 @@ const initializeDb = async () => {
         await sequelize.authenticate();
         console.log('Database connected successfully');
 
-        // Sync models (only sync without alter in production for safety/speed)
-        const syncOptions = process.env.NODE_ENV === 'production' ? {} : { alter: true };
+        // Sync models
+        const syncOptions = { alter: true };
         await sequelize.sync(syncOptions);
         console.log('Models synced');
 

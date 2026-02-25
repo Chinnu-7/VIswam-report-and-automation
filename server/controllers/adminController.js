@@ -1,5 +1,6 @@
 import StudentReport from '../models/StudentReport.js';
 import SchoolInfo from '../models/SchoolInfo.js';
+import User from '../models/User.js';
 import axios from 'axios';
 import { Op } from 'sequelize';
 import * as gradingService from '../services/gradingService.js';
@@ -72,13 +73,22 @@ export const recalculateGrades = async (req, res) => {
 
 export const getReports = async (req, res) => {
     try {
-        const { status, id, schoolId, assessmentName, qp } = req.query;
+        const { status, id, schoolId, assessmentName, qp, studentName, class: className, schoolName } = req.query;
         const where = {};
         if (status) where.status = status;
         if (id) where.id = id;
         if (schoolId) where.schoolId = schoolId;
         if (assessmentName) where.assessmentName = assessmentName;
         if (qp) where.qp = qp;
+        if (className) where.class = className;
+
+        if (studentName) {
+            where.studentName = { [Op.like]: `%${studentName}%` };
+        }
+
+        if (schoolName) {
+            where.schoolName = { [Op.like]: `%${schoolName}%` };
+        }
 
         const reports = await StudentReport.findAll({ where });
         res.json(reports);

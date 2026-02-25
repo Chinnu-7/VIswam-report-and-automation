@@ -11,6 +11,11 @@ const AdminDashboard = () => {
     const [message, setMessage] = useState('');
     const [isError, setIsError] = useState(false);
     const [filter, setFilter] = useState('PENDING');
+    const [searchStudent, setSearchStudent] = useState('');
+    const [searchSchool, setSearchSchool] = useState('');
+    const [searchAssessment, setSearchAssessment] = useState('');
+    const [searchClass, setSearchClass] = useState('');
+    const [debouncedStudent, setDebouncedStudent] = useState('');
 
     const [assessmentName, setAssessmentName] = useState('');
     const [qp, setQp] = useState('');
@@ -24,13 +29,28 @@ const AdminDashboard = () => {
     };
 
     useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedStudent(searchStudent);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchStudent]);
+
+    useEffect(() => {
         fetchReports();
-    }, [filter]);
+    }, [filter, debouncedStudent, searchSchool, searchAssessment, searchClass]);
 
     const fetchReports = async () => {
         setLoading(true);
         try {
-            const res = await api.get(`/reports?status=${filter}`, config);
+            const query = new URLSearchParams({
+                status: filter,
+                studentName: debouncedStudent,
+                schoolName: searchSchool,
+                assessmentName: searchAssessment,
+                class: searchClass
+            }).toString();
+
+            const res = await api.get(`/reports?${query}`, config);
             setReports(res.data);
         } catch (err) {
             console.error('Error fetching reports', err);
@@ -195,6 +215,67 @@ const AdminDashboard = () => {
                         <option value="REJECTED">Rejected</option>
                     </select>
                 </div>
+            </div>
+
+            {/* Filter Section */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 flex flex-wrap gap-4 items-center">
+                <div className="flex-1 min-w-[200px] relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <input
+                        type="text"
+                        placeholder="Search student or roll no..."
+                        className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary outline-none"
+                        value={searchStudent}
+                        onChange={(e) => setSearchStudent(e.target.value)}
+                    />
+                </div>
+                <div className="flex-1 min-w-[200px]">
+                    <input
+                        type="text"
+                        placeholder="Filter by school..."
+                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary outline-none"
+                        value={searchSchool}
+                        onChange={(e) => setSearchSchool(e.target.value)}
+                    />
+                </div>
+                <div className="w-40">
+                    <select
+                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary outline-none"
+                        value={searchAssessment}
+                        onChange={(e) => setSearchAssessment(e.target.value)}
+                    >
+                        <option value="">All Assessments</option>
+                        <option value="Samagra">Samagra</option>
+                        <option value="Sodhana 1">Sodhana 1</option>
+                        <option value="Sodhana 2">Sodhana 2</option>
+                        <option value="Sodhana 3">Sodhana 3</option>
+                        <option value="Sodhana 4">Sodhana 4</option>
+                    </select>
+                </div>
+                <div className="w-32">
+                    <select
+                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary outline-none"
+                        value={searchClass}
+                        onChange={(e) => setSearchClass(e.target.value)}
+                    >
+                        <option value="">All Classes</option>
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(c => (
+                            <option key={c} value={c}>Grade {c}</option>
+                        ))}
+                    </select>
+                </div>
+                <button
+                    onClick={() => {
+                        setSearchStudent('');
+                        setSearchSchool('');
+                        setSearchAssessment('');
+                        setSearchClass('');
+                    }}
+                    className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                    title="Clear Filters"
+                >
+                    <Trash2 size={20} />
+                </button>
             </div>
 
             {/* Quick Upload Section for Admins */}
