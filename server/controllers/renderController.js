@@ -41,7 +41,7 @@ export const renderReportHtml = async (req, res) => {
 
         const getGradeColor = (grade) => {
             if (!grade) return '#64748B';
-            const g = grade.toUpperCase();
+            const g = String(grade).toUpperCase();
             if (['O', 'A+', 'A', 'B+'].includes(g)) return '#15803d'; // Greenish
             if (['B', 'C+', 'C'].includes(g)) return '#ea580c'; // Orange
             if (g === 'D') return '#dc2626'; // Red
@@ -50,7 +50,7 @@ export const renderReportHtml = async (req, res) => {
 
         const getGradeBg = (grade) => {
             if (!grade) return '#F1F5F9';
-            const g = grade.toUpperCase();
+            const g = String(grade).toUpperCase();
             if (g === 'O') return '#dcfce7';
             if (g === 'A+') return '#bbf7d0';
             if (g === 'A') return '#86efac';

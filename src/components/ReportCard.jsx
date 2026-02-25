@@ -151,7 +151,7 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
 
     const getGradeColor = (grade) => {
         if (!grade) return '#64748B';
-        const g = grade.toUpperCase();
+        const g = String(grade).toUpperCase();
         if (g === 'O') return '#ffffff'; // White text on dark green
         if (['A+', 'A', 'B+'].includes(g)) return '#15803d'; // Rich green
         if (['B', 'C+', 'C'].includes(g)) return '#ea580c'; // Orange
@@ -161,7 +161,7 @@ export default function ReportCard({ students, viewMode = 'principal', schoolNam
 
     const getGradeBg = (grade) => {
         if (!grade) return '#F1F5F9';
-        const g = grade.toUpperCase();
+        const g = String(grade).toUpperCase();
         if (g === 'O') return '#064e3b'; // DARK GREEN
         if (g === 'A+') return '#dcfce7'; // Light green
         if (g === 'A') return '#f0fdf4'; // Very light green
