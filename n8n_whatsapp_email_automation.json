@@ -1,0 +1,299 @@
+{
+    "name": "Viswam WhatsApp & Email Automation (Direct Google Sheets Lookup)",
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "minutes",
+                            "value": 5
+                        }
+                    ]
+                }
+            },
+            "name": "Every 5 Minutes",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1,
+            "position": [
+                0,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "url": "https://viswam-reports-automation.netlify.app/api/reports/automation/queue",
+                "options": {}
+            },
+            "name": "Fetch Queue",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                200,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "fieldToSplitOut": "={{ $json }}",
+                "options": {}
+            },
+            "name": "Split Reports",
+            "type": "n8n-nodes-base.itemLists",
+            "typeVersion": 1,
+            "position": [
+                400,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "resource": "spreadsheet",
+                "operation": "lookup",
+                "spreadsheetId": {
+                    "__rl": true,
+                    "value": "ENTER_YOUR_GOOGLE_SHEET_ID_HERE",
+                    "mode": "id"
+                },
+                "sheetName": {
+                    "__rl": true,
+                    "value": "Sheet1",
+                    "mode": "name"
+                },
+                "lookupColumn": "School Name",
+                "lookupValue": "={{ $node[\"Split Reports\"].json[\"schoolName\"] }}",
+                "options": {}
+            },
+            "name": "Lookup School in Google Sheet",
+            "type": "n8n-nodes-base.googleSheets",
+            "typeVersion": 4,
+            "position": [
+                600,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "command": "=${ $env[\"CHROME_PATH\"] || \"/usr/bin/chromium-browser\" } --headless --disable-gpu --print-to-pdf=\"/tmp/report_{{ $node[\"Split Reports\"].json[\"id\"] }}.pdf\" https://viswam-reports-automation.netlify.app/api/reports/{{ $node[\"Split Reports\"].json[\"id\"] }}/render"
+            },
+            "name": "Generate PDF",
+            "type": "n8n-nodes-base.executeCommand",
+            "typeVersion": 1,
+            "position": [
+                800,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "fileSelector": "=/tmp/report_{{ $node[\"Split Reports\"].json[\"id\"] }}.pdf"
+            },
+            "name": "Read PDF",
+            "type": "n8n-nodes-base.readBinaryFile",
+            "typeVersion": 1,
+            "position": [
+                1000,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "resource": "message",
+                "operation": "send",
+                "emailTo": "={{ $node[\"Lookup School in Google Sheet\"].json[\"Email\"] }}",
+                "subject": "=Report Card: {{ $node[\"Split Reports\"].json[\"studentName\"] }}",
+                "html": "<h1>Student Report Card</h1><p>Dear Principal,</p><p>Please find attached the report card for <b>{{ $node[\"Split Reports\"].json[\"studentName\"] }}</b> (Roll No: {{ $node[\"Split Reports\"].json[\"rollNo\"] }}).</p><p>Best Regards,<br>Viswam Team</p>",
+                "options": {
+                    "appendAttachements": "={{ $node[\"Read PDF\"].binary.data }}"
+                }
+            },
+            "name": "Send Email",
+            "type": "n8n-nodes-base.gmail",
+            "typeVersion": 2,
+            "position": [
+                1200,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://api.whatsapp.com/send",
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "phone",
+                            "value": "={{ $node[\"Lookup School in Google Sheet\"].json[\"WhatsApp\"] }}"
+                        },
+                        {
+                            "name": "message",
+                            "value": "=Hi, here is the report card for {{ $node[\"Split Reports\"].json[\"studentName\"] }}: https://viswam-reports-automation.netlify.app/api/reports/{{ $node[\"Split Reports\"].json[\"id\"] }}/render"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "name": "Send WhatsApp",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                1200,
+                400
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "aggregateItems",
+                "fieldsToAggregate": {
+                    "primaryFields": [
+                        {
+                            "field": "id"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "name": "Aggregate IDs",
+            "type": "n8n-nodes-base.itemLists",
+            "typeVersion": 1,
+            "position": [
+                1400,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://viswam-reports-automation.netlify.app/api/reports/automation/mark-sent",
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "ids",
+                            "value": "={{ $node[\"Aggregate IDs\"].json[\"ids\"] }}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "name": "Mark as Sent",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                1600,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Every 5 Minutes": {
+            "main": [
+                [
+                    {
+                        "node": "Fetch Queue",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fetch Queue": {
+            "main": [
+                [
+                    {
+                        "node": "Split Reports",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Split Reports": {
+            "main": [
+                [
+                    {
+                        "node": "Lookup School in Google Sheet",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Lookup School in Google Sheet": {
+            "main": [
+                [
+                    {
+                        "node": "Generate PDF",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Generate PDF": {
+            "main": [
+                [
+                    {
+                        "node": "Read PDF",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Read PDF": {
+            "main": [
+                [
+                    {
+                        "node": "Send Email",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Send WhatsApp",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Send Email": {
+            "main": [
+                [
+                    {
+                        "node": "Aggregate IDs",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Send WhatsApp": {
+            "main": [
+                [
+                    {
+                        "node": "Aggregate IDs",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Aggregate IDs": {
+            "main": [
+                [
+                    {
+                        "node": "Mark as Sent",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "active": false,
+    "settings": {
+        "executionOrder": "v1"
+    }
+}
