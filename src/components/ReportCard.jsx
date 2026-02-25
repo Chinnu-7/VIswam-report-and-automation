@@ -506,15 +506,15 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                                         </ResponsiveContainer>
                                         <div style={{
                                             position: 'absolute',
-                                            top: '50%',
+                                            bottom: '0',
                                             left: '50%',
-                                            transform: 'translate(-50%, -50%)',
+                                            transform: 'translateX(-50%)',
                                             textAlign: 'center',
                                             width: 'auto',
                                             display: 'flex',
                                             flexDirection: 'column',
                                             alignItems: 'center',
-                                            justifyContent: 'center',
+                                            justifyContent: 'flex-end',
                                             zIndex: 10
                                         }}>
                                             <div style={{ fontSize: '1.8rem', fontWeight: '900', color: primaryColor, lineHeight: '1.1' }}>{totalParticipated} / {totalRegistered}</div>
