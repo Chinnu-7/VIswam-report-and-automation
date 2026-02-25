@@ -18,7 +18,8 @@
             "position": [
                 0,
                 300
-            ]
+            ],
+            "id": "schedule-trigger"
         },
         {
             "parameters": {
@@ -31,7 +32,8 @@
             "position": [
                 200,
                 300
-            ]
+            ],
+            "id": "fetch-queue"
         },
         {
             "parameters": {
@@ -44,33 +46,27 @@
             "position": [
                 400,
                 300
-            ]
+            ],
+            "id": "split-reports"
         },
         {
             "parameters": {
                 "resource": "spreadsheet",
                 "operation": "lookup",
-                "spreadsheetId": {
-                    "__rl": true,
-                    "value": "ENTER_YOUR_GOOGLE_SHEET_ID_HERE",
-                    "mode": "id"
-                },
-                "sheetName": {
-                    "__rl": true,
-                    "value": "Sheet1",
-                    "mode": "name"
-                },
+                "spreadsheetId": "ENTER_YOUR_GOOGLE_SHEET_ID_HERE",
+                "range": "A:E",
                 "lookupColumn": "School Name",
                 "lookupValue": "={{ $node[\"Split Reports\"].json[\"schoolName\"] }}",
                 "options": {}
             },
             "name": "Lookup School in Google Sheet",
             "type": "n8n-nodes-base.googleSheets",
-            "typeVersion": 4,
+            "typeVersion": 3,
             "position": [
                 600,
                 300
-            ]
+            ],
+            "id": "google-sheets-lookup"
         },
         {
             "parameters": {
@@ -82,7 +78,8 @@
             "position": [
                 800,
                 300
-            ]
+            ],
+            "id": "execute-command"
         },
         {
             "parameters": {
@@ -94,15 +91,16 @@
             "position": [
                 1000,
                 300
-            ]
+            ],
+            "id": "read-pdf"
         },
         {
             "parameters": {
                 "resource": "message",
                 "operation": "send",
+                "content": "<h1>Student Report Card</h1><p>Dear Principal,</p><p>Please find attached the report card for <b>{{ $node[\"Split Reports\"].json[\"studentName\"] }}</b> (Roll No: {{ $node[\"Split Reports\"].json[\"rollNo\"] }}).</p><p>Best Regards,<br>Viswam Team</p>",
                 "emailTo": "={{ $node[\"Lookup School in Google Sheet\"].json[\"Email\"] }}",
                 "subject": "=Report Card: {{ $node[\"Split Reports\"].json[\"studentName\"] }}",
-                "html": "<h1>Student Report Card</h1><p>Dear Principal,</p><p>Please find attached the report card for <b>{{ $node[\"Split Reports\"].json[\"studentName\"] }}</b> (Roll No: {{ $node[\"Split Reports\"].json[\"rollNo\"] }}).</p><p>Best Regards,<br>Viswam Team</p>",
                 "options": {
                     "appendAttachements": "={{ $node[\"Read PDF\"].binary.data }}"
                 }
@@ -113,7 +111,8 @@
             "position": [
                 1200,
                 200
-            ]
+            ],
+            "id": "send-email"
         },
         {
             "parameters": {
@@ -128,7 +127,7 @@
                         },
                         {
                             "name": "message",
-                            "value": "=Hi, here is the report card for {{ $node[\"Split Reports\"].json[\"studentName\"] }}: https://viswam-reports-automation.netlify.app/api/reports/{{ $node[\"Split Reports\"].json[\"id\"] }}/render"
+                            "value": "=Hi, here is the report card for {{ $node[\"Split Reports\"].json[\"studentName\"] }}. You can download the PDF and View it by clicking this link: https://viswam-reports-automation.netlify.app/api/reports/{{ $node[\"Split Reports\"].json[\"id\"] }}/render"
                         }
                     ]
                 },
@@ -140,7 +139,8 @@
             "position": [
                 1200,
                 400
-            ]
+            ],
+            "id": "send-whatsapp"
         },
         {
             "parameters": {
@@ -160,7 +160,8 @@
             "position": [
                 1400,
                 300
-            ]
+            ],
+            "id": "aggregate-ids"
         },
         {
             "parameters": {
@@ -183,7 +184,8 @@
             "position": [
                 1600,
                 300
-            ]
+            ],
+            "id": "mark-as-sent"
         }
     ],
     "connections": {
