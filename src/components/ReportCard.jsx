@@ -473,7 +473,7 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                     <div className="page-content">
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.4rem', marginBottom: '0.3rem' }}>
 
-                            {/* Participation - Gauge Style */}
+                            {/* Participation - Number Style */}
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                 <h3 style={{ fontSize: '1rem', margin: '0 0 0.3rem 0', color: primaryColor, borderLeft: `10px solid ${primaryColor}`, paddingLeft: '0.6rem' }}>Participation</h3>
                                 <div style={{
@@ -485,40 +485,13 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                                     height: '95px',
                                     display: 'flex',
                                     flexDirection: 'column',
+                                    alignItems: 'center',
                                     justifyContent: 'center'
                                 }}>
-                                    <div style={{ height: '80px', width: '100%', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <PieChart>
-                                                <Pie
-                                                    data={[{ value: 100 }]}
-                                                    cx="50%"
-                                                    cy="100%"
-                                                    startAngle={180}
-                                                    endAngle={0}
-                                                    innerRadius={50}
-                                                    outerRadius={70}
-                                                    fill={primaryColor}
-                                                    stroke="none"
-                                                    dataKey="value"
-                                                />
-                                            </PieChart>
-                                        </ResponsiveContainer>
-                                        <div style={{
-                                            position: 'absolute',
-                                            bottom: '0',
-                                            left: '0',
-                                            width: '100%',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            alignItems: 'center',
-                                            justifyContent: 'flex-end',
-                                            zIndex: 10
-                                        }}>
-                                            <div style={{ fontSize: '1.8rem', fontWeight: '900', color: primaryColor, lineHeight: '1.1' }}>{totalParticipated} / {totalRegistered}</div>
-                                            <div style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 'bold', marginTop: '0.1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Attendance</div>
-                                        </div>
+                                    <div style={{ fontSize: '2.6rem', fontWeight: '900', color: primaryColor, lineHeight: '1' }}>
+                                        {totalParticipated} <span style={{ fontSize: '1.6rem', color: '#64748B' }}>/ {totalRegistered}</span>
                                     </div>
+                                    <div style={{ fontSize: '0.8rem', color: '#64748B', fontWeight: 'bold', marginTop: '0.3rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Attendance</div>
                                 </div>
                             </div>
 
