@@ -90,14 +90,14 @@ const ReportViewer = () => {
         </div>
     );
 
-    // Format data for ReportCard
-    const studentDataList = allSchoolReports.map(r => ({
-        studentName: r.studentName,
-        rollNo: r.rollNo,
-        class: r.class,
-        reportData: r.reportData,
-        schoolName: r.schoolName || defaultSchool
-    }));
+    // Format data for ReportCard, safely checking if it is an array
+    const studentDataList = Array.isArray(allSchoolReports) ? allSchoolReports.map(r => ({
+        studentName: r?.studentName || 'Unknown Name',
+        rollNo: r?.rollNo || '-',
+        class: r?.class || '-',
+        reportData: r?.reportData || {},
+        schoolName: r?.schoolName || defaultSchool
+    })) : [];
 
     const finalSchoolName = report?.schoolName || defaultSchool;
     const finalAssessmentName = report?.assessmentName || defaultAssessment;

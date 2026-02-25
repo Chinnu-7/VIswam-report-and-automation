@@ -91,7 +91,19 @@ export const getReports = async (req, res) => {
         }
 
         const reports = await StudentReport.findAll({ where });
-        res.json(reports);
+        const parsedReports = reports.map(r => {
+            const data = r.get({ plain: true });
+            if (typeof data.reportData === 'string') {
+                try {
+                    data.reportData = JSON.parse(data.reportData);
+                } catch (e) {
+                    // Ignore parse errors safely
+                }
+            }
+            return data;
+        });
+
+        res.json(parsedReports);
     } catch (error) {
         console.error('Error fetching reports:', error);
         res.status(500).json({ message: 'Error fetching data' });
@@ -107,7 +119,16 @@ export const getReportById = async (req, res) => {
             return res.status(404).json({ message: 'Report not found' });
         }
 
-        res.json(report);
+        const data = report.get({ plain: true });
+        if (typeof data.reportData === 'string') {
+            try {
+                data.reportData = JSON.parse(data.reportData);
+            } catch (e) {
+                console.error("Failed to parse reportData string", e);
+            }
+        }
+
+        res.json(data);
     } catch (error) {
         console.error('Error fetching report:', error);
         res.status(500).json({ message: 'Error fetching report' });

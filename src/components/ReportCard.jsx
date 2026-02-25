@@ -3,9 +3,41 @@ import nsfLogo from '../assets/NSF logo 2.jpeg';
 import viswamLogo from '../assets/Viswam.png';
 import GradeCard from './GradeCard';
 import { Printer } from 'lucide-react';
+import React, { Component } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList, PieChart, Pie, Legend } from 'recharts';
 
-export default function ReportCard({ students, viewMode = 'principal', schoolName = 'Vignyan', assessmentName = 'Sodhana 1', qp = '' }) {
+class ErrorBoundary extends Component {
+    constructor(props) {
+        super(props);
+        this.state = { hasError: false, error: null };
+    }
+    static getDerivedStateFromError(error) {
+        return { hasError: true, error };
+    }
+    componentDidCatch(error, errorInfo) {
+        console.error("ErrorBoundary caught an error", error, errorInfo);
+    }
+    render() {
+        if (this.state.hasError) {
+            return <div style={{ padding: 20, color: 'red' }}>
+                <h2>Something went wrong in ReportCard.</h2>
+                <pre>{this.state.error && this.state.error.toString()}</pre>
+                <pre>{this.state.error && this.state.error.stack}</pre>
+            </div>;
+        }
+        return this.props.children;
+    }
+}
+
+export default function ReportCard(props) {
+    return (
+        <ErrorBoundary>
+            <ReportCardContent {...props} />
+        </ErrorBoundary>
+    );
+}
+
+function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vignyan', assessmentName = 'Sodhana 1', qp = '' }) {
     const primaryColor = '#1e3a8a'; // Navy Blue
     const accentColor = '#dc2626'; // Red 
 
