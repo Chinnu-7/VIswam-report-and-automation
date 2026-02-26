@@ -28,6 +28,8 @@ const User = db.define('user', {
         comment: 'Only for principal role'
     }
 }, {
+    tableName: 'Users',
+    freezeTableName: true,
     hooks: {
         beforeCreate: async (user) => {
             const salt = await bcrypt.genSalt(10);

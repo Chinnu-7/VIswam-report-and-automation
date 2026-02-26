@@ -333,13 +333,6 @@ const UploadPage = () => {
                                         <td className="px-6 py-4">
                                             <div className="flex justify-center gap-3">
                                                 <a
-                                                    href={`/report/${report.id}?view=student&school=${encodeURIComponent(schoolName)}&assessment=${encodeURIComponent(assessmentName)}&qp=${encodeURIComponent(qp || report.qp || '')}`}
-                                                    target="_blank"
-                                                    className="px-4 py-2 bg-indigo-50 text-indigo-600 rounded-lg font-bold hover:bg-indigo-100 transition-colors text-sm"
-                                                >
-                                                    Student View
-                                                </a>
-                                                <a
                                                     href={`/report/${report.id}?view=principal&school=${encodeURIComponent(schoolName)}&assessment=${encodeURIComponent(assessmentName)}&qp=${encodeURIComponent(qp || report.qp || '')}`}
                                                     target="_blank"
                                                     className="px-4 py-2 bg-teal-50 text-teal-600 rounded-lg font-bold hover:bg-teal-100 transition-colors text-sm"

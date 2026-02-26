@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/axios';
-import { CheckCircle, XCircle, Trash2, Search, Filter, AlertCircle, FileText, Upload, FileSpreadsheet, FileUp, RefreshCw, Eye, Download, LayoutDashboard } from 'lucide-react';
+import { CheckCircle, XCircle, Trash2, Search, Filter, AlertCircle, FileText, Upload, FileSpreadsheet, FileUp, RefreshCw, Download, LayoutDashboard } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import * as xlsx from 'xlsx';
 
@@ -470,14 +470,6 @@ const AdminDashboard = () => {
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex justify-center">
-                                            <Link
-                                                to={`/report/${report.id}?view=student&qp=${encodeURIComponent(report.qp || '')}`}
-                                                target="_blank"
-                                                className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"
-                                                title="Student Preview"
-                                            >
-                                                <Eye size={20} />
-                                            </Link>
                                             <Link
                                                 to={`/report/${report.id}?view=principal&qp=${encodeURIComponent(report.qp || '')}`}
                                                 target="_blank"

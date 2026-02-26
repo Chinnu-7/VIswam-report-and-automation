@@ -19,6 +19,9 @@ const SchoolInfo = db.define('school_info', {
         type: Sequelize.STRING,
         allowNull: true
     }
+}, {
+    tableName: 'SchoolInfos',
+    freezeTableName: true
 });
 
 export default SchoolInfo;

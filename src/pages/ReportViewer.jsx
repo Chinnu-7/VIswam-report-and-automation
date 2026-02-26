@@ -21,8 +21,8 @@ const ReportViewer = () => {
         headers: { Authorization: `Bearer ${userInfo.token}` }
     } : {};
 
-    // View state from URL or default
-    const [viewMode, setViewMode] = useState(queryParams.get('view') || 'student');
+    // Forcing view mode to principal 
+    const viewMode = 'principal';
     const defaultSchool = queryParams.get('school') || 'Vignyan';
     const defaultAssessment = queryParams.get('assessment') || 'Sodhana 1';
 
@@ -34,17 +34,13 @@ const ReportViewer = () => {
                 const mainReport = res.data;
                 setReport(mainReport);
 
-                // 2. If principal view, fetch all reports for this school and assessment
-                if (viewMode === 'principal') {
-                    let endpoint = `/reports?schoolId=${mainReport.schoolId}`;
-                    if (mainReport.assessmentName) {
-                        endpoint += `&assessmentName=${encodeURIComponent(mainReport.assessmentName)}`;
-                    }
-                    const allRes = await api.get(endpoint, config);
-                    setAllSchoolReports(allRes.data);
-                } else {
-                    setAllSchoolReports([mainReport]);
+                // 2. Since this is now always principal view, fetch all reports for this school and assessment
+                let endpoint = `/reports?schoolId=${mainReport.schoolId}`;
+                if (mainReport.assessmentName) {
+                    endpoint += `&assessmentName=${encodeURIComponent(mainReport.assessmentName)}`;
                 }
+                const allRes = await api.get(endpoint, config);
+                setAllSchoolReports(allRes.data);
 
                 setLoading(false);
             } catch (err) {
@@ -55,7 +51,7 @@ const ReportViewer = () => {
         };
 
         if (id) fetchData();
-    }, [id, viewMode]);
+    }, [id]);
 
     // Auto-print logic for downloads
     useEffect(() => {
@@ -117,24 +113,8 @@ const ReportViewer = () => {
 
                 <div className="flex flex-col items-center">
                     <h1 className="text-lg font-bold text-white tracking-wide">
-                        {viewMode === 'principal' ? finalSchoolName : report.studentName}
+                        {finalSchoolName}
                     </h1>
-                    {!isDownload && (
-                        <div className="flex items-center gap-2 mt-1">
-                            <button
-                                onClick={() => setViewMode('student')}
-                                className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${viewMode === 'student' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 border border-slate-700 hover:text-white'}`}
-                            >
-                                Student View
-                            </button>
-                            <button
-                                onClick={() => setViewMode('principal')}
-                                className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${viewMode === 'principal' ? 'bg-teal-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 border border-slate-700 hover:text-white'}`}
-                            >
-                                Principal View
-                            </button>
-                        </div>
-                    )}
                 </div>
 
                 <div className="flex items-center gap-3">

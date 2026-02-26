@@ -44,14 +44,28 @@ const StudentReport = db.define('student_report', {
         defaultValue: 'PENDING'
     },
     reportData: {
-        type: Sequelize.JSON,
+        type: Sequelize.TEXT('long'),
         allowNull: false,
+        get() {
+            const rawValue = this.getDataValue('reportData');
+            try {
+                return rawValue ? JSON.parse(rawValue) : {};
+            } catch (e) {
+                return rawValue || {};
+            }
+        },
+        set(value) {
+            this.setDataValue('reportData', JSON.stringify(value));
+        },
         comment: 'Stores M1-M15, E1-E15, S1-S15 and other calculated values'
     },
     isEmailSent: {
         type: Sequelize.BOOLEAN,
         defaultValue: false
     }
+}, {
+    tableName: 'StudentReports',
+    freezeTableName: true
 });
 
 export default StudentReport;
