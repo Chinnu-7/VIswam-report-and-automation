@@ -11,46 +11,37 @@ A full-stack application designed to automate the generation and distribution of
 - **Live Deployment**: Ready for Vercel with Supabase (PostgreSQL) support for permanent storage.
 - **Dockerized**: Entire stack (App + n8n) can be run with a single command.
 
-## Quick Start (Docker)
+## Quick Start
 
-The easiest way to run the project is using Docker Compose:
-
-1. **Prerequisites**: [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed.
-2. **Build and Start**:
+1. **Install Dependencies**:
    ```bash
-   docker-compose up --build -d
+   npm install
    ```
-3. **Access the App**:
-   - Frontend/API: `http://localhost:5000`
-   - n8n Automation: `http://localhost:5678`
+2. **Setup Environment**:
+   Create a `.env` file with your database credentials (see Deployment section).
+3. **Start Development**:
+   ```bash
+   npm.cmd run dev    # Frontend
+   npm.cmd run server # Backend
+   ```
 
-## Manual Local Setup
+## Production Deployment (Vercel)
 
-### 1. Backend & Frontend
-```bash
-# Install dependencies
-npm install
+The project is optimized for deployment via Vercel. Push your changes to GitHub and connect your repository to Vercel.
 
-# Build frontend
-npm run build
+### Required Environment Variables
+- `DB_HOST`: Your remote MySQL host.
+- `DB_NAME`: Database name.
+- `DB_USER`: Username.
+- `DB_PASS`: Password.
+- `N8N_WEBHOOK_URL`: Your n8n workflow webhook.
+- `APP_URL`: The public URL of your app (e.g., `https://viswam-reports.vercel.app`).
 
-# Start server
-node server/index.js
-```
-The app will be available at `http://localhost:5000`.
+## Automation (n8n)
 
-### 2. Automation (n8n)
-1. Install n8n: `npm install n8n -g`
-2. Start n8n: `npx n8n start`
-3. Import `n8n_workflow.json` from the root directory.
-4. Configure your Gmail App Password in the n8n Gmail node.
-
-## Production Configuration
-
-### Environment Variables
-For production (Vercel), set the following environment variables:
-- `DATABASE_URL`: Your Supabase/PostgreSQL connection string (required for persistence).
-- `NODE_ENV`: `production`
+1. Import `n8n_viswam_automation.json`.
+2. Configure environment variables in n8n (`CHROME_PATH`, `APP_URL`).
+3. Set up your Gmail credentials for delivery.
 
 ## Tech Stack
 - **Frontend**: React, Vite, Lucide-React, Recharts.
