@@ -31,15 +31,15 @@ if (dbUrl) {
     });
 
 } else {
-    const host = process.env.DB_HOST || 'localhost';
+    const host = (process.env.DB_HOST || 'localhost').trim();
     const useSSL = process.env.DB_SSL === 'true' || (host !== 'localhost' && !host.includes('freesqldatabase.com'));
 
     console.log(`Attempting MySQL connection to ${host}... (SSL: ${useSSL})`);
 
     sequelize = new Sequelize(
-        process.env.DB_NAME || 'viswam_reports',
-        process.env.DB_USER || 'root',
-        process.env.DB_PASS || '2500',
+        (process.env.DB_NAME || 'viswam_reports').trim(),
+        (process.env.DB_USER || 'root').trim(),
+        (process.env.DB_PASS || '2500').trim(),
         {
             host: host,
             port: process.env.DB_PORT || 3306,
