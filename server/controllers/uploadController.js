@@ -9,7 +9,7 @@ import fs from 'fs';
 // Helper to load answer key from file (e.g., SCERT 1.xlsx)
 const loadAnswerKey = (qp) => {
     if (!qp) return null;
-    const keyFile = path.resolve(`${qp}.xlsx`);
+    const keyFile = path.join(process.cwd(), `${qp}.xlsx`);
 
     if (!fs.existsSync(keyFile)) {
         console.log(`Answer Key file not found: ${keyFile}`);

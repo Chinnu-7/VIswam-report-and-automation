@@ -51,7 +51,7 @@
         },
         {
             "parameters": {
-                "command": "=${ $env[\"CHROME_PATH\"] || \"/usr/bin/chromium-browser\" } --headless --disable-gpu --print-to-pdf=\"/tmp/report_{{ $json[\"id\"] }}.pdf\" https://viswam-reports-automation.netlify.app/api/reports/{{ $json[\"id\"] }}/render"
+                "command": "=${ $env[\"CHROME_PATH\"] || \"/usr/bin/chromium-browser\" } --headless --disable-gpu --print-to-pdf=\"/tmp/report_{{ $json[\"id\"] }}.pdf\" {{ $env[\"APP_URL\"] || \"http://localhost:5000\" }}/api/reports/{{ $json[\"id\"] }}/render"
             },
             "name": "Generate PDF (Chrome)",
             "type": "n8n-nodes-base.executeCommand",
@@ -91,7 +91,7 @@
                     "parameters": [
                         {
                             "name": "ids",
-                            "value": "={{ $node[\"Aggregate IDs\"].json[\"ids\"] }}"
+                            "value": "={{ $node[\"Aggregate IDs\"].json[\"id\"] }}"
                         }
                     ]
                 },

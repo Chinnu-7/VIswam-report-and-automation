@@ -5,7 +5,7 @@ import path from 'path';
 // Helper to get base64 logo
 const getBase64Image = (fileName) => {
     try {
-        const filePath = path.resolve('src', 'assets', fileName);
+        const filePath = path.join(process.cwd(), 'src', 'assets', fileName);
         if (fs.existsSync(filePath)) {
 
 

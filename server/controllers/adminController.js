@@ -247,7 +247,7 @@ export const getAutomationQueue = async (req, res) => {
             }
         });
 
-        if (reports.length === 0) {
+        if (!reports || reports.length === 0) {
             return res.json([]);
         }
 
