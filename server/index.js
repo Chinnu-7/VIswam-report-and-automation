@@ -57,7 +57,12 @@ const initializeDb = async () => {
 
 // Health check (isolate from DB middleware) - No DB required
 app.get('/api', (req, res) => {
-    res.send('Viswam Report Card Automation API is running');
+    res.json({
+        message: 'Viswam Report Card Automation API is running',
+        dbInitialized: isDbInitialized,
+        version: 'v1.0.9-debug-db',
+        timestamp: new Date().toISOString()
+    });
 });
 
 // Middleware to ensure DB is ready - REQUIRED for all subsequent routes
