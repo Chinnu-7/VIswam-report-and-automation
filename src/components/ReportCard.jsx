@@ -305,7 +305,8 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                         box-shadow: none !important;
                         page-break-after: always !important;
                         break-after: always !important;
-                        min-height: 0 !important;
+                        position: relative !important;
+                        min-height: 277mm !important;
                     }
                     .page-content {
                         padding: 0 !important;
@@ -622,7 +623,7 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
             {
                 /* Helper to chunk the data */
                 (() => {
-                    const itemsPerPage = 25; // Increased to fill page
+                    const itemsPerPage = 20; // Decreased to fit A4 print page
                     const chunks = [];
                     if (studentData.length === 0) {
                         chunks.push([]);

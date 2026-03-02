@@ -101,7 +101,7 @@ const ReportViewer = () => {
     const isDownload = queryParams.get('download') === 'true';
 
     return (
-        <div className="min-h-screen bg-slate-800 flex flex-col">
+        <div className="min-h-screen bg-slate-800 flex flex-col print:bg-white">
             {/* Navbar for Viewer */}
             <div className="glass-nav sticky top-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-slate-700 text-white px-6 py-4 flex justify-between items-center shadow-lg no-print">
                 <Link to="/" className="flex items-center text-slate-400 hover:text-white transition group">
@@ -126,8 +126,8 @@ const ReportViewer = () => {
             </div>
 
             {/* Report Container */}
-            <div className="flex-1 overflow-auto p-4 flex justify-center">
-                <div className="shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="flex-1 overflow-auto p-4 print:p-0 flex justify-center print:block">
+                <div className="shadow-2xl print:shadow-none animate-in fade-in slide-in-from-bottom-4 duration-700">
                     <ReportCard
                         students={studentDataList}
                         viewMode={viewMode}
