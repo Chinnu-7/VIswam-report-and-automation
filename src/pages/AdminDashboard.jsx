@@ -125,30 +125,19 @@ const AdminDashboard = () => {
     };
 
     const downloadStudentTemplate = () => {
-        const headers = [
-            'Roll No', 'Student Name', 'Class', 'School Id',
-            'M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8', 'M9', 'M10', 'M11', 'M12', 'M13', 'M14', 'M15',
-            'S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10', 'S11', 'S12', 'S13', 'S14', 'S15',
-            'E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7', 'E8', 'E9', 'E10', 'E11', 'E12', 'E13', 'E14', 'E15'
-        ];
+        const row0 = ['', '', 'English', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 'Mathematics', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 'Science'];
 
-        const loDescriptions = [
-            'R.No', 'Name', 'Grade', 'SID',
-            'Math LO 1', 'Math LO 2', 'Math LO 3', 'Math LO 4', 'Math LO 5', 'Math LO 6', 'Math LO 7', 'Math LO 8', 'Math LO 9', 'Math LO 10', 'Math LO 11', 'Math LO 12', 'Math LO 13', 'Math LO 14', 'Math LO 15',
-            'Sci LO 1', 'Sci LO 2', 'Sci LO 3', 'Sci LO 4', 'Sci LO 5', 'Sci LO 6', 'Sci LO 7', 'Sci LO 8', 'Sci LO 9', 'Sci LO 10', 'Sci LO 11', 'Sci LO 12', 'Sci LO 13', 'Sci LO 14', 'Sci LO 15',
-            'Eng LO 1', 'Eng LO 2', 'Eng LO 3', 'Eng LO 4', 'Eng LO 5', 'Eng LO 6', 'Eng LO 7', 'Eng LO 8', 'Eng LO 9', 'Eng LO 10', 'Eng LO 11', 'Eng LO 12', 'Eng LO 13', 'Eng LO 14', 'Eng LO 15'
-        ];
+        const row1 = ['Student Id', 'PaperCode'];
+        for (let i = 1; i <= 15; i++) row1.push(i);
+        for (let i = 1; i <= 15; i++) row1.push(i);
+        for (let i = 1; i <= 15; i++) row1.push(i);
 
-        const sampleData = [
-            '101', 'John Doe', '7', 'SCHOOL001',
-            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-        ];
+        const sampleData = ['1001', 'SCERT 2'];
+        for (let i = 1; i <= 45; i++) sampleData.push('A'); // Sample answers
 
         const wb = xlsx.utils.book_new();
-        const ws = xlsx.utils.aoa_to_sheet([headers, loDescriptions, sampleData]);
-        xlsx.utils.book_append_sheet(wb, ws, "Student Data Template");
+        const ws = xlsx.utils.aoa_to_sheet([row0, row1, sampleData]);
+        xlsx.utils.book_append_sheet(wb, ws, "Grade 7");
         xlsx.writeFile(wb, "Viswam_Student_Template.xlsx");
     };
 

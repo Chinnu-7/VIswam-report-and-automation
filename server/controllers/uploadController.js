@@ -78,13 +78,13 @@ export const uploadStudentData = async (req, res) => {
         const sheet = workbook.Sheets[sheetName];
         const rows = xlsx.utils.sheet_to_json(sheet, { header: 1 });
 
-        if (!rows || rows.length < 3) {
-            return res.status(400).json({ message: 'Excel file must have header row (1), LO text row (2), and at least one student data row (3+).' });
-        }
-
         // --- DYNAMIC HEADER MAPPING ---
         const newFormatRow1 = rows[1] ? rows[1].map(h => String(h).toLowerCase().trim().replace(/\s+/g, ' ')) : [];
         const isFinalFormat = newFormatRow1.includes('papercode') || newFormatRow1.includes('student id');
+
+        if (!rows || rows.length < (isFinalFormat ? 2 : 3)) {
+            return res.status(400).json({ message: 'Excel file must have headers and at least one student data row.' });
+        }
 
         let headers = [];
         let dataStartIdx = 2;
@@ -107,7 +107,7 @@ export const uploadStudentData = async (req, res) => {
 
         const idxRollNo = getIndex(['roll no', 'roll number', 'rollno', 'r.no', 'roll_no', 'student id', 'stid']);
         let idxSchoolId = getIndex(['school id', 'school code', 'schoolid', 'school_id']);
-        const idxStudentName = getIndex(['student name', 'name', 'studentname', 'student', 'student_name', 'stname', 'student id']);
+        const idxStudentName = isFinalFormat ? idxRollNo : getIndex(['student name', 'name', 'studentname', 'student', 'student_name', 'stname', 'student id']);
         const idxClass = getIndex(['class', 'grade', 'standard', 'std']);
         const idxSchoolName = getIndex(['school name', 'schoolname', 'school']);
         const idxPaperCode = getIndex(['papercode', 'paper code']);
