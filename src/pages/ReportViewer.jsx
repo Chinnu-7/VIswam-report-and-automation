@@ -126,7 +126,7 @@ const ReportViewer = () => {
             </div>
 
             {/* Report Container */}
-            <div className="flex-1 overflow-auto p-4 flex justify-center bg-pattern">
+            <div className="flex-1 overflow-auto p-4 flex justify-center">
                 <div className="shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-700">
                     <ReportCard
                         students={studentDataList}

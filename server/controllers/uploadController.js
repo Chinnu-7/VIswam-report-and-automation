@@ -83,60 +83,67 @@ export const uploadStudentData = async (req, res) => {
         }
 
         // --- DYNAMIC HEADER MAPPING ---
-        // Normalize headers to handle case/trimming issues
-        const headers = rows[0].map(h => String(h).toLowerCase().trim().replace(/\s+/g, ' '));
+        const newFormatRow1 = rows[1] ? rows[1].map(h => String(h).toLowerCase().trim().replace(/\s+/g, ' ')) : [];
+        const isFinalFormat = newFormatRow1.includes('papercode') || newFormatRow1.includes('student id');
+
+        let headers = [];
+        let dataStartIdx = 2;
+        let loRowIdx = 1;
+
+        if (isFinalFormat) {
+            headers = newFormatRow1;
+            loRowIdx = -1; // No LO row
+            dataStartIdx = 2;
+        } else {
+            headers = rows[0].map(h => String(h).toLowerCase().trim().replace(/\s+/g, ' '));
+        }
+
         console.log('Detected Headers:', headers);
+        console.log('Is Final Format:', isFinalFormat);
 
         const getIndex = (possibleHeaders) => {
             return headers.findIndex(h => possibleHeaders.includes(h));
         };
 
-        const idxRollNo = getIndex(['roll no', 'roll number', 'rollno', 'r.no', 'roll_no']);
+        const idxRollNo = getIndex(['roll no', 'roll number', 'rollno', 'r.no', 'roll_no', 'student id', 'stid']);
         let idxSchoolId = getIndex(['school id', 'school code', 'schoolid', 'school_id']);
-        const idxStudentName = getIndex(['student name', 'name', 'studentname', 'student', 'student_name']);
+        const idxStudentName = getIndex(['student name', 'name', 'studentname', 'student', 'student_name', 'stname', 'student id']);
         const idxClass = getIndex(['class', 'grade', 'standard', 'std']);
         const idxSchoolName = getIndex(['school name', 'schoolname', 'school']);
+        const idxPaperCode = getIndex(['papercode', 'paper code']);
 
         // Score start indices using loose matching
-        const idxMathsStart = headers.findIndex(h => h.includes('math') || h.includes('m1') || h === 'q1');
-        const idxScienceStart = headers.findIndex(h => h.includes('science') || h.includes('s1') || h === 'q16');
-        const idxEnglishStart = headers.findIndex(h => h.includes('english') || h.includes('e1') || h === 'q31');
+        let idxMathsStart = -1;
+        let idxScienceStart = -1;
+        let idxEnglishStart = -1;
 
-        console.log('Detected Indices:', { idxRollNo, idxSchoolId, idxStudentName, idxClass, idxMathsStart, idxScienceStart, idxEnglishStart });
-
-        // New format detection: Q1-Q45
-        const isNewFormat = headers.includes('q1');
-        const idxAssessment = getIndex(['assessment']);
-        const idxType = getIndex(['type', 'qp']);
-
-        // Critical Column Check
-        const missingColumns = [];
-        if (!isNewFormat) {
-            if (idxRollNo === -1) missingColumns.push('Roll No');
-            if (idxStudentName === -1) missingColumns.push('Student Name');
+        if (isFinalFormat) {
+            // New format exact indexes based on string numbers
+            idxEnglishStart = headers.indexOf('1');
+            idxMathsStart = headers.indexOf('16');
+            idxScienceStart = headers.indexOf('31');
         } else {
-            // In new format, name is STNAME, roll no might be STID?
-            // Actually idxRollNo and idxStudentName will find STID/STNAME if mapping improved
+            idxMathsStart = headers.findIndex(h => h.includes('math') || h.includes('m1') || h === 'q1');
+            idxScienceStart = headers.findIndex(h => h.includes('science') || h.includes('s1') || h === 'q16');
+            idxEnglishStart = headers.findIndex(h => h.includes('english') || h.includes('e1') || h === 'q31');
         }
 
-        const idxSTID = getIndex(['stid', 'roll no', 'roll number']);
-        const idxSTNAME = getIndex(['stname', 'student name', 'name']);
+        console.log('Detected Indices:', { idxRollNo, idxSchoolId, idxStudentName, idxClass, idxMathsStart, idxScienceStart, idxEnglishStart, idxPaperCode });
 
-        const finalIdxRollNo = idxSTID !== -1 ? idxSTID : idxRollNo;
-        const finalIdxStudentName = idxSTNAME !== -1 ? idxSTNAME : idxStudentName;
+        // Critical Column Check
+        const finalIdxRollNo = idxRollNo;
+        const finalIdxStudentName = idxStudentName;
 
         if (finalIdxRollNo === -1 || finalIdxStudentName === -1) {
-            if (finalIdxRollNo === -1) missingColumns.push('STID/Roll No');
-            if (finalIdxStudentName === -1) missingColumns.push('STNAME/Student Name');
             return res.status(400).json({
-                message: `Could not find critical columns: ${missingColumns.join(', ')}. Please check your Excel headers.`,
+                message: `Could not find critical columns (Roll No/Student Id). Please check your Excel headers.`,
                 detectedHeaders: headers
             });
         }
         // ------------------------------
 
-        // Row 1 contains the full LO text descriptions
-        const loRow = rows[1];
+        // Row 1 contains the full LO text descriptions (only for old format)
+        const loRow = loRowIdx !== -1 ? rows[loRowIdx] : [];
 
         // Helper to extract LO mapping
         const getLoMapping = (start, count, prefix) => {
@@ -161,41 +168,68 @@ export const uploadStudentData = async (req, res) => {
             english: getLoMapping(eStart, 15, 'E')
         };
 
-        // ANSWER KEY LOGIC
-        let answerKey = null;
-        const { assessmentName, schoolName, qp } = req.body;
+        // EXTRACT METADATA FROM FILENAME AND SHEETNAME
+        const fileNameOriginal = req.file.originalname || '';
+        const fileNameParts = fileNameOriginal.replace(/\.[^/.]+$/, "").split('_');
 
-        // Try extracting embedded key from horizontal format first
-        if (isNewFormat) {
+        let extractedAssessment = null;
+        let extractedSchoolId = null;
+        let extractedYear = null;
+
+        if (fileNameParts.length >= 3) {
+            extractedAssessment = fileNameParts[0];
+            extractedSchoolId = fileNameParts[1];
+            extractedYear = fileNameParts[2];
+        }
+
+        const extractedGrade = sheetName.replace(/[^\d]/g, '');
+
+        // Fetch School Name from DB if we extracted a school ID
+        let dbSchoolName = null;
+        if (extractedSchoolId) {
+            try {
+                const schoolInfo = await SchoolInfo.findOne({ where: { schoolId: extractedSchoolId } });
+                if (schoolInfo) {
+                    dbSchoolName = schoolInfo.schoolName;
+                    console.log(`Matched extracted school ID ${extractedSchoolId} to ${dbSchoolName}`);
+                }
+            } catch (err) {
+                console.error("Error looking up school info:", err);
+            }
+        }
+
+        // ANSWER KEY LOGIC
+        // We will cache keys locally so we don't reload from disk for every student
+        const keyCache = {};
+        const globalQp = req.body.qp || null;
+        let globalAnswerKey = null;
+
+        // Try extracting embedded key from horizontal format first (legacy format check)
+        if (!isFinalFormat && getIndex(['q1']) !== -1) {
             const studentRow = rows.find(r => String(r[finalIdxStudentName] || '').trim().toUpperCase() === 'STUDENT');
             if (studentRow) {
-                answerKey = { maths: {}, science: {}, english: {} };
+                globalAnswerKey = { maths: {}, science: {}, english: {}, loDescriptions: { maths: {}, science: {}, english: {} } };
                 for (let j = 0; j < 15; j++) {
-                    answerKey.maths[j + 1] = String(studentRow[mStart + j] || '').trim().toUpperCase();
-                    answerKey.science[j + 1] = String(studentRow[sStart + j] || '').trim().toUpperCase();
-                    answerKey.english[j + 1] = String(studentRow[eStart + j] || '').trim().toUpperCase();
+                    globalAnswerKey.maths[j + 1] = String(studentRow[mStart + j] || '').trim().toUpperCase();
+                    globalAnswerKey.science[j + 1] = String(studentRow[sStart + j] || '').trim().toUpperCase();
+                    globalAnswerKey.english[j + 1] = String(studentRow[eStart + j] || '').trim().toUpperCase();
                 }
                 console.log('Loaded Embedded Answer Key from "STUDENT" row');
             }
         }
 
-        // If no embedded key, try loading external vertical key
-        if (!answerKey) {
-            answerKey = loadAnswerKey(qp);
-        }
-
-        // --- OVERRIDE LOs FROM EXTERNAL FILE ---
-        if (answerKey && answerKey.loDescriptions) {
-            Object.assign(loMapping.maths, answerKey.loDescriptions.maths);
-            Object.assign(loMapping.science, answerKey.loDescriptions.science);
-            Object.assign(loMapping.english, answerKey.loDescriptions.english);
-            console.log('Applied LO descriptions from external answer key file');
+        // If no embedded key and we have a global QP (e.g. all students have same paper), pre-load it
+        if (!globalAnswerKey && globalQp) {
+            globalAnswerKey = loadAnswerKey(globalQp);
+            if (globalAnswerKey) {
+                keyCache[globalQp] = globalAnswerKey;
+            }
         }
 
         const reportsToCreate = [];
         let skippedRows = 0;
 
-        for (let i = 2; i < rows.length; i++) {
+        for (let i = dataStartIdx; i < rows.length; i++) {
             const row = rows[i];
             if (!row || row.length === 0) continue;
 
@@ -206,12 +240,38 @@ export const uploadStudentData = async (req, res) => {
             if (isKeyRow) continue; // Already processed as answerKey
 
             // Allow flexibility if class column missing
-            const className = idxClass !== -1 ? String(row[idxClass] || '7').trim() : (req.body.grade || '7');
+            const className = extractedGrade || (idxClass !== -1 ? String(row[idxClass] || '7').trim() : (req.body.grade || '7'));
+            const studentQp = isFinalFormat && idxPaperCode !== -1 ? String(row[idxPaperCode] || '').trim() : globalQp;
 
             if (!rollNo || !studentName) {
                 skippedRows++;
                 if (skippedRows <= 3) console.log(`Skipping Row ${i + 1}: Missing RollNo or Name`, row);
                 continue;
+            }
+
+            // Determine Answer Key to use for this student
+            let studentAnswerKey = globalAnswerKey;
+            if (isFinalFormat && studentQp) {
+                if (!keyCache[studentQp]) {
+                    const loadedKey = loadAnswerKey(studentQp);
+                    if (loadedKey) {
+                        keyCache[studentQp] = loadedKey;
+                    }
+                }
+                studentAnswerKey = keyCache[studentQp] || null;
+            }
+
+            // --- OVERRIDE LOs FROM EXTERNAL FILE IF AVAILABLE ---
+            let studentLoMapping = {
+                maths: { ...loMapping.maths },
+                science: { ...loMapping.science },
+                english: { ...loMapping.english }
+            };
+
+            if (studentAnswerKey && studentAnswerKey.loDescriptions) {
+                Object.assign(studentLoMapping.maths, studentAnswerKey.loDescriptions.maths);
+                Object.assign(studentLoMapping.science, studentAnswerKey.loDescriptions.science);
+                Object.assign(studentLoMapping.english, studentAnswerKey.loDescriptions.english);
             }
 
             // Handle School ID Logic
@@ -221,12 +281,14 @@ export const uploadStudentData = async (req, res) => {
             // This prevents typos in the Excel sheet from detaching students.
             if (req.user && req.user.role === 'principal' && req.user.schoolId) {
                 schoolIdVal = req.user.schoolId;
+            } else if (extractedSchoolId) {
+                schoolIdVal = extractedSchoolId;
             } else if (idxSchoolId !== -1) {
                 schoolIdVal = String(row[idxSchoolId] || '').trim();
             } else if (idxSchoolName !== -1) {
                 schoolIdVal = String(row[idxSchoolName] || '').trim().toUpperCase();
             } else {
-                schoolIdVal = (schoolName || 'UNKNOWN_SCHOOL').toUpperCase();
+                schoolIdVal = (req.body.schoolName || 'UNKNOWN_SCHOOL').toUpperCase();
             }
 
             const mapScores = (startIdx, count, prefix, subjectKey) => {
@@ -236,8 +298,8 @@ export const uploadStudentData = async (req, res) => {
                     const qNum = j + 1;
 
                     // GRADING LOGIC: If answerKey exists, grade the response
-                    if (answerKey && answerKey[subjectKey] && answerKey[subjectKey][qNum]) {
-                        const correctAns = answerKey[subjectKey][qNum];
+                    if (studentAnswerKey && studentAnswerKey[subjectKey] && studentAnswerKey[subjectKey][qNum]) {
+                        const correctAns = studentAnswerKey[subjectKey][qNum];
                         const studentAns = String(val || '').trim().toUpperCase();
 
                         // If student data has A/B/C/D, grade it. If it's already 0/1, keep it.
@@ -264,9 +326,9 @@ export const uploadStudentData = async (req, res) => {
                 rollNo,
                 studentName,
                 schoolId: schoolIdVal,
-                schoolName,
-                assessmentName,
-                qp,
+                schoolName: dbSchoolName || req.body.schoolName || '',
+                assessmentName: extractedAssessment || req.body.assessmentName || 'Sodhana 1',
+                qp: studentQp || globalQp,
                 class: className,
                 reportData: {
                     maths: mathsScores,
@@ -275,7 +337,7 @@ export const uploadStudentData = async (req, res) => {
                     maths_score: calculatePercentage(mathsScores, 15),
                     science_score: calculatePercentage(scienceScores, 15),
                     english_score: calculatePercentage(englishScores, 15),
-                    lo_mapping: loMapping
+                    lo_mapping: studentLoMapping
                 },
                 status: 'PENDING'
             });
@@ -289,13 +351,16 @@ export const uploadStudentData = async (req, res) => {
             });
         }
 
-        console.log(`Preparing to delete existing reports for schoolId: ${reportsToCreate[0].schoolId}, assessment: ${assessmentName}`);
+        const finalAssessmentName = reportsToCreate[0].assessmentName;
+        const finalQp = reportsToCreate[0].qp || null;
+
+        console.log(`Preparing to delete existing reports for schoolId: ${reportsToCreate[0].schoolId}, assessment: ${finalAssessmentName}`);
         // CLEAR EXISTING DATA
         const deletedCount = await StudentReport.destroy({
             where: {
                 schoolId: reportsToCreate[0].schoolId,
-                assessmentName: assessmentName,
-                qp: qp || null
+                assessmentName: finalAssessmentName,
+                qp: finalQp
             }
         });
         console.log(`Deleted ${deletedCount} existing reports.`);
@@ -306,7 +371,7 @@ export const uploadStudentData = async (req, res) => {
 
         // TRIGGER AUTOMATIC RECALCULATION
         try {
-            await performRecalculate(reportsToCreate[0].schoolId, assessmentName, qp);
+            await performRecalculate(reportsToCreate[0].schoolId, finalAssessmentName, finalQp);
         } catch (err) {
             console.error('Auto-recalculate failed during upload:', err);
         }

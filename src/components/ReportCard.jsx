@@ -81,9 +81,9 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
 
     // Subject Colors
     const colors = {
-        english: '#4338ca',
-        maths: '#15803d',
-        science: '#b45309'
+        english: '#4f46e5', // Indigo
+        maths: '#0284c7',   // Blue
+        science: '#db2777'  // Pink
     };
 
     // Calculate Averages from Real Data - Explicitly using percentage scores
@@ -227,21 +227,24 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                     GRADING SCALE
                 </h4>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5mm' }}>
-                    {ranges.map((r, i) => (
-                        <div key={i} style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            padding: '1px 2px',
-                            borderRadius: '3px',
-                            backgroundColor: r.bg,
-                            border: `2px solid ${r.color}60`
-                        }}>
-                            <span style={{ fontWeight: 'bold', color: r.color, fontSize: '0.7rem' }}>{r.grade}</span>
-                            <span style={{ fontSize: '0.5rem', color: '#1e293b', fontWeight: '600' }}>{r.range}</span>
-                            <span style={{ fontSize: '0.45rem', color: '#475569', textAlign: 'center', lineHeight: '1' }}>{r.desc}</span>
-                        </div>
-                    ))}
+                    {ranges.map((r, i) => {
+                        const isWhiteText = r.grade === 'O'; // Dark background needs white text
+                        return (
+                            <div key={i} style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                padding: '1px 2px',
+                                borderRadius: '3px',
+                                backgroundColor: r.bg,
+                                border: `2px solid ${r.color}60`
+                            }}>
+                                <span style={{ fontWeight: 'bold', color: r.color, fontSize: '0.7rem' }}>{r.grade}</span>
+                                <span style={{ fontSize: '0.5rem', color: isWhiteText ? 'white' : '#1e293b', fontWeight: '600' }}>{r.range}</span>
+                                <span style={{ fontSize: '0.45rem', color: isWhiteText ? '#e2e8f0' : '#475569', textAlign: 'center', lineHeight: '1' }}>{r.desc}</span>
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
         );
@@ -619,7 +622,7 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
             {
                 /* Helper to chunk the data */
                 (() => {
-                    const itemsPerPage = 7; // Restored to 7
+                    const itemsPerPage = 25; // Increased to fill page
                     const chunks = [];
                     if (studentData.length === 0) {
                         chunks.push([]);
@@ -629,113 +632,230 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                         }
                     }
 
+                    const AttentionContent = () => (
+                        <>
+                            <h3 style={{ fontSize: '1rem', margin: '1rem 0 0.8rem 0', color: accentColor, borderLeft: `4px solid ${accentColor}`, paddingLeft: '0.5rem' }}>Students Needing Attention (Grade C & D)</h3>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', flex: 1 }}>
+                                {/* Overall Attention */}
+                                <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.5rem', display: 'flex', flexDirection: 'column' }}>
+                                    <h4 style={{ fontSize: '0.85rem', color: primaryColor, marginBottom: '0.5rem', fontWeight: 'bold', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.2rem' }}>Overall Performance</h4>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
+                                        <thead>
+                                            <tr style={{ backgroundColor: '#FFF1F2', color: '#991B1B', textAlign: 'left' }}>
+                                                <th style={{ padding: '0.4rem', borderBottom: '1px solid #FECACA' }}>Roll No</th>
+                                                <th style={{ padding: '0.4rem', borderBottom: '1px solid #FECACA' }}>Student Name</th>
+                                                <th style={{ padding: '0.4rem', borderBottom: '1px solid #FECACA' }}>Grade</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {studentData.filter(s => ['C', 'D'].includes(s.relative_grading?.overall?.grade)).map((student, idx) => (
+                                                <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                                                    <td style={{ padding: '0.4rem', color: '#64748B' }}>{student.rollNo}</td>
+                                                    <td style={{ padding: '0.4rem', fontWeight: '500' }}>{student.name}</td>
+                                                    <td style={{ padding: '0.4rem' }}>
+                                                        <span style={{ backgroundColor: getGradeBg(student.relative_grading?.overall?.grade), color: getGradeColor(student.relative_grading?.overall?.grade), padding: '1px 6px', borderRadius: '3px', fontWeight: 'bold', fontSize: '0.7rem' }}>
+                                                            {student.relative_grading?.overall?.grade}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* English Attention */}
+                                <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.5rem', display: 'flex', flexDirection: 'column' }}>
+                                    <h4 style={{ fontSize: '0.85rem', color: colors.english, marginBottom: '0.5rem', fontWeight: 'bold', borderBottom: `1px solid ${colors.english}20`, paddingBottom: '0.2rem' }}>English</h4>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
+                                        <thead>
+                                            <tr style={{ backgroundColor: `${colors.english}10`, color: colors.english, textAlign: 'left' }}>
+                                                <th style={{ padding: '0.4rem', borderBottom: `1px solid ${colors.english}20` }}>Roll No</th>
+                                                <th style={{ padding: '0.4rem', borderBottom: `1px solid ${colors.english}20` }}>Student Name</th>
+                                                <th style={{ padding: '0.4rem', borderBottom: `1px solid ${colors.english}20` }}>Grade</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {studentData.filter(s => ['C', 'D'].includes(s.relative_grading?.english?.grade)).map((student, idx) => (
+                                                <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                                                    <td style={{ padding: '0.4rem', color: '#64748B' }}>{student.rollNo}</td>
+                                                    <td style={{ padding: '0.4rem', fontWeight: '500' }}>{student.name}</td>
+                                                    <td style={{ padding: '0.4rem' }}>
+                                                        <span style={{ backgroundColor: getGradeBg(student.relative_grading?.english?.grade), color: getGradeColor(student.relative_grading?.english?.grade), padding: '1px 6px', borderRadius: '3px', fontWeight: 'bold', fontSize: '0.7rem' }}>
+                                                            {student.relative_grading?.english?.grade}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* Mathematics Attention */}
+                                <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.5rem', display: 'flex', flexDirection: 'column' }}>
+                                    <h4 style={{ fontSize: '0.85rem', color: colors.maths, marginBottom: '0.5rem', fontWeight: 'bold', borderBottom: `1px solid ${colors.maths}20`, paddingBottom: '0.2rem' }}>Mathematics</h4>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
+                                        <thead>
+                                            <tr style={{ backgroundColor: `${colors.maths}10`, color: colors.maths, textAlign: 'left' }}>
+                                                <th style={{ padding: '0.4rem', borderBottom: `1px solid ${colors.maths}20` }}>Roll No</th>
+                                                <th style={{ padding: '0.4rem', borderBottom: `1px solid ${colors.maths}20` }}>Student Name</th>
+                                                <th style={{ padding: '0.4rem', borderBottom: `1px solid ${colors.maths}20` }}>Grade</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {studentData.filter(s => ['C', 'D'].includes(s.relative_grading?.maths?.grade)).map((student, idx) => (
+                                                <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                                                    <td style={{ padding: '0.4rem', color: '#64748B' }}>{student.rollNo}</td>
+                                                    <td style={{ padding: '0.4rem', fontWeight: '500' }}>{student.name}</td>
+                                                    <td style={{ padding: '0.4rem' }}>
+                                                        <span style={{ backgroundColor: getGradeBg(student.relative_grading?.maths?.grade), color: getGradeColor(student.relative_grading?.maths?.grade), padding: '1px 6px', borderRadius: '3px', fontWeight: 'bold', fontSize: '0.7rem' }}>
+                                                            {student.relative_grading?.maths?.grade}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* Science Attention */}
+                                <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.5rem', display: 'flex', flexDirection: 'column' }}>
+                                    <h4 style={{ fontSize: '0.85rem', color: colors.science, marginBottom: '0.5rem', fontWeight: 'bold', borderBottom: `1px solid ${colors.science}20`, paddingBottom: '0.2rem' }}>Science</h4>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
+                                        <thead>
+                                            <tr style={{ backgroundColor: `${colors.science}10`, color: colors.science, textAlign: 'left' }}>
+                                                <th style={{ padding: '0.4rem', borderBottom: `1px solid ${colors.science}20` }}>Roll No</th>
+                                                <th style={{ padding: '0.4rem', borderBottom: `1px solid ${colors.science}20` }}>Student Name</th>
+                                                <th style={{ padding: '0.4rem', borderBottom: `1px solid ${colors.science}20` }}>Grade</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {studentData.filter(s => ['C', 'D'].includes(s.relative_grading?.science?.grade)).map((student, idx) => (
+                                                <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                                                    <td style={{ padding: '0.4rem', color: '#64748B' }}>{student.rollNo}</td>
+                                                    <td style={{ padding: '0.4rem', fontWeight: '500' }}>{student.name}</td>
+                                                    <td style={{ padding: '0.4rem' }}>
+                                                        <span style={{ backgroundColor: getGradeBg(student.relative_grading?.science?.grade), color: getGradeColor(student.relative_grading?.science?.grade), padding: '1px 6px', borderRadius: '3px', fontWeight: 'bold', fontSize: '0.7rem' }}>
+                                                            {student.relative_grading?.science?.grade}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </>
+                    );
+
                     return (
                         <>
-                            {chunks.map((chunk, pageIndex) => (
-                                <React.Fragment key={`principal-page-fragment-${pageIndex}`}>
-                                    <PageBreaker />
-                                    <div key={`principal-page-${pageIndex}`} className="page">
-                                        <div className="page-content">
-                                            <header style={{ borderBottom: `2px solid ${primaryColor}`, paddingBottom: '0.4rem', marginBottom: '1rem', textAlign: 'center' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '0.2rem' }}>
-                                                    <img src={fdrLogo} alt="FDR Logo" style={{ height: '50px', objectFit: 'contain' }} />
-                                                    <h1 style={{ margin: 0, color: primaryColor, fontSize: '1.2rem', fontWeight: 'bold', textTransform: 'uppercase' }}>
-                                                        Foundation for Democratic Reforms
-                                                    </h1>
-                                                </div>
-                                                <h2 style={{ fontSize: '1.1rem', margin: '0.5rem 0', fontWeight: '600', color: '#475569' }}>Student Performance Report</h2>
-                                            </header>
+                            {chunks.map((chunk, pageIndex) => {
+                                return (
+                                    <React.Fragment key={`principal-page-fragment-${pageIndex}`}>
+                                        <PageBreaker />
+                                        <div key={`principal-page-${pageIndex}`} className="page">
+                                            <div className="page-content">
+                                                <header style={{ borderBottom: `2px solid ${primaryColor}`, paddingBottom: '0.4rem', marginBottom: '1rem', textAlign: 'center' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '0.2rem' }}>
+                                                        <img src={fdrLogo} alt="FDR Logo" style={{ height: '50px', objectFit: 'contain' }} />
+                                                        <h1 style={{ margin: 0, color: primaryColor, fontSize: '1.2rem', fontWeight: 'bold', textTransform: 'uppercase' }}>
+                                                            Foundation for Democratic Reforms
+                                                        </h1>
+                                                    </div>
+                                                    <h2 style={{ fontSize: '1.1rem', margin: '0.5rem 0', fontWeight: '600', color: '#475569' }}>Student Performance Report</h2>
+                                                </header>
 
-                                            <h3 style={{ fontSize: '1rem', margin: '0 0 1rem 0', color: primaryColor, borderLeft: `4px solid ${primaryColor}`, paddingLeft: '0.5rem' }}>
-                                                Detailed Student Scores {chunks.length > 1 ? `(Page ${pageIndex + 1}/${chunks.length})` : ''}
-                                            </h3>
+                                                <h3 style={{ fontSize: '1rem', margin: '0 0 1rem 0', color: primaryColor, borderLeft: `4px solid ${primaryColor}`, paddingLeft: '0.5rem' }}>
+                                                    Detailed Student Scores {chunks.length > 1 ? `(Page ${pageIndex + 1}/${chunks.length})` : ''}
+                                                </h3>
 
-                                            <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', marginBottom: '1rem' }}>
-                                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-                                                    <thead>
-                                                        <tr style={{ backgroundColor: '#F1F5F9', color: '#1e293b', textAlign: 'left' }}>
-                                                            <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0' }}>Roll No</th>
-                                                            <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0' }}>Student Name</th>
-                                                            <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0', backgroundColor: '#FEF3C7' }}>Overall</th>
-                                                            <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0' }}>Eng Grade</th>
-                                                            <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0' }}>Math Grade</th>
-                                                            <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0' }}>Sci Grade</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {chunk.map((student, idx) => (
-                                                            <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                                                                <td style={{ padding: '0.6rem', fontSize: '0.75rem', color: '#64748B' }}>{student.rollNo}</td>
-                                                                <td style={{ padding: '0.6rem', fontWeight: '500' }}>{student.name}</td>
-                                                                <td style={{ padding: '0.6rem' }}>
-                                                                    <span style={{
-                                                                        backgroundColor: getGradeBg(student.relative_grading?.overall?.grade),
-                                                                        color: getGradeColor(student.relative_grading?.overall?.grade),
-                                                                        padding: '2px 8px',
-                                                                        borderRadius: '4px',
-                                                                        fontWeight: 'bold',
-                                                                        fontSize: '0.75rem',
-                                                                        border: `1px solid ${getGradeColor(student.relative_grading?.overall?.grade)}40`
-                                                                    }}>{student.relative_grading?.overall?.grade ?? '-'}</span>
-                                                                </td>
-                                                                <td style={{ padding: '0.6rem' }}>
-                                                                    <span style={{
-                                                                        backgroundColor: getGradeBg(student.relative_grading?.english?.grade),
-                                                                        color: getGradeColor(student.relative_grading?.english?.grade),
-                                                                        padding: '2px 8px',
-                                                                        borderRadius: '4px',
-                                                                        fontWeight: 'bold',
-                                                                        fontSize: '0.75rem',
-                                                                        border: `1px solid ${getGradeColor(student.relative_grading?.english?.grade)}40`
-                                                                    }}>{student.relative_grading?.english?.grade || '-'}</span>
-                                                                </td>
-                                                                <td style={{ padding: '0.6rem' }}>
-                                                                    <span style={{
-                                                                        backgroundColor: getGradeBg(student.relative_grading?.maths?.grade),
-                                                                        color: getGradeColor(student.relative_grading?.maths?.grade),
-                                                                        padding: '2px 8px',
-                                                                        borderRadius: '4px',
-                                                                        fontWeight: 'bold',
-                                                                        fontSize: '0.75rem',
-                                                                        border: `1px solid ${getGradeColor(student.relative_grading?.maths?.grade)}40`
-                                                                    }}>{student.relative_grading?.maths?.grade || '-'}</span>
-                                                                </td>
-                                                                <td style={{ padding: '0.6rem' }}>
-                                                                    <span style={{
-                                                                        backgroundColor: getGradeBg(student.relative_grading?.science?.grade),
-                                                                        color: getGradeColor(student.relative_grading?.science?.grade),
-                                                                        padding: '2px 8px',
-                                                                        borderRadius: '4px',
-                                                                        fontWeight: 'bold',
-                                                                        fontSize: '0.75rem',
-                                                                        border: `1px solid ${getGradeColor(student.relative_grading?.science?.grade)}40`
-                                                                    }}>{student.relative_grading?.science?.grade || '-'}</span>
-                                                                </td>
+                                                <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', marginBottom: '1rem' }}>
+                                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                                                        <thead>
+                                                            <tr style={{ backgroundColor: '#F1F5F9', color: '#1e293b', textAlign: 'left' }}>
+                                                                <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0' }}>Roll No</th>
+                                                                <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0' }}>Student Name</th>
+                                                                <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0', backgroundColor: '#FEF3C7' }}>Overall</th>
+                                                                <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0' }}>Eng Grade</th>
+                                                                <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0' }}>Math Grade</th>
+                                                                <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0' }}>Sci Grade</th>
                                                             </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
+                                                        </thead>
+                                                        <tbody>
+                                                            {chunk.map((student, idx) => (
+                                                                <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                                                                    <td style={{ padding: '0.6rem', fontSize: '0.75rem', color: '#64748B' }}>{student.rollNo}</td>
+                                                                    <td style={{ padding: '0.6rem', fontWeight: '500' }}>{student.name}</td>
+                                                                    <td style={{ padding: '0.6rem' }}>
+                                                                        <span style={{
+                                                                            backgroundColor: getGradeBg(student.relative_grading?.overall?.grade),
+                                                                            color: getGradeColor(student.relative_grading?.overall?.grade),
+                                                                            padding: '2px 8px',
+                                                                            borderRadius: '4px',
+                                                                            fontWeight: 'bold',
+                                                                            fontSize: '0.75rem',
+                                                                            border: `1px solid ${getGradeColor(student.relative_grading?.overall?.grade)}40`
+                                                                        }}>{student.relative_grading?.overall?.grade ?? '-'}</span>
+                                                                    </td>
+                                                                    <td style={{ padding: '0.6rem' }}>
+                                                                        <span style={{
+                                                                            backgroundColor: getGradeBg(student.relative_grading?.english?.grade),
+                                                                            color: getGradeColor(student.relative_grading?.english?.grade),
+                                                                            padding: '2px 8px',
+                                                                            borderRadius: '4px',
+                                                                            fontWeight: 'bold',
+                                                                            fontSize: '0.75rem',
+                                                                            border: `1px solid ${getGradeColor(student.relative_grading?.english?.grade)}40`
+                                                                        }}>{student.relative_grading?.english?.grade || '-'}</span>
+                                                                    </td>
+                                                                    <td style={{ padding: '0.6rem' }}>
+                                                                        <span style={{
+                                                                            backgroundColor: getGradeBg(student.relative_grading?.maths?.grade),
+                                                                            color: getGradeColor(student.relative_grading?.maths?.grade),
+                                                                            padding: '2px 8px',
+                                                                            borderRadius: '4px',
+                                                                            fontWeight: 'bold',
+                                                                            fontSize: '0.75rem',
+                                                                            border: `1px solid ${getGradeColor(student.relative_grading?.maths?.grade)}40`
+                                                                        }}>{student.relative_grading?.maths?.grade || '-'}</span>
+                                                                    </td>
+                                                                    <td style={{ padding: '0.6rem' }}>
+                                                                        <span style={{
+                                                                            backgroundColor: getGradeBg(student.relative_grading?.science?.grade),
+                                                                            color: getGradeColor(student.relative_grading?.science?.grade),
+                                                                            padding: '2px 8px',
+                                                                            borderRadius: '4px',
+                                                                            fontWeight: 'bold',
+                                                                            fontSize: '0.75rem',
+                                                                            border: `1px solid ${getGradeColor(student.relative_grading?.science?.grade)}40`
+                                                                        }}>{student.relative_grading?.science?.grade || '-'}</span>
+                                                                    </td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
                                             </div>
-                                        </div>
 
-                                        <div className="page-footer">
-                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
-                                                <span style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' }}>Assessment Partner</span>
-                                                <img src={nsfLogo} alt="NSF" style={{ height: '35px', objectFit: 'contain' }} />
-                                            </div>
-                                            <span style={{ fontSize: '0.7rem', color: '#94A3B8', fontWeight: 'bold' }}>Page {pageIndex + 2}</span>
-                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
-                                                <span style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' }}>Implementation Partner</span>
-                                                <img src={viswamLogo} alt="Viswam" style={{ height: '30px', objectFit: 'contain' }} />
+                                            <div className="page-footer">
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
+                                                    <span style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' }}>Assessment Partner</span>
+                                                    <img src={nsfLogo} alt="NSF" style={{ height: '35px', objectFit: 'contain' }} />
+                                                </div>
+                                                <span style={{ fontSize: '0.7rem', color: '#94A3B8', fontWeight: 'bold' }}>Page {pageIndex + 2}</span>
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                                                    <span style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' }}>Implementation Partner</span>
+                                                    <img src={viswamLogo} alt="Viswam" style={{ height: '30px', objectFit: 'contain' }} />
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </React.Fragment>
-                            ))}
-                            <PageBreaker />
-                            {/* The IIFE and conditional block continue to include the Students Needing Attention section */}
+                                    </React.Fragment>
+                                );
+                            })}
 
                             {/* Dedicated "Students Needing Attention" Page at the very end */}
+                            <PageBreaker />
                             <div className="page">
                                 <div className="page-content">
                                     <header style={{ borderBottom: `2px solid ${primaryColor}`, paddingBottom: '0.4rem', marginBottom: '1rem', textAlign: 'center' }}>
@@ -747,117 +867,7 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                                         </div>
                                     </header>
 
-                                    <h3 style={{ fontSize: '1rem', margin: '1rem 0 0.8rem 0', color: accentColor, borderLeft: `4px solid ${accentColor}`, paddingLeft: '0.5rem' }}>Students Needing Attention (Grade C & D)</h3>
-
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', flex: 1 }}>
-                                        {/* Overall Attention */}
-                                        <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.5rem', display: 'flex', flexDirection: 'column' }}>
-                                            <h4 style={{ fontSize: '0.85rem', color: primaryColor, marginBottom: '0.5rem', fontWeight: 'bold', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.2rem' }}>Overall Performance</h4>
-                                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
-                                                <thead>
-                                                    <tr style={{ backgroundColor: '#FFF1F2', color: '#991B1B', textAlign: 'left' }}>
-                                                        <th style={{ padding: '0.4rem', borderBottom: '1px solid #FECACA' }}>Roll No</th>
-                                                        <th style={{ padding: '0.4rem', borderBottom: '1px solid #FECACA' }}>Student Name</th>
-                                                        <th style={{ padding: '0.4rem', borderBottom: '1px solid #FECACA' }}>Grade</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {studentData.filter(s => ['C', 'D'].includes(s.relative_grading?.overall?.grade)).map((student, idx) => (
-                                                        <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                                                            <td style={{ padding: '0.4rem', color: '#64748B' }}>{student.rollNo}</td>
-                                                            <td style={{ padding: '0.4rem', fontWeight: '500' }}>{student.name}</td>
-                                                            <td style={{ padding: '0.4rem' }}>
-                                                                <span style={{ backgroundColor: getGradeBg(student.relative_grading?.overall?.grade), color: getGradeColor(student.relative_grading?.overall?.grade), padding: '1px 6px', borderRadius: '3px', fontWeight: 'bold', fontSize: '0.7rem' }}>
-                                                                    {student.relative_grading?.overall?.grade}
-                                                                </span>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-
-                                        {/* English Attention */}
-                                        <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.5rem', display: 'flex', flexDirection: 'column' }}>
-                                            <h4 style={{ fontSize: '0.85rem', color: colors.english, marginBottom: '0.5rem', fontWeight: 'bold', borderBottom: `1px solid ${colors.english}20`, paddingBottom: '0.2rem' }}>English</h4>
-                                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
-                                                <thead>
-                                                    <tr style={{ backgroundColor: `${colors.english}10`, color: colors.english, textAlign: 'left' }}>
-                                                        <th style={{ padding: '0.4rem', borderBottom: `1px solid ${colors.english}20` }}>Roll No</th>
-                                                        <th style={{ padding: '0.4rem', borderBottom: `1px solid ${colors.english}20` }}>Student Name</th>
-                                                        <th style={{ padding: '0.4rem', borderBottom: `1px solid ${colors.english}20` }}>Grade</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {studentData.filter(s => ['C', 'D'].includes(s.relative_grading?.english?.grade)).map((student, idx) => (
-                                                        <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                                                            <td style={{ padding: '0.4rem', color: '#64748B' }}>{student.rollNo}</td>
-                                                            <td style={{ padding: '0.4rem', fontWeight: '500' }}>{student.name}</td>
-                                                            <td style={{ padding: '0.4rem' }}>
-                                                                <span style={{ backgroundColor: getGradeBg(student.relative_grading?.english?.grade), color: getGradeColor(student.relative_grading?.english?.grade), padding: '1px 6px', borderRadius: '3px', fontWeight: 'bold', fontSize: '0.7rem' }}>
-                                                                    {student.relative_grading?.english?.grade}
-                                                                </span>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-
-                                        {/* Mathematics Attention */}
-                                        <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.5rem', display: 'flex', flexDirection: 'column' }}>
-                                            <h4 style={{ fontSize: '0.85rem', color: colors.maths, marginBottom: '0.5rem', fontWeight: 'bold', borderBottom: `1px solid ${colors.maths}20`, paddingBottom: '0.2rem' }}>Mathematics</h4>
-                                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
-                                                <thead>
-                                                    <tr style={{ backgroundColor: `${colors.maths}10`, color: colors.maths, textAlign: 'left' }}>
-                                                        <th style={{ padding: '0.4rem', borderBottom: `1px solid ${colors.maths}20` }}>Roll No</th>
-                                                        <th style={{ padding: '0.4rem', borderBottom: `1px solid ${colors.maths}20` }}>Student Name</th>
-                                                        <th style={{ padding: '0.4rem', borderBottom: `1px solid ${colors.maths}20` }}>Grade</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {studentData.filter(s => ['C', 'D'].includes(s.relative_grading?.maths?.grade)).map((student, idx) => (
-                                                        <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                                                            <td style={{ padding: '0.4rem', color: '#64748B' }}>{student.rollNo}</td>
-                                                            <td style={{ padding: '0.4rem', fontWeight: '500' }}>{student.name}</td>
-                                                            <td style={{ padding: '0.4rem' }}>
-                                                                <span style={{ backgroundColor: getGradeBg(student.relative_grading?.maths?.grade), color: getGradeColor(student.relative_grading?.maths?.grade), padding: '1px 6px', borderRadius: '3px', fontWeight: 'bold', fontSize: '0.7rem' }}>
-                                                                    {student.relative_grading?.maths?.grade}
-                                                                </span>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-
-                                        {/* Science Attention */}
-                                        <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.5rem', display: 'flex', flexDirection: 'column' }}>
-                                            <h4 style={{ fontSize: '0.85rem', color: colors.science, marginBottom: '0.5rem', fontWeight: 'bold', borderBottom: `1px solid ${colors.science}20`, paddingBottom: '0.2rem' }}>Science</h4>
-                                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
-                                                <thead>
-                                                    <tr style={{ backgroundColor: `${colors.science}10`, color: colors.science, textAlign: 'left' }}>
-                                                        <th style={{ padding: '0.4rem', borderBottom: `1px solid ${colors.science}20` }}>Roll No</th>
-                                                        <th style={{ padding: '0.4rem', borderBottom: `1px solid ${colors.science}20` }}>Student Name</th>
-                                                        <th style={{ padding: '0.4rem', borderBottom: `1px solid ${colors.science}20` }}>Grade</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {studentData.filter(s => ['C', 'D'].includes(s.relative_grading?.science?.grade)).map((student, idx) => (
-                                                        <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                                                            <td style={{ padding: '0.4rem', color: '#64748B' }}>{student.rollNo}</td>
-                                                            <td style={{ padding: '0.4rem', fontWeight: '500' }}>{student.name}</td>
-                                                            <td style={{ padding: '0.4rem' }}>
-                                                                <span style={{ backgroundColor: getGradeBg(student.relative_grading?.science?.grade), color: getGradeColor(student.relative_grading?.science?.grade), padding: '1px 6px', borderRadius: '3px', fontWeight: 'bold', fontSize: '0.7rem' }}>
-                                                                    {student.relative_grading?.science?.grade}
-                                                                </span>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
+                                    <AttentionContent />
                                 </div>
 
                                 <div className="page-footer">
