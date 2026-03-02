@@ -191,7 +191,7 @@ const UploadPage = () => {
                     Viswam Report Portal
                 </h1>
                 <p className="text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed">
-                    Upload student data and generate detailed report cards for both Students and Principals.
+                    Upload student data and generate a detailed School Performance Report.
                 </p>
             </div>
 
@@ -337,7 +337,7 @@ const UploadPage = () => {
                                                     target="_blank"
                                                     className="px-4 py-2 bg-teal-50 text-teal-600 rounded-lg font-bold hover:bg-teal-100 transition-colors text-sm"
                                                 >
-                                                    Principal View
+                                                    View School Report
                                                 </a>
                                             </div>
                                         </td>
