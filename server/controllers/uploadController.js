@@ -241,7 +241,16 @@ export const uploadStudentData = async (req, res) => {
 
             // Allow flexibility if class column missing
             const className = extractedGrade || (idxClass !== -1 ? String(row[idxClass] || '7').trim() : (req.body.grade || '7'));
-            const studentQp = isFinalFormat && idxPaperCode !== -1 ? String(row[idxPaperCode] || '').trim() : globalQp;
+
+            // Map numeric paper codes to Excel filenames
+            const paperCodeMap = {
+                '1': 'SCERT 1',
+                '2': 'SCERT 2',
+                '3': 'NCERT 3',
+                '4': 'NCERT 4'
+            };
+            let rawQp = isFinalFormat && idxPaperCode !== -1 ? String(row[idxPaperCode] || '').trim() : globalQp;
+            const studentQp = paperCodeMap[rawQp] || rawQp;
 
             if (!rollNo || !studentName) {
                 skippedRows++;
