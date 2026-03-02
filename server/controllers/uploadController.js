@@ -5,11 +5,15 @@ import * as xlsx from 'xlsx';
 import { performRecalculate } from './adminController.js';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Helper to load answer key from file (e.g., SCERT 1.xlsx)
 const loadAnswerKey = (qp) => {
     if (!qp) return null;
-    const keyFile = path.join(process.cwd(), `${qp}.xlsx`);
+    const keyFile = path.resolve(__dirname, '../../', `${qp}.xlsx`);
 
     if (!fs.existsSync(keyFile)) {
         console.log(`Answer Key file not found: ${keyFile}`);
