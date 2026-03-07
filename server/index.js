@@ -46,7 +46,8 @@ const initializeDb = async () => {
             // This is much safer and faster
             await User.sync();
             await SchoolInfo.sync();
-            console.log('Database connection validated');
+            await StudentReport.sync();
+            console.log('Database connection and all tables validated');
         }
 
         await seedAdmin();
@@ -79,11 +80,10 @@ app.use(async (req, res, next) => {
     }, 5000);
 
     try {
-        // Enforce a strict 3-second timeout so Vercel doesn't kill the request 
-        // before our login bypass can activate
+        // Increase timeout to 8 seconds for the first Supabase connection/sync
         await Promise.race([
             initializeDb(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('DB_TIMEOUT')), 3000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('DB_TIMEOUT')), 8000))
         ]);
         clearTimeout(timeout);
         next();

@@ -2,6 +2,7 @@ import StudentReport from '../models/StudentReport.js';
 import SchoolInfo from '../models/SchoolInfo.js';
 import User from '../models/User.js';
 import axios from 'axios';
+import sequelize from '../config/database.js';
 import puppeteerCore from 'puppeteer-core';
 import chromium from '@sparticuz/chromium';
 import FormData from 'form-data';
@@ -449,6 +450,17 @@ export const updateSchoolsBatch = async (req, res) => {
     const { schools } = req.body; // Array of { schoolId, schoolName, principalEmail, whatsappNo }
     if (!schools || !Array.isArray(schools)) {
         return res.status(400).json({ message: 'Invalid schools data' });
+    }
+
+    // Safety check: Ensure DB is actually connected before bulk operations
+    try {
+        await sequelize.authenticate();
+    } catch (dbError) {
+        console.error('Sync failed: Database not reachable:', dbError.message);
+        return res.status(503).json({
+            message: 'Database connection failed. Please try again in 10 seconds while the database wakes up.',
+            error: dbError.message
+        });
     }
 
     try {
