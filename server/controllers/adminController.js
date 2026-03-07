@@ -457,23 +457,43 @@ export const updateSchoolsBatch = async (req, res) => {
             conflictAttributes: ['schoolId']
         });
 
-        // Also ensure user accounts exist for these principals
-        for (const school of schools) {
-            const [user, created] = await User.findOrCreate({
-                where: { email: school.principalEmail },
-                defaults: {
-                    password: `${school.schoolId}@123`,
+        // OPTIMIZED: Bulk Check/Create Users to avoid Vercel timeouts (10s limit)
+        const emails = schools.map(s => s.principalEmail).filter(Boolean);
+        const existingUsers = await User.findAll({
+            where: { email: { [Op.in]: emails } },
+            attributes: ['email']
+        });
+        const existingEmailsSet = new Set(existingUsers.map(u => u.email.toLowerCase()));
+
+        const newUsersToHash = schools.filter(school =>
+            school.principalEmail && !existingEmailsSet.has(school.principalEmail.toLowerCase())
+        );
+
+        let newUsersCreatedCount = 0;
+        if (newUsersToHash.length > 0) {
+            const bcrypt = (await import('bcryptjs' + '')).default;
+            const salt = await bcrypt.genSalt(10);
+
+            console.log(`Hashing and bulk creating ${newUsersToHash.length} new principal accounts...`);
+
+            const newUsersData = await Promise.all(newUsersToHash.map(async (school) => {
+                const hashedPassword = await bcrypt.hash(`${school.schoolId}@123`, salt);
+                return {
+                    email: school.principalEmail.toLowerCase(),
+                    password: hashedPassword,
                     role: 'principal',
                     schoolId: school.schoolId
-                }
-            });
-            if (!created) {
-                user.schoolId = school.schoolId;
-                await user.save();
-            }
+                };
+            }));
+
+            await User.bulkCreate(newUsersData);
+            newUsersCreatedCount = newUsersData.length;
         }
 
-        res.json({ message: `Successfully synced ${schools.length} schools from Google Sheets` });
+        res.json({
+            message: `Successfully synced ${schools.length} schools and ensures ${newUsersCreatedCount} principal accounts are ready.`,
+            count: schools.length
+        });
     } catch (error) {
         console.error('Error syncing schools:', error);
 
