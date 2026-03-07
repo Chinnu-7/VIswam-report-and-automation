@@ -8,7 +8,8 @@ let sequelize;
 const dbUrl = process.env.DATABASE_URL || process.env.NETLIFY_DATABASE_URL;
 
 
-if (dbUrl) {
+// FORCE SQLITE FOR NOW DUE TO BROKEN MYSQL
+if (false && dbUrl) {
     console.log('Using DATABASE_URL for connection');
     const isPostgres = dbUrl.startsWith('postgres');
 
