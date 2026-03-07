@@ -70,6 +70,22 @@ app.get('/api', (req, res) => {
         version: 'v1.1.0-optimized',
         timestamp: new Date().toISOString()
     });
+
+    // Debug route to see the EXACT DB error (helpful for credentials/DNS checks)
+    app.get('/api/debug-db', async (req, res) => {
+        try {
+            await sequelize.authenticate();
+            res.json({ success: true, message: 'Database connection authenticated successfully' });
+        } catch (err) {
+            res.status(500).json({
+                success: false,
+                error: err.message,
+                name: err.name,
+                code: err.original ? err.original.code : null,
+                stack: err.stack
+            });
+        }
+    });
 });
 
 // Middleware to ensure DB is ready - REQUIRED for all subsequent routes
