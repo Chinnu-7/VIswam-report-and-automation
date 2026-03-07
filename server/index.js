@@ -90,9 +90,9 @@ app.use(async (req, res, next) => {
     } catch (err) {
         clearTimeout(timeout);
         console.error('Middleware Error:', err.message);
-        // FORCE BYPASS for Authentication Route so the admin fallback works
-        if (req.path.includes('/auth/login')) {
-            console.log('Bypassing DB check for login route');
+        // FORCE BYPASS for Authentication and Sync Routes so the admin fallback works
+        if (req.path.includes('/auth/login') || req.path.includes('/schools/sync') || req.path.includes('/reports/sync-external')) {
+            console.log('Bypassing DB check for bypassed route:', req.path);
             return next();
         }
         res.status(503).json({ message: 'Database initialization failed', error: err.message });
