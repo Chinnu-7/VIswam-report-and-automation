@@ -9,13 +9,18 @@ export const protect = async (req, res, next) => {
             token = req.headers.authorization.split(' ')[1];
             const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret123');
 
-            req.user = await User.findByPk(decoded.id, {
-                attributes: { exclude: ['password'] }
-            });
+            // OFFLINE BYPASS: If the ID is the hardcoded fallback admin, don't query the DB
+            if (decoded.id === 99999 || decoded.id === '99999') {
+                req.user = { id: 99999, email: 'admin@viswam.com', role: 'admin', schoolId: null };
+            } else {
+                req.user = await User.findByPk(decoded.id, {
+                    attributes: { exclude: ['password'] }
+                });
 
-            if (!req.user) {
-                console.error(`Auth Error: User not found for ID ${decoded.id}`);
-                return res.status(401).json({ message: 'Not authorized, user not found' });
+                if (!req.user) {
+                    console.error(`Auth Error: User not found for ID ${decoded.id}`);
+                    return res.status(401).json({ message: 'Not authorized, user not found' });
+                }
             }
 
             next();
