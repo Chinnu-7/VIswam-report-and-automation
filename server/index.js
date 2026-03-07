@@ -90,8 +90,8 @@ app.use(async (req, res, next) => {
     } catch (err) {
         clearTimeout(timeout);
         console.error('Middleware Error:', err.message);
-        // FORCE BYPASS for Authentication and Sync Routes so the admin fallback works
-        if (req.path.includes('/auth/login') || req.path.includes('/schools/sync') || req.path.includes('/reports/sync-external')) {
+        // FORCE BYPASS for Authentication, Sync, and Dashboard Routes so the admin fallback works
+        if (req.path.includes('/auth/login') || req.path.includes('/schools') || req.path.includes('/reports')) {
             console.log('Bypassing DB check for bypassed route:', req.path);
             return next();
         }
