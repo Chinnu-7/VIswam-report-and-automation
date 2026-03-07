@@ -176,17 +176,27 @@ export const uploadStudentData = async (req, res) => {
         const fileNameOriginal = req.file.originalname || '';
         const fileNameParts = fileNameOriginal.replace(/\.[^/.]+$/, "").split('_');
 
+        // NEW: Also check sheet name for the same format: Assessment_Schoolcode_AcadamicYear
+        const sheetNameParts = sheetName.split('_');
+
         let extractedAssessment = null;
         let extractedSchoolId = null;
         let extractedYear = null;
 
-        if (fileNameParts.length >= 3) {
+        // Prioritize Sheet Name if it has at least 3 parts
+        if (sheetNameParts.length >= 3) {
+            extractedAssessment = sheetNameParts[0];
+            extractedSchoolId = sheetNameParts[1];
+            extractedYear = sheetNameParts[2];
+            console.log(`Extracted metadata from sheet name: ${extractedAssessment}, ${extractedSchoolId}, ${extractedYear}`);
+        } else if (fileNameParts.length >= 3) {
             extractedAssessment = fileNameParts[0];
             extractedSchoolId = fileNameParts[1];
             extractedYear = fileNameParts[2];
+            console.log(`Extracted metadata from file name: ${extractedAssessment}, ${extractedSchoolId}, ${extractedYear}`);
         }
 
-        const extractedGrade = sheetName.replace(/[^\d]/g, '');
+        const extractedGrade = sheetName.replace(/[^\d]/g, '').slice(0, 1); // Extract only the first digit as grade if possible
 
         // Fetch School Name from DB if we extracted a school ID
         let dbSchoolName = null;
@@ -282,9 +292,22 @@ export const uploadStudentData = async (req, res) => {
             };
 
             if (studentAnswerKey && studentAnswerKey.loDescriptions) {
-                Object.assign(studentLoMapping.maths, studentAnswerKey.loDescriptions.maths);
-                Object.assign(studentLoMapping.science, studentAnswerKey.loDescriptions.science);
-                Object.assign(studentLoMapping.english, studentAnswerKey.loDescriptions.english);
+                const mergeLOs = (target, source, subj) => {
+                    if (!source) return;
+                    let mergedCount = 0;
+                    for (const [key, value] of Object.entries(source)) {
+                        if (value && String(value).trim() !== '' && !String(value).includes('(No Description)')) {
+                            target[key] = value;
+                            mergedCount++;
+                        }
+                    }
+                    if (mergedCount > 0) {
+                        console.log(`Merged ${mergedCount} LO descriptions for ${subj} from answer key`);
+                    }
+                };
+                mergeLOs(studentLoMapping.maths, studentAnswerKey.loDescriptions.maths, 'maths');
+                mergeLOs(studentLoMapping.science, studentAnswerKey.loDescriptions.science, 'science');
+                mergeLOs(studentLoMapping.english, studentAnswerKey.loDescriptions.english, 'english');
             }
 
             // Handle School ID Logic

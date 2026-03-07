@@ -12,6 +12,7 @@ const ReportViewer = () => {
 
     const [report, setReport] = useState(null);
     const [allSchoolReports, setAllSchoolReports] = useState([]);
+    const [schoolInfo, setSchoolInfo] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
@@ -42,6 +43,14 @@ const ReportViewer = () => {
                 const allRes = await api.get(endpoint, config);
                 setAllSchoolReports(allRes.data);
 
+                // 3. Fetch school info for registered/participated stats
+                try {
+                    const schoolRes = await api.get(`/schools/${mainReport.schoolId}`, config);
+                    setSchoolInfo(schoolRes.data);
+                } catch (e) {
+                    console.error("School info fetch failed", e);
+                }
+
                 setLoading(false);
             } catch (err) {
                 console.error(err);
@@ -71,7 +80,7 @@ const ReportViewer = () => {
         </div>
     );
 
-    if (error || !report) return (
+    if (error || (!loading && !report)) return (
         <div className="flex h-screen items-center justify-center flex-col gap-6 bg-slate-50 text-slate-500">
             <div className="p-6 bg-white rounded-2xl shadow-xl border border-slate-100 flex flex-col items-center">
                 <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4">
@@ -126,14 +135,15 @@ const ReportViewer = () => {
             </div>
 
             {/* Report Container */}
-            <div className="flex-1 overflow-auto p-4 print:p-0 flex justify-center print:block">
-                <div className="shadow-2xl print:shadow-none animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="flex-1 overflow-auto p-4 print:p-0 print:block">
+                <div className="shadow-2xl print:shadow-none animate-in fade-in slide-in-from-bottom-4 duration-700 w-fit mx-auto">
                     <ReportCard
                         students={studentDataList}
                         viewMode={viewMode}
                         schoolName={finalSchoolName}
                         assessmentName={finalAssessmentName}
                         qp={finalQp}
+                        schoolInfo={schoolInfo}
                     />
                 </div>
             </div>

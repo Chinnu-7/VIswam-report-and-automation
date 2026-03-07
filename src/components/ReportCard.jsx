@@ -134,8 +134,12 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
             .sort((a, b) => isStrength ? b.avgScore - a.avgScore : a.avgScore - b.avgScore)
             .slice(0, limit)
             .map(({ code, avgScore }) => {
-                const text = mapping[code] || code;
-                return `${text}`;
+                const text = mapping[code];
+                // If it's the fallback "(No Description)", just use the code
+                if (!text || text.includes('(No Description)')) {
+                    return code.toUpperCase();
+                }
+                return text;
             });
     };
 
@@ -164,15 +168,11 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                 }}>
                     {isStrength ? '✅ Strengths' : '⚠️ Areas for Development (AOD)'}
                 </h5>
-                <ul style={{ margin: 0, paddingLeft: '1rem', listStyleType: 'disc', fontSize: '0.65rem', color: '#334155' }}>
+                <ul style={{ margin: 0, paddingLeft: '1.2rem', listStyleType: 'disc', fontSize: '0.65rem', color: '#334155' }}>
                     {items.map((item, idx) => {
-                        const parts = item.split(/[:]/);
-                        const text = parts[0];
-                        const score = parts[1] || '';
                         return (
-                            <li key={idx} style={{ marginBottom: '0.1rem', paddingLeft: '0.2rem' }}>
-                                <span>{text}</span>
-                                {score && <span style={{ fontWeight: 'bold', color: isStrength ? '#166534' : '#b45309', fontSize: '0.65rem', marginLeft: '0.2rem' }}>{score}</span>}
+                            <li key={idx} style={{ marginBottom: '0.1rem', paddingLeft: '0.1rem' }}>
+                                <span>{item}</span>
                             </li>
                         );
                     })}
@@ -391,232 +391,463 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
 
             {/* PRINCIPAL VIEW: School Overview */}
             {viewMode === 'principal' && (
-                <div className="page">
-                    {/* Header */}
-                    <header style={{
-                        borderBottom: `2px solid ${primaryColor} `,
-                        paddingBottom: '0.1rem',
-                        marginBottom: '0.2rem',
-                        textAlign: 'center',
-                        position: 'relative' // Added for absolute positioning of print button
-                    }}>
-                        {/* Print Button - Moved to Header */}
-                        <button
-                            onClick={handlePrint}
-                            style={{
-                                position: 'absolute',
-                                top: '0',
-                                right: '0',
+                <>
+                    <div className="page">
+                        {/* Header */}
+                        <header style={{
+                            borderBottom: `2px solid ${primaryColor} `,
+                            paddingBottom: '0.1rem',
+                            marginBottom: '0.2rem',
+                            textAlign: 'center',
+                            position: 'relative'
+                        }}>
+                            {/* Print Button */}
+                            <button
+                                onClick={handlePrint}
+                                style={{
+                                    position: 'absolute',
+                                    top: '0',
+                                    right: '0',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.4rem',
+                                    padding: '0.4rem 0.8rem',
+                                    backgroundColor: '#F1F5F9',
+                                    color: primaryColor,
+                                    borderRadius: '6px',
+                                    cursor: 'pointer',
+                                    border: `1px solid ${primaryColor}`,
+                                    fontSize: '0.8rem',
+                                    fontWeight: '600',
+                                    transition: 'all 0.2s ease'
+                                }}
+                                className="no-print hover-lift"
+                                title="Print Report"
+                            >
+                                <Printer size={14} />
+                                Print
+                            </button>
+
+                            <div style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '0.4rem',
-                                padding: '0.4rem 0.8rem',
-                                backgroundColor: '#F1F5F9', // Subtle background
-                                color: primaryColor,
-                                borderRadius: '6px',
-                                cursor: 'pointer',
-                                border: `1px solid ${primaryColor}`,
-                                fontSize: '0.8rem',
-                                fontWeight: '600',
-                                transition: 'all 0.2s ease'
-                            }}
-                            className="no-print hover-lift"
-                            title="Print Report"
-                        >
-                            <Printer size={14} />
-                            Print
-                        </button>
-
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '1rem',
-                            marginBottom: '0.2rem'
-                        }}>
-                            <img
-                                src={fdrLogo}
-                                alt="FDR Logo"
-                                style={{ height: '60px', objectFit: 'contain' }}
-                            />
-                            <h1 style={{
-                                margin: 0,
-                                color: primaryColor,
-                                fontSize: '1.4rem',
-                                fontWeight: 'bold',
-                                textTransform: 'uppercase',
-                                lineHeight: '1.2'
+                                justifyContent: 'center',
+                                gap: '1rem',
+                                marginBottom: '0.2rem'
                             }}>
-                                Foundation for Democratic Reforms <span style={{ fontSize: '1.1rem', color: accentColor, fontWeight: '600' }}>(FDR)</span>
-                            </h1>
-                        </div>
-                        <h2 style={{ fontSize: '1.1rem', margin: '0.2rem 0', fontWeight: '600', color: '#475569' }}>
-                            School Performance Report
-                        </h2>
-
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'center',
-                            gap: '0.4rem',
-                            fontSize: '0.8rem',
-                            color: '#64748B',
-                            marginTop: '0.1rem',
-                            flexWrap: 'wrap'
-                        }}>
-                            <span><strong>School:</strong> {schoolName}</span>
-                            <span>•</span>
-                            <span><strong>Assessment:</strong> {qp || assessmentName || 'PSA PILOT'}</span>
-                            <span>•</span>
-                            <span><strong>Date:</strong> 06 JAN 2026</span>
-                            <span>•</span>
-                            <span><strong>Grade:</strong> {studentData[0]?.grade || 7}</span>
-                        </div>
-                    </header>
-
-                    {/* Overview Section */}
-                    <div className="page-content">
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.4rem', marginBottom: '0.3rem' }}>
-
-                            {/* Participation - Number Style */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                <h3 style={{ fontSize: '1rem', margin: '0 0 0.3rem 0', color: primaryColor, borderLeft: `10px solid ${primaryColor}`, paddingLeft: '0.6rem' }}>Participation</h3>
-                                <div style={{
-                                    backgroundColor: '#F8FAFC',
-                                    borderRadius: '8px',
-                                    padding: '0.4rem',
-                                    border: '2px solid #E2E8F0',
-                                    textAlign: 'center',
-                                    height: '95px',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
+                                <img
+                                    src={fdrLogo}
+                                    alt="FDR Logo"
+                                    style={{ height: '60px', objectFit: 'contain' }}
+                                />
+                                <h1 style={{
+                                    margin: 0,
+                                    color: primaryColor,
+                                    fontSize: '1.4rem',
+                                    fontWeight: 'bold',
+                                    textTransform: 'uppercase',
+                                    lineHeight: '1.2'
                                 }}>
-                                    <div style={{ fontSize: '2.6rem', fontWeight: '900', color: primaryColor, lineHeight: '1' }}>
-                                        {totalParticipated} <span style={{ fontSize: '1.6rem', color: '#64748B' }}>/ {totalRegistered}</span>
+                                    Foundation for Democratic Reforms <span style={{ fontSize: '1.1rem', color: accentColor, fontWeight: '600' }}>(FDR)</span>
+                                </h1>
+                            </div>
+                            <h2 style={{ fontSize: '1.1rem', margin: '0.2rem 0', fontWeight: '600', color: '#475569' }}>
+                                School Performance Report
+                            </h2>
+
+                            <div style={{
+                                display: 'flex',
+                                justifyContent: 'center',
+                                gap: '0.4rem',
+                                fontSize: '0.8rem',
+                                color: '#64748B',
+                                marginTop: '0.1rem',
+                                flexWrap: 'wrap'
+                            }}>
+                                <span><strong>School:</strong> {schoolName}</span>
+                                <span>•</span>
+                                <span><strong>Assessment:</strong> {assessmentName}{qp ? ` - ${qp}` : ''}</span>
+                                <span>•</span>
+                                <span><strong>Date:</strong> 06 JAN 2026</span>
+                                <span>•</span>
+                                <span><strong>Grade:</strong> {studentData[0]?.grade || 7}</span>
+                            </div>
+                        </header>
+
+                        {/* Overview Section */}
+                        <div className="page-content">
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.4rem', marginBottom: '0.3rem' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                    <h3 style={{ fontSize: '1rem', margin: '0 0 0.3rem 0', color: primaryColor, borderLeft: `10px solid ${primaryColor}`, paddingLeft: '0.6rem' }}>Participation</h3>
+                                    <div style={{
+                                        backgroundColor: '#F8FAFC',
+                                        borderRadius: '8px',
+                                        padding: '0.4rem',
+                                        border: '2px solid #E2E8F0',
+                                        textAlign: 'center',
+                                        height: '95px',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}>
+                                        <div style={{ fontSize: '2.6rem', fontWeight: '900', color: primaryColor, lineHeight: '1' }}>
+                                            {totalParticipated} <span style={{ fontSize: '1.6rem', color: '#64748B' }}>/ {totalRegistered}</span>
+                                        </div>
+                                        <div style={{ fontSize: '0.8rem', color: '#64748B', fontWeight: 'bold', marginTop: '0.3rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Attendance</div>
                                     </div>
-                                    <div style={{ fontSize: '0.8rem', color: '#64748B', fontWeight: 'bold', marginTop: '0.3rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Attendance</div>
+                                </div>
+                                <div>
+                                    <h3 style={{ fontSize: '1rem', margin: '0 0 0.5rem 0', color: primaryColor, borderLeft: `10px solid ${primaryColor}`, paddingLeft: '0.6rem' }}>Overall Grade Distribution</h3>
+                                    <div style={{
+                                        border: '2px solid #e2e8f0',
+                                        borderRadius: '8px',
+                                        height: '95px',
+                                        backgroundColor: 'white',
+                                        padding: '0.1rem'
+                                    }}>
+                                        {(() => {
+                                            const gradeDistribution = studentData.reduce((acc, curr) => {
+                                                const grade = curr.relative_grading?.overall?.grade || 'D';
+                                                acc[grade] = (acc[grade] || 0) + 1;
+                                                return acc;
+                                            }, {});
+
+                                            const distributionData = [
+                                                { grade: 'O', count: gradeDistribution['O'] || 0, color: '#15803d' },
+                                                { grade: 'A+', count: gradeDistribution['A+'] || 0, color: '#15803d' },
+                                                { grade: 'A', count: gradeDistribution['A'] || 0, color: '#15803d' },
+                                                { grade: 'B+', count: gradeDistribution['B+'] || 0, color: '#15803d' },
+                                                { grade: 'B', count: gradeDistribution['B'] || 0, color: '#ea580c' },
+                                                { grade: 'C+', count: gradeDistribution['C+'] || 0, color: '#ea580c' },
+                                                { grade: 'C', count: gradeDistribution['C'] || 0, color: '#ea580c' },
+                                                { grade: 'D', count: gradeDistribution['D'] || 0, color: '#dc2626' }
+                                            ];
+
+                                            return (
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <BarChart
+                                                        data={distributionData}
+                                                        margin={{ top: 25, right: 10, left: -20, bottom: 0 }}
+                                                        style={{ pointerEvents: 'none' }}
+                                                    >
+                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                                        <XAxis dataKey="grade" tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
+                                                        <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                                                        <Bar dataKey="count" radius={[4, 4, 0, 0]} barSize={35} legendType="none" isAnimationActive={false}>
+                                                            <LabelList dataKey="count" position="top" fontSize={12} fontWeight="bold" />
+                                                            {
+                                                                distributionData.map((entry, index) => (
+                                                                    <Cell key={`cell-${index}`} fill={entry.color} />
+                                                                ))
+                                                            }
+                                                        </Bar>
+                                                    </BarChart>
+                                                </ResponsiveContainer>
+                                            );
+                                        })()}
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* Student Performance Breakdown - Grade Distribution Graph */}
                             <div>
-                                <h3 style={{ fontSize: '1rem', margin: '0 0 0.5rem 0', color: primaryColor, borderLeft: `10px solid ${primaryColor}`, paddingLeft: '0.6rem' }}>Overall Grade Distribution</h3>
-                                <div style={{
-                                    border: '2px solid #e2e8f0',
-                                    borderRadius: '8px',
-                                    height: '95px',
-                                    backgroundColor: 'white',
-                                    padding: '0.1rem'
-                                }}>
-                                    {(() => {
-                                        const gradeDistribution = studentData.reduce((acc, curr) => {
-                                            const grade = curr.relative_grading?.overall?.grade || 'D';
-                                            acc[grade] = (acc[grade] || 0) + 1;
-                                            return acc;
-                                        }, {});
-
-                                        const distributionData = [
-                                            { grade: 'O', count: gradeDistribution['O'] || 0, color: '#15803d' },
-                                            { grade: 'A+', count: gradeDistribution['A+'] || 0, color: '#15803d' },
-                                            { grade: 'A', count: gradeDistribution['A'] || 0, color: '#15803d' },
-                                            { grade: 'B+', count: gradeDistribution['B+'] || 0, color: '#15803d' },
-                                            { grade: 'B', count: gradeDistribution['B'] || 0, color: '#ea580c' },
-                                            { grade: 'C+', count: gradeDistribution['C+'] || 0, color: '#ea580c' },
-                                            { grade: 'C', count: gradeDistribution['C'] || 0, color: '#ea580c' },
-                                            { grade: 'D', count: gradeDistribution['D'] || 0, color: '#dc2626' }
-                                        ];
-
-                                        return (
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <BarChart
-                                                    data={distributionData}
-                                                    margin={{ top: 25, right: 10, left: -20, bottom: 0 }}
-                                                    style={{ pointerEvents: 'none' }}
-                                                >
-                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                                    <XAxis dataKey="grade" tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
-                                                    <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} allowDecimals={false} />
-                                                    <Bar dataKey="count" radius={[4, 4, 0, 0]} barSize={35} legendType="none" isAnimationActive={false}>
-                                                        <LabelList dataKey="count" position="top" fontSize={12} fontWeight="bold" />
-                                                        {
-                                                            distributionData.map((entry, index) => (
-                                                                <Cell key={`cell-${index}`} fill={entry.color} />
-                                                            ))
-                                                        }
-                                                    </Bar>
-                                                </BarChart>
-                                            </ResponsiveContainer>
-                                        );
-                                    })()}
+                                <h3 style={{ fontSize: '1rem', margin: '0 0 0.5rem 0', color: primaryColor, borderLeft: `10px solid ${primaryColor}`, paddingLeft: '0.6rem' }}>Focus Areas & Remarks</h3>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', alignItems: 'start' }}>
+                                    <div>
+                                        <div style={{ textAlign: 'center', marginBottom: '0.4rem', paddingBottom: '0.2rem', borderBottom: `10px solid ${colors.english}` }}>
+                                            <h4 style={{ margin: 0, color: colors.english, textTransform: 'uppercase', fontSize: '0.8rem' }}>English</h4>
+                                        </div>
+                                        <div style={{ border: '1px solid #F1F5F9', borderRadius: '8px', padding: '0.4rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+                                            {renderTopicList('✅ Strengths', englishStrengths, colors.english, true)}
+                                            {englishStrengths.length > 0 && englishImprovements.length > 0 && <div style={{ height: '0.3rem' }}></div>}
+                                            {renderTopicList('⚠️ Areas for Development (AOD)', englishImprovements, colors.english, false)}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div style={{ textAlign: 'center', marginBottom: '0.4rem', paddingBottom: '0.2rem', borderBottom: `10px solid ${colors.maths}` }}>
+                                            <h4 style={{ margin: 0, color: colors.maths, textTransform: 'uppercase', fontSize: '0.8rem' }}>Mathematics</h4>
+                                        </div>
+                                        <div style={{ border: '1px solid #F1F5F9', borderRadius: '8px', padding: '0.4rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+                                            {renderTopicList('✅ Strengths', mathStrengths, colors.maths, true)}
+                                            {mathStrengths.length > 0 && mathImprovements.length > 0 && <div style={{ height: '0.3rem' }}></div>}
+                                            {renderTopicList('⚠️ Areas for Development (AOD)', mathImprovements, colors.maths, false)}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div style={{ textAlign: 'center', marginBottom: '0.4rem', paddingBottom: '0.2rem', borderBottom: `10px solid ${colors.science}` }}>
+                                            <h4 style={{ margin: 0, color: colors.science, textTransform: 'uppercase', fontSize: '0.8rem' }}>Science</h4>
+                                        </div>
+                                        <div style={{ border: '1px solid #F1F5F9', borderRadius: '8px', padding: '0.4rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+                                            {renderTopicList('✅ Strengths', scienceStrengths, colors.science, true)}
+                                            {scienceStrengths.length > 0 && scienceImprovements.length > 0 && <div style={{ height: '0.3rem' }}></div>}
+                                            {renderTopicList('⚠️ Areas for Development (AOD)', scienceImprovements, colors.science, false)}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-
-                        </div>
-
-                        {/* Focus Areas */}
-                        <div>
-                            <h3 style={{ fontSize: '1rem', margin: '0 0 0.5rem 0', color: primaryColor, borderLeft: `10px solid ${primaryColor}`, paddingLeft: '0.6rem' }}>Focus Areas & Remarks</h3>
-
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', alignItems: 'start' }}>
-
-                                {/* English */}
-                                <div>
-                                    <div style={{ textAlign: 'center', marginBottom: '0.4rem', paddingBottom: '0.2rem', borderBottom: `10px solid ${colors.english}` }}>
-                                        <h4 style={{ margin: 0, color: colors.english, textTransform: 'uppercase', fontSize: '0.8rem' }}>English</h4>
-                                    </div>
-                                    <div style={{ border: '1px solid #F1F5F9', borderRadius: '8px', padding: '0.4rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-                                        {renderTopicList('✅ Strengths', englishStrengths, colors.english, true)}
-                                        {englishStrengths.length > 0 && englishImprovements.length > 0 && <div style={{ height: '0.3rem' }}></div>}
-                                        {renderTopicList('⚠️ Areas for Development (AOD)', englishImprovements, colors.english, false)}
-                                    </div>
-                                </div>
-
-                                {/* Math */}
-                                <div>
-                                    <div style={{ textAlign: 'center', marginBottom: '0.4rem', paddingBottom: '0.2rem', borderBottom: `10px solid ${colors.maths}` }}>
-                                        <h4 style={{ margin: 0, color: colors.maths, textTransform: 'uppercase', fontSize: '0.8rem' }}>Mathematics</h4>
-                                    </div>
-                                    <div style={{ border: '1px solid #F1F5F9', borderRadius: '8px', padding: '0.4rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-                                        {renderTopicList('✅ Strengths', mathStrengths, colors.maths, true)}
-                                        {mathStrengths.length > 0 && mathImprovements.length > 0 && <div style={{ height: '0.3rem' }}></div>}
-                                        {renderTopicList('⚠️ Areas for Development (AOD)', mathImprovements, colors.maths, false)}
-                                    </div>
-                                </div>
-
-                                {/* Science */}
-                                <div>
-                                    <div style={{ textAlign: 'center', marginBottom: '0.4rem', paddingBottom: '0.2rem', borderBottom: `10px solid ${colors.science}` }}>
-                                        <h4 style={{ margin: 0, color: colors.science, textTransform: 'uppercase', fontSize: '0.8rem' }}>Science</h4>
-                                    </div>
-                                    <div style={{ border: '1px solid #F1F5F9', borderRadius: '8px', padding: '0.4rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-                                        {renderTopicList('✅ Strengths', scienceStrengths, colors.science, true)}
-                                        {scienceStrengths.length > 0 && scienceImprovements.length > 0 && <div style={{ height: '0.3rem' }}></div>}
-                                        {renderTopicList('⚠️ Areas for Development (AOD)', scienceImprovements, colors.science, false)}
-                                    </div>
-                                </div>
-
+                            <div style={{ marginTop: 'auto' }}>
+                                <RelativeGradingTable compact={true} />
                             </div>
                         </div>
 
-                        {/* Relative Grading Key in Principal Overview */}
-                        <div style={{ marginTop: 'auto' }}>
-                            <RelativeGradingTable compact={true} />
+                        <div className="page-footer">
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
+                                <span style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' }}>Assessment Partner</span>
+                                <img src={nsfLogo} alt="NSF" style={{ height: '35px', objectFit: 'contain' }} />
+                            </div>
+                            <span style={{ fontSize: '0.7rem', color: '#94A3B8', fontWeight: 'bold' }}>Page 1</span>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                                <span style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' }}>Implementation Partner</span>
+                                <img src={viswamLogo} alt="Viswam" style={{ height: '30px', objectFit: 'contain' }} />
+                            </div>
                         </div>
                     </div>
 
-                    <div className="page-footer">
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
-                            <span style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' }}>Assessment Partner</span>
-                            <img src={nsfLogo} alt="NSF" style={{ height: '35px', objectFit: 'contain' }} />
+                    {/* Detailed Student Scores Pages */}
+                    {(() => {
+                        const studentsPerPage = 15;
+                        const pages = [];
+                        for (let i = 0; i < studentData.length; i += studentsPerPage) {
+                            pages.push(studentData.slice(i, i + studentsPerPage));
+                        }
+
+                        return pages.map((pageStudents, pageIndex) => (
+                            <React.Fragment key={pageIndex}>
+                                <PageBreaker />
+                                <div className="page">
+                                    <div className="page-content">
+                                        <header style={{ borderBottom: `2px solid ${primaryColor}`, paddingBottom: '0.4rem', marginBottom: '1rem', textAlign: 'center' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '0.2rem' }}>
+                                                <img src={fdrLogo} alt="FDR Logo" style={{ height: '50px', objectFit: 'contain' }} />
+                                                <h1 style={{ margin: 0, color: primaryColor, fontSize: '1.2rem', fontWeight: 'bold', textTransform: 'uppercase' }}>
+                                                    Foundation for Democratic Reforms
+                                                </h1>
+                                            </div>
+                                            <h2 style={{ fontSize: '1rem', margin: '0.2rem 0', fontWeight: 'bold', color: '#475569' }}>
+                                                Detailed Student Scores (Page {pageIndex + 1}/{pages.length})
+                                            </h2>
+                                        </header>
+
+                                        <div style={{ border: '2px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
+                                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
+                                                <thead>
+                                                    <tr style={{ backgroundColor: '#EDF2F7', color: primaryColor, textAlign: 'left' }}>
+                                                        <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0' }}>Roll No</th>
+                                                        <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0' }}>Student Name</th>
+                                                        <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0', backgroundColor: '#FEF3C7' }}>Overall</th>
+                                                        <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0' }}>Eng Grade</th>
+                                                        <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0' }}>Math Grade</th>
+                                                        <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0' }}>Sci Grade</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {pageStudents.map((student, idx) => (
+                                                        <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                                            <td style={{ padding: '0.6rem', color: '#64748B' }}>{student.rollNo}</td>
+                                                            <td style={{ padding: '0.6rem', fontWeight: '600' }}>{student.name}</td>
+                                                            <td style={{ padding: '0.6rem', backgroundColor: '#FFFBEB' }}>
+                                                                <span style={{
+                                                                    backgroundColor: getGradeBg(student.relative_grading?.overall?.grade),
+                                                                    color: getGradeColor(student.relative_grading?.overall?.grade),
+                                                                    padding: '2px 8px',
+                                                                    borderRadius: '4px',
+                                                                    fontWeight: 'bold',
+                                                                    fontSize: '0.75rem'
+                                                                }}>{student.relative_grading?.overall?.grade || '-'}</span>
+                                                            </td>
+                                                            <td style={{ padding: '0.6rem' }}>
+                                                                <span style={{
+                                                                    backgroundColor: getGradeBg(student.relative_grading?.english?.grade),
+                                                                    color: getGradeColor(student.relative_grading?.english?.grade),
+                                                                    padding: '2px 8px',
+                                                                    borderRadius: '4px',
+                                                                    fontWeight: 'bold',
+                                                                    fontSize: '0.75rem'
+                                                                }}>{student.relative_grading?.english?.grade || '-'}</span>
+                                                            </td>
+                                                            <td style={{ padding: '0.6rem' }}>
+                                                                <span style={{
+                                                                    backgroundColor: getGradeBg(student.relative_grading?.maths?.grade),
+                                                                    color: getGradeColor(student.relative_grading?.maths?.grade),
+                                                                    padding: '2px 8px',
+                                                                    borderRadius: '4px',
+                                                                    fontWeight: 'bold',
+                                                                    fontSize: '0.75rem'
+                                                                }}>{student.relative_grading?.maths?.grade || '-'}</span>
+                                                            </td>
+                                                            <td style={{ padding: '0.6rem' }}>
+                                                                <span style={{
+                                                                    backgroundColor: getGradeBg(student.relative_grading?.science?.grade),
+                                                                    color: getGradeColor(student.relative_grading?.science?.grade),
+                                                                    padding: '2px 8px',
+                                                                    borderRadius: '4px',
+                                                                    fontWeight: 'bold',
+                                                                    fontSize: '0.75rem'
+                                                                }}>{student.relative_grading?.science?.grade || '-'}</span>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <div className="page-footer">
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
+                                            <span style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' }}>Assessment Partner</span>
+                                            <img src={nsfLogo} alt="NSF" style={{ height: '35px', objectFit: 'contain' }} />
+                                        </div>
+                                        <span style={{ fontSize: '0.7rem', color: '#94A3B8', fontWeight: 'bold' }}>Page {pageIndex + 2}</span>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                                            <span style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' }}>Implementation Partner</span>
+                                            <img src={viswamLogo} alt="Viswam" style={{ height: '30px', objectFit: 'contain' }} />
+                                        </div>
+                                    </div>
+                                </div>
+                            </React.Fragment>
+                        ));
+                    })()}
+
+                    {/* Dedicated "Students Needing Attention" Page */}
+                    <PageBreaker />
+                    <div className="page">
+                        <div className="page-content">
+                            <header style={{ borderBottom: `2px solid ${primaryColor}`, paddingBottom: '0.4rem', marginBottom: '1rem', textAlign: 'center' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '0.2rem' }}>
+                                    <img src={fdrLogo} alt="FDR Logo" style={{ height: '50px', objectFit: 'contain' }} />
+                                    <h1 style={{ margin: 0, color: primaryColor, fontSize: '1.2rem', fontWeight: 'bold', textTransform: 'uppercase' }}>
+                                        Foundation for Democratic Reforms
+                                    </h1>
+                                </div>
+                                <h2 style={{ fontSize: '1rem', margin: '0.2rem 0', fontWeight: 'bold', color: accentColor }}>
+                                    Students Needing Attention (Grade C & D)
+                                </h2>
+                            </header>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                {/* Overall Performance Attention */}
+                                <div style={{ border: '2px solid #e2e8f0', borderRadius: '8px', padding: '0.6rem' }}>
+                                    <h4 style={{ fontSize: '0.9rem', color: primaryColor, marginBottom: '0.5rem', fontWeight: 'bold', borderBottom: `2px solid ${primaryColor}20`, paddingBottom: '0.2rem' }}>Overall Performance</h4>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
+                                        <thead style={{ color: '#E53E3E' }}>
+                                            <tr style={{ backgroundColor: '#FFF5F5', textAlign: 'left' }}>
+                                                <th style={{ padding: '0.5rem' }}>Roll No</th>
+                                                <th style={{ padding: '0.5rem' }}>Student Name</th>
+                                                <th style={{ padding: '0.5rem' }}>Grade</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {studentData.filter(s => ['C', 'D'].includes(s.relative_grading?.overall?.grade)).map((student, idx) => (
+                                                <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                                    <td style={{ padding: '0.5rem' }}>{student.rollNo}</td>
+                                                    <td style={{ padding: '0.5rem', fontWeight: '600' }}>{student.name}</td>
+                                                    <td style={{ padding: '0.5rem' }}>
+                                                        <span style={{ color: getGradeColor(student.relative_grading?.overall?.grade), fontWeight: 'bold' }}>
+                                                            {student.relative_grading?.overall?.grade}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* English Attention */}
+                                <div style={{ border: '2px solid #e2e8f0', borderRadius: '8px', padding: '0.6rem' }}>
+                                    <h4 style={{ fontSize: '0.9rem', color: colors.english, marginBottom: '0.5rem', fontWeight: 'bold', borderBottom: `2px solid ${colors.english}20`, paddingBottom: '0.2rem' }}>English</h4>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
+                                        <thead style={{ color: '#E53E3E' }}>
+                                            <tr style={{ backgroundColor: '#FFF5F5', textAlign: 'left' }}>
+                                                <th style={{ padding: '0.5rem' }}>Roll No</th>
+                                                <th style={{ padding: '0.5rem' }}>Student Name</th>
+                                                <th style={{ padding: '0.5rem' }}>Grade</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {studentData.filter(s => ['C', 'D'].includes(s.relative_grading?.english?.grade)).map((student, idx) => (
+                                                <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                                    <td style={{ padding: '0.5rem' }}>{student.rollNo}</td>
+                                                    <td style={{ padding: '0.5rem', fontWeight: '600' }}>{student.name}</td>
+                                                    <td style={{ padding: '0.5rem' }}>
+                                                        <span style={{ color: getGradeColor(student.relative_grading?.english?.grade), fontWeight: 'bold' }}>
+                                                            {student.relative_grading?.english?.grade}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* Maths Attention */}
+                                <div style={{ border: '2px solid #e2e8f0', borderRadius: '8px', padding: '0.6rem' }}>
+                                    <h4 style={{ fontSize: '0.9rem', color: colors.maths, marginBottom: '0.5rem', fontWeight: 'bold', borderBottom: `2px solid ${colors.maths}20`, paddingBottom: '0.2rem' }}>Mathematics</h4>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
+                                        <thead style={{ color: '#E53E3E' }}>
+                                            <tr style={{ backgroundColor: '#FFF5F5', textAlign: 'left' }}>
+                                                <th style={{ padding: '0.5rem' }}>Roll No</th>
+                                                <th style={{ padding: '0.5rem' }}>Student Name</th>
+                                                <th style={{ padding: '0.5rem' }}>Grade</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {studentData.filter(s => ['C', 'D'].includes(s.relative_grading?.maths?.grade)).map((student, idx) => (
+                                                <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                                    <td style={{ padding: '0.5rem' }}>{student.rollNo}</td>
+                                                    <td style={{ padding: '0.5rem', fontWeight: '600' }}>{student.name}</td>
+                                                    <td style={{ padding: '0.5rem' }}>
+                                                        <span style={{ color: getGradeColor(student.relative_grading?.maths?.grade), fontWeight: 'bold' }}>
+                                                            {student.relative_grading?.maths?.grade}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* Science Attention */}
+                                <div style={{ border: '2px solid #e2e8f0', borderRadius: '8px', padding: '0.6rem' }}>
+                                    <h4 style={{ fontSize: '0.9rem', color: colors.science, marginBottom: '0.5rem', fontWeight: 'bold', borderBottom: `2px solid ${colors.science}20`, paddingBottom: '0.2rem' }}>Science</h4>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
+                                        <thead style={{ color: '#E53E3E' }}>
+                                            <tr style={{ backgroundColor: '#FFF5F5', textAlign: 'left' }}>
+                                                <th style={{ padding: '0.5rem' }}>Roll No</th>
+                                                <th style={{ padding: '0.5rem' }}>Student Name</th>
+                                                <th style={{ padding: '0.5rem' }}>Grade</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {studentData.filter(s => ['C', 'D'].includes(s.relative_grading?.science?.grade)).map((student, idx) => (
+                                                <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                                    <td style={{ padding: '0.5rem' }}>{student.rollNo}</td>
+                                                    <td style={{ padding: '0.5rem', fontWeight: '600' }}>{student.name}</td>
+                                                    <td style={{ padding: '0.5rem' }}>
+                                                        <span style={{ color: getGradeColor(student.relative_grading?.science?.grade), fontWeight: 'bold' }}>
+                                                            {student.relative_grading?.science?.grade}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
-                        <span style={{ fontSize: '0.7rem', color: '#94A3B8', fontWeight: 'bold' }}>Page 1</span>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
-                            <span style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' }}>Implementation Partner</span>
-                            <img src={viswamLogo} alt="Viswam" style={{ height: '30px', objectFit: 'contain' }} />
+
+                        <div className="page-footer">
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
+                                <span style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' }}>Assessment Partner</span>
+                                <img src={nsfLogo} alt="NSF" style={{ height: '35px', objectFit: 'contain' }} />
+                            </div>
+                            <span style={{ fontSize: '0.7rem', color: '#94A3B8', fontWeight: 'bold' }}>Final Page</span>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                                <span style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' }}>Implementation Partner</span>
+                                <img src={viswamLogo} alt="Viswam" style={{ height: '30px', objectFit: 'contain' }} />
+                            </div>
                         </div>
                     </div>
-                </div>
+                </>
             )}
 
 

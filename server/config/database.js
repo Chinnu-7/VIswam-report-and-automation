@@ -20,13 +20,16 @@ if (dbUrl) {
             ssl: {
                 require: true,
                 rejectUnauthorized: false
-            }
+            },
+            // For MySQL, ensure connections are handled properly
+            connectTimeout: 60000
         },
         pool: {
-            max: 5,
+            max: 2, // Low pool size for serverless
             min: 0,
             acquire: 30000,
-            idle: 10000
+            idle: 10000,
+            evict: 1000 // Quickly evict dead connections
         }
     });
 
@@ -34,32 +37,16 @@ if (dbUrl) {
     const host = (process.env.DB_HOST || 'localhost').trim();
     const useSSL = process.env.DB_SSL === 'true' || (host !== 'localhost' && !host.includes('freesqldatabase.com'));
 
-    console.log(`Attempting MySQL connection to ${host}... (SSL: ${useSSL})`);
+    console.log(`Using SQLite fallback due to external MySQL issues...`);
 
-    sequelize = new Sequelize(
-        (process.env.DB_NAME || 'viswam_reports').trim(),
-        (process.env.DB_USER || 'root').trim(),
-        (process.env.DB_PASS || '2500').trim(),
-        {
-            host: host,
-            port: process.env.DB_PORT || 3306,
-            dialect: 'mysql',
-            dialectModule: mysql2,
-            logging: false,
-            dialectOptions: {
-                // Support SSL for remote MySQL providers if needed
-                ssl: useSSL ? {
-                    rejectUnauthorized: false
-                } : null
-            },
-            pool: {
-                max: 5,
-                min: 0,
-                acquire: 30000,
-                idle: 10000
-            }
-        }
-    );
+    // SQLite configuration that works both locally and on Vercel (/tmp is required on Vercel)
+    const sqlitePath = process.env.VERCEL ? '/tmp/viswam_reports.sqlite' : './viswam_reports.sqlite';
+
+    sequelize = new Sequelize({
+        dialect: 'sqlite',
+        storage: sqlitePath,
+        logging: false
+    });
 }
 
 export default sequelize;

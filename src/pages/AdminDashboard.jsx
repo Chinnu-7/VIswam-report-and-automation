@@ -51,7 +51,31 @@ const AdminDashboard = () => {
             }).toString();
 
             const res = await api.get(`/reports?${query}`, config);
-            setReports(res.data);
+
+            // Group by School and Assessment
+            const grouped = {};
+            res.data.forEach(report => {
+                const key = `${report.schoolId}_${report.assessmentName}_${report.qp || 'noqp'}`;
+                if (!grouped[key]) {
+                    grouped[key] = {
+                        id: report.schoolId, // Using schoolId as primary key for selection
+                        schoolId: report.schoolId,
+                        schoolName: report.schoolName,
+                        assessmentName: report.assessmentName,
+                        qp: report.qp,
+                        status: report.status,
+                        isEmailSent: false,
+                        studentCount: 0,
+                        sampleReportId: report.id
+                    };
+                }
+                grouped[key].studentCount += 1;
+                if (report.isEmailSent) {
+                    grouped[key].isEmailSent = true;
+                }
+            });
+
+            setReports(Object.values(grouped));
         } catch (err) {
             console.error('Error fetching reports', err);
         } finally {
@@ -88,26 +112,180 @@ const AdminDashboard = () => {
 
     const handleAction = async (action, ids) => {
         try {
-            let endpoint = '/reports/approve';
-            if (action === 'reject') endpoint = '/reports/reject';
-            if (action === 'delete') endpoint = '/reports';
-
-            const method = action === 'delete' ? 'delete' : 'post';
+            let endpoint = '/reports/school/approve';
+            if (action === 'reject') endpoint = '/reports/school/reject';
+            if (action === 'delete') endpoint = '/reports/school/delete';
 
             await api({
-                method,
+                method: 'post',
                 url: endpoint,
-                data: { ids },
+                data: { schoolIds: ids },
                 ...config
             });
 
-            setMessage(`Successfully ${action}ed ${ids.length} reports`);
+            setMessage(`Successfully ${action}ed reports for ${ids.length} schools`);
             setSelectedIds([]);
             fetchReports();
             setTimeout(() => setMessage(''), 3000);
         } catch (err) {
             console.error(`Error during ${action}`, err);
         }
+    };
+
+    const handleSyncSchools = async () => {
+        let url = 'https://docs.google.com/spreadsheets/d/1fl5NW2skc_8NC0x3vxE9Fcfm6HGF1-e2lOTy4IMs7N0/export?format=csv';
+
+
+        setLoading(true);
+        try {
+            setMessage('Fetching and parsing school data...');
+            setIsError(false);
+
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Failed to fetch data. Ensure the Google Sheet is "Published to the web" as CSV.');
+
+            const text = response.data ? (typeof response.data === 'string' ? response.data : JSON.stringify(response.data)) : await response.text();
+
+            if (text.includes('<html') || text.includes('<!DOCTYPE')) {
+                throw new Error('Received HTML instead of data. Please ensure: File > Share > Publish to web > CSV.');
+            }
+
+            // ROBUST MULTI-LINE CSV PARSER
+            const parseCSVText = (csv) => {
+                const rows = [];
+                let currentRow = [];
+                let currentField = '';
+                let inQuotes = false;
+
+                for (let i = 0; i < csv.length; i++) {
+                    const char = csv[i];
+                    const nextChar = csv[i + 1];
+
+                    if (inQuotes) {
+                        if (char === '"' && nextChar === '"') {
+                            currentField += '"';
+                            i++; // Skip next quote
+                        } else if (char === '"') {
+                            inQuotes = false;
+                        } else {
+                            currentField += char;
+                        }
+                    } else {
+                        if (char === '"') {
+                            inQuotes = true;
+                        } else if (char === ',') {
+                            currentRow.push(currentField.trim());
+                            currentField = '';
+                        } else if (char === '\n' || char === '\r') {
+                            if (currentField || currentRow.length > 0) {
+                                currentRow.push(currentField.trim());
+                                rows.push(currentRow);
+                                currentRow = [];
+                                currentField = '';
+                            }
+                            if (char === '\r' && nextChar === '\n') i++; // Skip \n in \r\n
+                        } else {
+                            currentField += char;
+                        }
+                    }
+                }
+                if (currentField || currentRow.length > 0) {
+                    currentRow.push(currentField.trim());
+                    rows.push(currentRow);
+                }
+                return rows;
+            };
+
+            const allRows = parseCSVText(text);
+            if (allRows.length < 2) throw new Error('CSV is empty or invalid');
+
+            const headers = allRows[0].map(h => h.toLowerCase().replace(/[^a-z0-9]/g, ''));
+            const dataRows = allRows.slice(1).map(row => {
+                const obj = {};
+                headers.forEach((h, i) => { if (h) obj[h] = row[i]; });
+                return obj;
+            });
+
+            // Normalized header matching keys
+            const keyNSF = 'nsfuserid';
+            const keyEmail = 'schoolemailid';
+            const keyContact = 'poccontactno';
+
+            const consolidatedSchools = dataRows.map(row => {
+                const id = row[keyNSF] || row['schoolid'] || row['id'] || row['schoolcode'];
+                if (!id) return null;
+
+                const idUpper = String(id).toUpperCase();
+
+                return {
+                    schoolId: idUpper,
+                    schoolName: row['schoolname'] || row['nsfschoolname'] || row['name'] || idUpper,
+                    principalEmail: row[keyEmail] || row['principalemail'] || row['email'] || '',
+                    whatsappNo: row[keyContact] || row['contactnumber'] || row['whatsapp'] || row['phone'] || '',
+                    registered: parseInt(row['totalstudentsregistered'] || row['registered'] || 0, 10) || 0,
+                    participated: parseInt(row['noofomrsreceived'] || row['participated'] || 0, 10) || 0
+                };
+            }).filter(s => s && s.schoolId && s.principalEmail);
+
+            if (consolidatedSchools.length === 0) {
+                console.log('Headers found:', headers);
+                console.log('Sample data row:', dataRows[0]);
+                throw new Error('No valid school records found. Check if your headers are correct.');
+            }
+
+            const res = await api.post('/schools/sync', { schools: consolidatedSchools }, config);
+            setMessage(`${res.data.message} Synced ${consolidatedSchools.length} schools.`);
+            setIsError(false);
+            setTimeout(() => setMessage(''), 7000);
+        } catch (err) {
+            console.error('Sync Error:', err);
+            setMessage('Sync Error: ' + err.message);
+            setIsError(true);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSyncResults = async () => {
+        if (reports.length === 0) {
+            setMessage('No reports to sync');
+            setIsError(true);
+            return;
+        }
+
+        setLoading(true);
+        try {
+            setMessage('Syncing dashboard to PSA Tracker...');
+            setIsError(false);
+            await api.post('/reports/sync-external', { reports }, config);
+            setMessage('Sync to PSA Tracker initiated successfully!');
+            setTimeout(() => setMessage(''), 5000);
+        } catch (err) {
+            console.error('Sync failed', err);
+            setMessage('Sync failed: ' + (err.response?.data?.message || err.message));
+            setIsError(true);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleManualDownload = () => {
+        if (reports.length === 0) return;
+
+        const data = reports.map(r => ({
+            'School ID': r.schoolId,
+            'School Name': r.schoolName,
+            'Assessment': r.assessmentName,
+            'QP': r.qp || 'N/A',
+            'Students': r.studentCount,
+            'Status': r.status,
+            'Notified': r.isEmailSent ? 'SENT' : 'UNSENT'
+        }));
+
+        const ws = xlsx.utils.json_to_sheet(data);
+        const wb = xlsx.utils.book_new();
+        xlsx.utils.book_append_sheet(wb, ws, "Reports");
+        xlsx.writeFile(wb, `Viswam_Reports_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
     };
 
     const toggleSelect = (id) => {
@@ -188,12 +366,12 @@ const AdminDashboard = () => {
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
-            <div className="flex justify-between items-end">
+            <div className="flex flex-col md:flex-row justify-between items-stretch md:items-end gap-4">
                 <div>
                     <h1 className="text-4xl font-bold text-slate-900 mb-2">Approval Dashboard</h1>
                     <p className="text-lg text-slate-500">Manage and approve reports submitted by principals.</p>
                 </div>
-                <div className="flex gap-4">
+                <div className="flex flex-wrap gap-4">
                     <select
                         className="bg-white border border-slate-200 rounded-xl px-4 py-2.5 font-bold text-slate-700 shadow-sm outline-none focus:ring-2 focus:ring-primary"
                         value={filter}
@@ -203,6 +381,34 @@ const AdminDashboard = () => {
                         <option value="APPROVED">Already Approved</option>
                         <option value="REJECTED">Rejected</option>
                     </select>
+
+                    <button
+                        onClick={handleSyncSchools}
+                        className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-2.5 font-bold text-primary shadow-sm hover:bg-slate-50 transition-colors"
+                        title="Sync School Emails & WhatsApp from Google Sheet"
+                    >
+                        <RefreshCw size={18} className={loading && message.includes('Syncing') ? 'animate-spin' : ''} />
+                        Sync Schools
+                    </button>
+
+                    <button
+                        onClick={handleSyncResults}
+                        disabled={loading}
+                        className="flex items-center gap-2 bg-indigo-600 text-white rounded-xl px-4 py-2.5 font-bold shadow-sm hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                        title="Push current dashboard status to PSA Tracker"
+                    >
+                        <RefreshCw size={18} className={loading && message.includes('Syncing dashboard') ? 'animate-spin' : ''} />
+                        Sync Results
+                    </button>
+
+                    <button
+                        onClick={handleManualDownload}
+                        className="flex items-center gap-2 bg-slate-800 text-white rounded-xl px-4 py-2.5 font-bold shadow-sm hover:bg-slate-900 transition-colors"
+                        title="Download current view as Excel"
+                    >
+                        <Download size={18} />
+                        Export
+                    </button>
                 </div>
             </div>
 
@@ -401,11 +607,11 @@ const AdminDashboard = () => {
                         <thead className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider">
                             <tr>
                                 <th className="px-6 py-4 w-12"></th>
-                                <th className="px-6 py-4">Student</th>
                                 <th className="px-6 py-4">School</th>
                                 <th className="px-6 py-4">Assessment</th>
-                                <th className="px-6 py-4">Class</th>
-                                <th className="px-6 py-4">Status</th>
+                                <th className="px-6 py-4">Students</th>
+                                <th className="px-6 py-4">Approval</th>
+                                <th className="px-6 py-4">Notified</th>
                                 <th className="px-6 py-4 text-center">Preview</th>
                             </tr>
                         </thead>
@@ -426,7 +632,7 @@ const AdminDashboard = () => {
                                     </td>
                                 </tr>
                             ) : reports.map((report) => (
-                                <tr key={report.id} className={`hover:bg-slate-50/80 transition-colors ${selectedIds.includes(report.id) ? 'bg-primary/5' : ''}`}>
+                                <tr key={`${report.schoolId}_${report.assessmentName}`} className={`hover:bg-slate-50/80 transition-colors ${selectedIds.includes(report.id) ? 'bg-primary/5' : ''}`}>
                                     <td className="px-6 py-4">
                                         <input
                                             type="checkbox"
@@ -436,19 +642,15 @@ const AdminDashboard = () => {
                                         />
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="font-bold text-slate-800">{report.studentName}</div>
-                                        <div className="text-xs text-slate-400">{report.rollNo}</div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="text-slate-700 font-medium">{report.schoolName || 'Unknown'}</div>
+                                        <div className="text-slate-700 font-bold">{report.schoolName || 'Unknown'}</div>
                                         <div className="text-[10px] text-slate-400">{report.schoolId}</div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded font-bold">
-                                            {report.assessmentName || 'Sodhana 1'}
+                                            {report.assessmentName || 'Sodhana 1'} {report.qp ? `(${report.qp})` : ''}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 text-slate-600">Grade {report.class}</td>
+                                    <td className="px-6 py-4 text-slate-600 font-medium">{report.studentCount} Students</td>
                                     <td className="px-6 py-4">
                                         <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${report.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700' :
                                             report.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
@@ -458,9 +660,14 @@ const AdminDashboard = () => {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
+                                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${report.isEmailSent ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500'}`}>
+                                            {report.isEmailSent ? 'SENT' : 'UNSENT'}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4">
                                         <div className="flex justify-center">
                                             <Link
-                                                to={`/report/${report.id}?view=principal&qp=${encodeURIComponent(report.qp || '')}`}
+                                                to={`/report/${report.sampleReportId}?view=principal&qp=${encodeURIComponent(report.qp || '')}`}
                                                 target="_blank"
                                                 className="p-2 text-slate-400 hover:text-teal-600 transition-colors"
                                                 title="Principal Preview"
@@ -468,7 +675,7 @@ const AdminDashboard = () => {
                                                 <LayoutDashboard size={20} />
                                             </Link>
                                             <Link
-                                                to={`/report/${report.id}?view=principal&download=true&qp=${encodeURIComponent(report.qp || '')}`}
+                                                to={`/report/${report.sampleReportId}?view=principal&download=true&qp=${encodeURIComponent(report.qp || '')}`}
                                                 target="_blank"
                                                 className="p-2 text-slate-400 hover:text-primary transition-colors"
                                                 title="Download Principal Report"
