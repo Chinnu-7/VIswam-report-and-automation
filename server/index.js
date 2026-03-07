@@ -80,16 +80,17 @@ app.use(async (req, res, next) => {
 
     try {
         await initializeDb();
+        clearTimeout(timeout);
+        next();
     } catch (err) {
+        clearTimeout(timeout);
         console.error('Middleware Error:', err.message);
         // FORCE BYPASS for Authentication Route so the admin fallback works
         if (req.path.includes('/auth/login')) {
             console.log('Bypassing DB check for login route');
             return next();
         }
-    } finally {
-        clearTimeout(timeout);
-        next();
+        res.status(503).json({ message: 'Database initialization failed', error: err.message });
     }
 });
 

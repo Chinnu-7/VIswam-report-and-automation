@@ -9,10 +9,11 @@ const generateToken = (id) => {
 
 export const login = async (req, res) => {
     const { email, password } = req.body;
+    const providedEmail = email ? email.trim().toLowerCase() : '';
 
     try {
         // FIXED ADMIN BYPASS FOR WHEN DATABASE FAILS
-        if (email === 'admin@viswam.com' && password === 'admin123') {
+        if (providedEmail === 'admin@viswam.com' && password === 'admin123') {
             console.log('Login success (Bypass) for:', email);
             return res.json({
                 id: 99999,
