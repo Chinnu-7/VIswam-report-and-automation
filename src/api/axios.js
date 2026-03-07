@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const instance = axios.create({
-    baseURL: import.meta.env.PROD ? '/api' : 'http://localhost:5000/api'
+    baseURL: window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : '/api'
 });
 
 // Response interceptor to handle 401 errors
