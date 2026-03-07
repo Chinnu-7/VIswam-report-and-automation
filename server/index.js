@@ -34,23 +34,29 @@ const initializeDb = async () => {
         await sequelize.authenticate();
         console.log('Database connection authenticated successfully');
 
-        // Sync models
-        const syncOptions = { alter: process.env.NODE_ENV !== 'production' };
-        await sequelize.sync(syncOptions);
-        console.log('Database models synced');
+        // Only sync if strictly necessary or in development
+        // For production Vercel, we should avoid 'alter: true' on every cold start
+        if (process.env.NODE_ENV !== 'production') {
+            await User.sync({ alter: false });
+            await SchoolInfo.sync({ alter: true });
+            await StudentReport.sync({ alter: false });
+            console.log('Database models synced (Development mode)');
+        } else {
+            // In production, just ensure tables exist without 'alter'
+            // This is much safer and faster
+            await User.sync();
+            await SchoolInfo.sync();
+            console.log('Database connection validated');
+        }
 
         await seedAdmin();
-        console.log('Admin user seeding check complete');
         isDbInitialized = true;
     } catch (err) {
         console.error('CRITICAL: Database initialization failed!');
-        console.error('Error Name:', err.name);
-        console.error('Error Message:', err.message);
-        if (err.original) {
-            console.error('Original Error:', err.original.message);
-        }
-        // Do not block the entire app if DB is briefly down, let next request retry
+        console.error('Error:', err.message);
         isDbInitialized = false;
+        // Re-throw to let the middleware handle it
+        throw err;
     }
 };
 
@@ -60,7 +66,7 @@ app.get('/api', (req, res) => {
     res.json({
         message: 'Viswam Report Card Automation API is running',
         dbInitialized: isDbInitialized,
-        version: 'v1.0.9-debug-db',
+        version: 'v1.1.0-optimized',
         timestamp: new Date().toISOString()
     });
 });
@@ -75,7 +81,12 @@ app.use(async (req, res, next) => {
     try {
         await initializeDb();
     } catch (err) {
-        console.error('Middleware Error:', err);
+        console.error('Middleware Error:', err.message);
+        // FORCE BYPASS for Authentication Route so the admin fallback works
+        if (req.path.includes('/auth/login')) {
+            console.log('Bypassing DB check for login route');
+            return next();
+        }
     } finally {
         clearTimeout(timeout);
         next();
