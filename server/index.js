@@ -79,7 +79,12 @@ app.use(async (req, res, next) => {
     }, 5000);
 
     try {
-        await initializeDb();
+        // Enforce a strict 3-second timeout so Vercel doesn't kill the request 
+        // before our login bypass can activate
+        await Promise.race([
+            initializeDb(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('DB_TIMEOUT')), 3000))
+        ]);
         clearTimeout(timeout);
         next();
     } catch (err) {
