@@ -28,18 +28,32 @@ router.get('/reports/:id', protect, adminController.getReportById); // Get singl
 router.get('/reports', protect, adminController.getReports); // Get all or filter by status
 router.post('/reports/approve', protect, adminOnly, adminController.approveReports); // Approve list of IDs
 router.post('/reports/reject', protect, adminOnly, adminController.rejectReports); // Reject list of IDs
+router.post('/reports/school/approve', protect, adminOnly, adminController.approveReportsBySchool); // Approve list of school IDs
+router.post('/reports/school/reject', protect, adminOnly, adminController.rejectReportsBySchool); // Reject list of school IDs
+router.post('/reports/school/delete', protect, adminOnly, adminController.deleteReportsBySchool); // Delete list of school IDs
 router.post('/reports/recalculate', protect, adminOnly, adminController.recalculateGrades); // Recalculate cohort grades
+router.post('/reports/sync-external', protect, adminOnly, adminController.syncExternal); // Sync dashboard to N8N
 router.delete('/reports', protect, adminOnly, adminController.deleteReports); // Delete list of IDs
 
 // Automation Queue (Polling for n8n)
 router.get('/reports/automation/queue', adminController.getAutomationQueue);
 router.post('/reports/automation/mark-sent', adminController.markAsSent);
 
-// School Sync
-router.post('/schools/sync', adminController.updateSchoolsBatch);
+// School Sync & Info
+router.post('/schools/sync', protect, adminOnly, adminController.updateSchoolsBatch);
+router.get('/schools/:id', protect, adminController.getSchoolInfo);
 
 // Render Route (Public for n8n/Api2Pdf, or could be protected if needed)
 router.get('/reports/:id/render', renderController.renderReportHtml);
+
+// Keep-alive / Health Check Route
+router.get('/keep-alive', (req, res) => {
+    res.json({
+        status: 'alive',
+        timestamp: new Date().toISOString(),
+        message: 'Server is active and warm'
+    });
+});
 
 // TEMP: Diagnostic route
 router.get('/db-status', async (req, res) => {

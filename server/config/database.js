@@ -1,69 +1,33 @@
 import Sequelize from 'sequelize';
-import mysql2 from 'mysql2';
 import pg from 'pg';
+import dotenv from 'dotenv';
+dotenv.config();
 
-let sequelize;
+const dbUrl = process.env.DATABASE_URL;
 
-
-const dbUrl = process.env.DATABASE_URL || process.env.NETLIFY_DATABASE_URL;
-
-
-if (dbUrl) {
-    console.log('Using DATABASE_URL for connection');
-    const isPostgres = dbUrl.startsWith('postgres');
-
-    sequelize = new Sequelize(dbUrl, {
-        dialect: isPostgres ? 'postgres' : 'mysql',
-        dialectModule: isPostgres ? pg : mysql2,
-        logging: false,
-        dialectOptions: {
-            ssl: {
-                require: true,
-                rejectUnauthorized: false
-            },
-            // For MySQL, ensure connections are handled properly
-            connectTimeout: 60000
-        },
-        pool: {
-            max: 2, // Low pool size for serverless
-            min: 0,
-            acquire: 30000,
-            idle: 10000,
-            evict: 1000 // Quickly evict dead connections
-        }
-    });
-
-} else {
-    const host = (process.env.DB_HOST || 'localhost').trim();
-    const useSSL = process.env.DB_SSL === 'true' || (host !== 'localhost' && !host.includes('freesqldatabase.com'));
-
-    console.log(`Attempting MySQL connection to ${host}... (SSL: ${useSSL})`);
-
-    sequelize = new Sequelize(
-        (process.env.DB_NAME || 'viswam_reports').trim(),
-        (process.env.DB_USER || 'root').trim(),
-        (process.env.DB_PASS || '2500').trim(),
-        {
-            host: host,
-            port: process.env.DB_PORT || 3306,
-            dialect: 'mysql',
-            dialectModule: mysql2,
-            logging: false,
-            dialectOptions: {
-                ssl: useSSL ? {
-                    rejectUnauthorized: false
-                } : null,
-                connectTimeout: 60000
-            },
-            pool: {
-                max: 2, // Low pool size for serverless
-                min: 0,
-                acquire: 30000,
-                idle: 10000,
-                evict: 1000
-            }
-        }
-    );
+if (!dbUrl) {
+    console.warn('CRITICAL: DATABASE_URL environment variable is missing.');
 }
+
+console.log('Connecting to Supabase PostgreSQL database...');
+
+const sequelize = new Sequelize(dbUrl, {
+    dialect: 'postgres',
+    dialectModule: pg,
+    logging: false,
+    dialectOptions: {
+        ssl: {
+            require: true,
+            rejectUnauthorized: false // Required for Supabase pooling
+        }
+    },
+    pool: {
+        max: 5, // Supabase recommends keeping pool connections low for serverless
+        min: 0,
+        acquire: 30000,
+        idle: 10000,
+        evict: 1000
+    }
+});
 
 export default sequelize;

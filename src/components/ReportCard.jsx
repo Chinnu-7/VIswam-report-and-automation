@@ -37,7 +37,7 @@ export default function ReportCard(props) {
     );
 }
 
-function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vignyan', assessmentName = 'Sodhana 1', qp = '' }) {
+function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vignyan', assessmentName = 'Sodhana 1', qp = '', schoolInfo = null }) {
     const primaryColor = '#1e3a8a'; // Navy Blue
     const accentColor = '#dc2626'; // Red 
 
@@ -72,8 +72,8 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
         science: 'Science'
     };
 
-    const totalRegistered = studentData.length > 0 ? studentData.length : 27;
-    const totalParticipated = studentData.length > 0 ? studentData.length : 27;
+    const totalRegistered = schoolInfo?.registered || (studentData.length > 0 ? studentData.length : 27);
+    const totalParticipated = schoolInfo?.participated || (studentData.length > 0 ? studentData.length : 27);
 
     const participationData = [
         { grade: 7, registered: totalRegistered, participated: totalParticipated, percent: 100 },
@@ -256,6 +256,11 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
         </div>
     );
 
+    const studentsPerPage = 25;
+    const studentPages = [];
+    for (let i = 0; i < studentData.length; i += studentsPerPage) {
+        studentPages.push(studentData.slice(i, i + studentsPerPage));
+    }
 
     return (
         <div className="report-wrapper" style={{
@@ -396,37 +401,11 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                         {/* Header */}
                         <header style={{
                             borderBottom: `2px solid ${primaryColor} `,
-                            paddingBottom: '0.1rem',
-                            marginBottom: '0.2rem',
-                            textAlign: 'center',
-                            position: 'relative'
+                            paddingBottom: '0.4rem',
+                            marginBottom: '1rem',
+                            textAlign: 'center'
                         }}>
-                            {/* Print Button */}
-                            <button
-                                onClick={handlePrint}
-                                style={{
-                                    position: 'absolute',
-                                    top: '0',
-                                    right: '0',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.4rem',
-                                    padding: '0.4rem 0.8rem',
-                                    backgroundColor: '#F1F5F9',
-                                    color: primaryColor,
-                                    borderRadius: '6px',
-                                    cursor: 'pointer',
-                                    border: `1px solid ${primaryColor}`,
-                                    fontSize: '0.8rem',
-                                    fontWeight: '600',
-                                    transition: 'all 0.2s ease'
-                                }}
-                                className="no-print hover-lift"
-                                title="Print Report"
-                            >
-                                <Printer size={14} />
-                                Print
-                            </button>
+
 
                             <div style={{
                                 display: 'flex',
@@ -438,21 +417,20 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                                 <img
                                     src={fdrLogo}
                                     alt="FDR Logo"
-                                    style={{ height: '60px', objectFit: 'contain' }}
+                                    style={{ height: '50px', objectFit: 'contain' }}
                                 />
                                 <h1 style={{
                                     margin: 0,
                                     color: primaryColor,
-                                    fontSize: '1.4rem',
+                                    fontSize: '1.2rem',
                                     fontWeight: 'bold',
-                                    textTransform: 'uppercase',
-                                    lineHeight: '1.2'
+                                    textTransform: 'uppercase'
                                 }}>
-                                    Foundation for Democratic Reforms <span style={{ fontSize: '1.1rem', color: accentColor, fontWeight: '600' }}>(FDR)</span>
+                                    Foundation for Democratic Reforms
                                 </h1>
                             </div>
-                            <h2 style={{ fontSize: '1.1rem', margin: '0.2rem 0', fontWeight: '600', color: '#475569' }}>
-                                School Performance Report
+                            <h2 style={{ fontSize: '1.1rem', margin: '0.2rem 0', fontWeight: 'bold', color: primaryColor }}>
+                                Student Performance Report
                             </h2>
 
                             <div style={{
@@ -491,10 +469,17 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                                         alignItems: 'center',
                                         justifyContent: 'center'
                                     }}>
-                                        <div style={{ fontSize: '2.6rem', fontWeight: '900', color: primaryColor, lineHeight: '1' }}>
-                                            {totalParticipated} <span style={{ fontSize: '1.6rem', color: '#64748B' }}>/ {totalRegistered}</span>
+                                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', width: '100%', padding: '0 0.5rem' }}>
+                                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                                <div style={{ fontSize: '1.8rem', fontWeight: '900', color: primaryColor, lineHeight: '1' }}>{totalRegistered}</div>
+                                                <div style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 'bold', marginTop: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Registered</div>
+                                            </div>
+                                            <div style={{ width: '1px', height: '40px', backgroundColor: '#CBD5E1' }}></div>
+                                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                                <div style={{ fontSize: '1.8rem', fontWeight: '900', color: primaryColor, lineHeight: '1' }}>{totalParticipated}</div>
+                                                <div style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 'bold', marginTop: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Participated</div>
+                                            </div>
                                         </div>
-                                        <div style={{ fontSize: '0.8rem', color: '#64748B', fontWeight: 'bold', marginTop: '0.3rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Attendance</div>
                                     </div>
                                 </div>
                                 <div>
@@ -603,110 +588,124 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                         </div>
                     </div>
 
-                    {/* Detailed Student Scores Pages */}
-                    {(() => {
-                        const studentsPerPage = 15;
-                        const pages = [];
-                        for (let i = 0; i < studentData.length; i += studentsPerPage) {
-                            pages.push(studentData.slice(i, i + studentsPerPage));
-                        }
+                    {studentPages.map((pageStudents, index) => (
+                        <React.Fragment key={index}>
+                            <PageBreaker />
+                            <div className="page">
+                                <header style={{
+                                    borderBottom: `2px solid ${primaryColor} `,
+                                    paddingBottom: '0.4rem',
+                                    marginBottom: '1rem',
+                                    textAlign: 'center'
+                                }}>
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '1rem',
+                                        marginBottom: '0.2rem'
+                                    }}>
+                                        <img src={fdrLogo} alt="FDR Logo" style={{ height: '50px', objectFit: 'contain' }} />
+                                        <h1 style={{
+                                            margin: 0,
+                                            color: primaryColor,
+                                            fontSize: '1.2rem',
+                                            fontWeight: 'bold',
+                                            textTransform: 'uppercase'
+                                        }}>
+                                            Foundation for Democratic Reforms
+                                        </h1>
+                                    </div>
+                                    <h2 style={{ fontSize: '1.1rem', margin: '0.2rem 0', fontWeight: 'bold', color: primaryColor }}>
+                                        Student Performance Report
+                                    </h2>
+                                </header>
 
-                        return pages.map((pageStudents, pageIndex) => (
-                            <React.Fragment key={pageIndex}>
-                                <PageBreaker />
-                                <div className="page">
-                                    <div className="page-content">
-                                        <header style={{ borderBottom: `2px solid ${primaryColor}`, paddingBottom: '0.4rem', marginBottom: '1rem', textAlign: 'center' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '0.2rem' }}>
-                                                <img src={fdrLogo} alt="FDR Logo" style={{ height: '50px', objectFit: 'contain' }} />
-                                                <h1 style={{ margin: 0, color: primaryColor, fontSize: '1.2rem', fontWeight: 'bold', textTransform: 'uppercase' }}>
-                                                    Foundation for Democratic Reforms
-                                                </h1>
-                                            </div>
-                                            <h2 style={{ fontSize: '1rem', margin: '0.2rem 0', fontWeight: 'bold', color: '#475569' }}>
-                                                Detailed Student Scores (Page {pageIndex + 1}/{pages.length})
-                                            </h2>
-                                        </header>
-
-                                        <div style={{ border: '2px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
-                                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
-                                                <thead>
-                                                    <tr style={{ backgroundColor: '#EDF2F7', color: primaryColor, textAlign: 'left' }}>
-                                                        <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0' }}>Roll No</th>
-                                                        <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0' }}>Student Name</th>
-                                                        <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0', backgroundColor: '#FEF3C7' }}>Overall</th>
-                                                        <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0' }}>Eng Grade</th>
-                                                        <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0' }}>Math Grade</th>
-                                                        <th style={{ padding: '0.6rem', borderBottom: '2px solid #e2e8f0' }}>Sci Grade</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {pageStudents.map((student, idx) => (
-                                                        <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                                            <td style={{ padding: '0.6rem', color: '#64748B' }}>{student.rollNo}</td>
-                                                            <td style={{ padding: '0.6rem', fontWeight: '600' }}>{student.name}</td>
-                                                            <td style={{ padding: '0.6rem', backgroundColor: '#FFFBEB' }}>
-                                                                <span style={{
-                                                                    backgroundColor: getGradeBg(student.relative_grading?.overall?.grade),
-                                                                    color: getGradeColor(student.relative_grading?.overall?.grade),
-                                                                    padding: '2px 8px',
-                                                                    borderRadius: '4px',
-                                                                    fontWeight: 'bold',
-                                                                    fontSize: '0.75rem'
-                                                                }}>{student.relative_grading?.overall?.grade || '-'}</span>
-                                                            </td>
-                                                            <td style={{ padding: '0.6rem' }}>
-                                                                <span style={{
-                                                                    backgroundColor: getGradeBg(student.relative_grading?.english?.grade),
-                                                                    color: getGradeColor(student.relative_grading?.english?.grade),
-                                                                    padding: '2px 8px',
-                                                                    borderRadius: '4px',
-                                                                    fontWeight: 'bold',
-                                                                    fontSize: '0.75rem'
-                                                                }}>{student.relative_grading?.english?.grade || '-'}</span>
-                                                            </td>
-                                                            <td style={{ padding: '0.6rem' }}>
-                                                                <span style={{
-                                                                    backgroundColor: getGradeBg(student.relative_grading?.maths?.grade),
-                                                                    color: getGradeColor(student.relative_grading?.maths?.grade),
-                                                                    padding: '2px 8px',
-                                                                    borderRadius: '4px',
-                                                                    fontWeight: 'bold',
-                                                                    fontSize: '0.75rem'
-                                                                }}>{student.relative_grading?.maths?.grade || '-'}</span>
-                                                            </td>
-                                                            <td style={{ padding: '0.6rem' }}>
-                                                                <span style={{
-                                                                    backgroundColor: getGradeBg(student.relative_grading?.science?.grade),
-                                                                    color: getGradeColor(student.relative_grading?.science?.grade),
-                                                                    padding: '2px 8px',
-                                                                    borderRadius: '4px',
-                                                                    fontWeight: 'bold',
-                                                                    fontSize: '0.75rem'
-                                                                }}>{student.relative_grading?.science?.grade || '-'}</span>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
+                                <div className="page-content">
+                                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
+                                        <div style={{ width: '4px', height: '24px', backgroundColor: primaryColor, marginRight: '0.5rem' }}></div>
+                                        <h3 style={{ fontSize: '1.1rem', color: primaryColor, margin: 0, fontWeight: '600' }}>
+                                            Detailed Student Scores (Page {index + 1}/{studentPages.length})
+                                        </h3>
                                     </div>
 
-                                    <div className="page-footer">
-                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
-                                            <span style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' }}>Assessment Partner</span>
-                                            <img src={nsfLogo} alt="NSF" style={{ height: '35px', objectFit: 'contain' }} />
-                                        </div>
-                                        <span style={{ fontSize: '0.7rem', color: '#94A3B8', fontWeight: 'bold' }}>Page {pageIndex + 2}</span>
-                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
-                                            <span style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' }}>Implementation Partner</span>
-                                            <img src={viswamLogo} alt="Viswam" style={{ height: '30px', objectFit: 'contain' }} />
-                                        </div>
+                                    <div style={{ border: '1px solid #E2E8F0', borderRadius: '8px', overflow: 'hidden' }}>
+                                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
+                                            <thead style={{ backgroundColor: '#F8FAFC', color: primaryColor, fontWeight: 'bold' }}>
+                                                <tr>
+                                                    <th style={{ padding: '0.75rem', textAlign: 'center', borderBottom: '2px solid #E2E8F0', width: '60px' }}>SNo</th>
+                                                    <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #E2E8F0', width: '100px' }}>Student Id</th>
+                                                    <th style={{ padding: '0.75rem', textAlign: 'center', borderBottom: '2px solid #E2E8F0', backgroundColor: '#FEF9C3', width: '100px' }}>Overall</th>
+                                                    <th style={{ padding: '0.75rem', textAlign: 'center', borderBottom: '2px solid #E2E8F0', width: '90px' }}>Eng Grade</th>
+                                                    <th style={{ padding: '0.75rem', textAlign: 'center', borderBottom: '2px solid #E2E8F0', width: '90px' }}>Math Grade</th>
+                                                    <th style={{ padding: '0.75rem', textAlign: 'center', borderBottom: '2px solid #E2E8F0', width: '90px' }}>Sci Grade</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody style={{ color: '#475569' }}>
+                                                {pageStudents.map((student, i) => {
+                                                    const overall = student.relative_grading?.overall?.grade || '-';
+                                                    const eng = student.relative_grading?.english?.grade || '-';
+                                                    const math = student.relative_grading?.maths?.grade || '-';
+                                                    const sci = student.relative_grading?.science?.grade || '-';
+
+                                                    const GradeBadge = ({ grade, isOverall = false }) => {
+                                                        const isMissing = grade === '-';
+                                                        return (
+                                                            <div style={{
+                                                                display: 'flex',
+                                                                justifyContent: 'center',
+                                                                alignItems: 'center',
+                                                                width: '100%'
+                                                            }}>
+                                                                <span style={{
+                                                                    display: 'inline-block',
+                                                                    padding: '0.2rem 0.6rem',
+                                                                    borderRadius: '6px',
+                                                                    backgroundColor: isMissing ? '#F1F5F9' : getGradeBg(grade),
+                                                                    color: isMissing ? '#94A3B8' : getGradeColor(grade),
+                                                                    border: `1.5px solid ${isMissing ? '#E2E8F0' : getGradeColor(grade) + '40'}`,
+                                                                    fontWeight: '800',
+                                                                    minWidth: '35px',
+                                                                    textAlign: 'center',
+                                                                    fontSize: '0.75rem',
+                                                                    boxShadow: isOverall ? '0 1px 2px rgba(0,0,0,0.05)' : 'none'
+                                                                }}>
+                                                                    {grade}
+                                                                </span>
+                                                            </div>
+                                                        );
+                                                    };
+
+                                                    return (
+                                                        <tr key={i} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                                                            <td style={{ padding: '0.6rem', textAlign: 'center', fontWeight: '500' }}>{index * studentsPerPage + i + 1}</td>
+                                                            <td style={{ padding: '0.6rem', fontWeight: 'bold', color: '#1e293b' }}>{student.rollNo}</td>
+                                                            <td style={{ padding: '0.6rem', textAlign: 'center', backgroundColor: '#FEF9C3' }}><GradeBadge grade={overall} isOverall={true} /></td>
+                                                            <td style={{ padding: '0.6rem', textAlign: 'center' }}><GradeBadge grade={eng} /></td>
+                                                            <td style={{ padding: '0.6rem', textAlign: 'center' }}><GradeBadge grade={math} /></td>
+                                                            <td style={{ padding: '0.6rem', textAlign: 'center' }}><GradeBadge grade={sci} /></td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
-                            </React.Fragment>
-                        ));
-                    })()}
+
+                                <div className="page-footer">
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
+                                        <span style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' }}>Assessment Partner</span>
+                                        <img src={nsfLogo} alt="NSF" style={{ height: '35px', objectFit: 'contain' }} />
+                                    </div>
+                                    <span style={{ fontSize: '0.7rem', color: '#94A3B8', fontWeight: 'bold' }}>Page {index + 2}</span>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                                        <span style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' }}>Implementation Partner</span>
+                                        <img src={viswamLogo} alt="Viswam" style={{ height: '30px', objectFit: 'contain' }} />
+                                    </div>
+                                </div>
+                            </div>
+                        </React.Fragment>
+                    ))}
 
                     {/* Dedicated "Students Needing Attention" Page */}
                     <PageBreaker />
@@ -731,16 +730,16 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
                                         <thead style={{ color: '#E53E3E' }}>
                                             <tr style={{ backgroundColor: '#FFF5F5', textAlign: 'left' }}>
-                                                <th style={{ padding: '0.5rem' }}>Roll No</th>
-                                                <th style={{ padding: '0.5rem' }}>Student Name</th>
+                                                <th style={{ padding: '0.5rem', width: '50px' }}>SNo</th>
+                                                <th style={{ padding: '0.5rem' }}>Student Id</th>
                                                 <th style={{ padding: '0.5rem' }}>Grade</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {studentData.filter(s => ['C', 'D'].includes(s.relative_grading?.overall?.grade)).map((student, idx) => (
                                                 <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                                    <td style={{ padding: '0.5rem' }}>{student.rollNo}</td>
-                                                    <td style={{ padding: '0.5rem', fontWeight: '600' }}>{student.name}</td>
+                                                    <td style={{ padding: '0.5rem' }}>{idx + 1}</td>
+                                                    <td style={{ padding: '0.5rem', fontWeight: '600' }}>{student.rollNo}</td>
                                                     <td style={{ padding: '0.5rem' }}>
                                                         <span style={{ color: getGradeColor(student.relative_grading?.overall?.grade), fontWeight: 'bold' }}>
                                                             {student.relative_grading?.overall?.grade}
@@ -758,16 +757,16 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
                                         <thead style={{ color: '#E53E3E' }}>
                                             <tr style={{ backgroundColor: '#FFF5F5', textAlign: 'left' }}>
-                                                <th style={{ padding: '0.5rem' }}>Roll No</th>
-                                                <th style={{ padding: '0.5rem' }}>Student Name</th>
+                                                <th style={{ padding: '0.5rem', width: '50px' }}>SNo</th>
+                                                <th style={{ padding: '0.5rem' }}>Student Id</th>
                                                 <th style={{ padding: '0.5rem' }}>Grade</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {studentData.filter(s => ['C', 'D'].includes(s.relative_grading?.english?.grade)).map((student, idx) => (
                                                 <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                                    <td style={{ padding: '0.5rem' }}>{student.rollNo}</td>
-                                                    <td style={{ padding: '0.5rem', fontWeight: '600' }}>{student.name}</td>
+                                                    <td style={{ padding: '0.5rem' }}>{idx + 1}</td>
+                                                    <td style={{ padding: '0.5rem', fontWeight: '600' }}>{student.rollNo}</td>
                                                     <td style={{ padding: '0.5rem' }}>
                                                         <span style={{ color: getGradeColor(student.relative_grading?.english?.grade), fontWeight: 'bold' }}>
                                                             {student.relative_grading?.english?.grade}
@@ -785,16 +784,16 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
                                         <thead style={{ color: '#E53E3E' }}>
                                             <tr style={{ backgroundColor: '#FFF5F5', textAlign: 'left' }}>
-                                                <th style={{ padding: '0.5rem' }}>Roll No</th>
-                                                <th style={{ padding: '0.5rem' }}>Student Name</th>
+                                                <th style={{ padding: '0.5rem', width: '50px' }}>SNo</th>
+                                                <th style={{ padding: '0.5rem' }}>Student Id</th>
                                                 <th style={{ padding: '0.5rem' }}>Grade</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {studentData.filter(s => ['C', 'D'].includes(s.relative_grading?.maths?.grade)).map((student, idx) => (
                                                 <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                                    <td style={{ padding: '0.5rem' }}>{student.rollNo}</td>
-                                                    <td style={{ padding: '0.5rem', fontWeight: '600' }}>{student.name}</td>
+                                                    <td style={{ padding: '0.5rem' }}>{idx + 1}</td>
+                                                    <td style={{ padding: '0.5rem', fontWeight: '600' }}>{student.rollNo}</td>
                                                     <td style={{ padding: '0.5rem' }}>
                                                         <span style={{ color: getGradeColor(student.relative_grading?.maths?.grade), fontWeight: 'bold' }}>
                                                             {student.relative_grading?.maths?.grade}
@@ -812,16 +811,16 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
                                         <thead style={{ color: '#E53E3E' }}>
                                             <tr style={{ backgroundColor: '#FFF5F5', textAlign: 'left' }}>
-                                                <th style={{ padding: '0.5rem' }}>Roll No</th>
-                                                <th style={{ padding: '0.5rem' }}>Student Name</th>
+                                                <th style={{ padding: '0.5rem', width: '50px' }}>SNo</th>
+                                                <th style={{ padding: '0.5rem' }}>Student Id</th>
                                                 <th style={{ padding: '0.5rem' }}>Grade</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {studentData.filter(s => ['C', 'D'].includes(s.relative_grading?.science?.grade)).map((student, idx) => (
                                                 <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                                    <td style={{ padding: '0.5rem' }}>{student.rollNo}</td>
-                                                    <td style={{ padding: '0.5rem', fontWeight: '600' }}>{student.name}</td>
+                                                    <td style={{ padding: '0.5rem' }}>{idx + 1}</td>
+                                                    <td style={{ padding: '0.5rem', fontWeight: '600' }}>{student.rollNo}</td>
                                                     <td style={{ padding: '0.5rem' }}>
                                                         <span style={{ color: getGradeColor(student.relative_grading?.science?.grade), fontWeight: 'bold' }}>
                                                             {student.relative_grading?.science?.grade}
@@ -840,7 +839,7 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                                 <span style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' }}>Assessment Partner</span>
                                 <img src={nsfLogo} alt="NSF" style={{ height: '35px', objectFit: 'contain' }} />
                             </div>
-                            <span style={{ fontSize: '0.7rem', color: '#94A3B8', fontWeight: 'bold' }}>Final Page</span>
+                            <span style={{ fontSize: '0.7rem', color: '#94A3B8', fontWeight: 'bold' }}>Page {studentPages.length + 2}</span>
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
                                 <span style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' }}>Implementation Partner</span>
                                 <img src={viswamLogo} alt="Viswam" style={{ height: '30px', objectFit: 'contain' }} />

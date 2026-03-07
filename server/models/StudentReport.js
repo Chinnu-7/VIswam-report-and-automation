@@ -44,7 +44,7 @@ const StudentReport = db.define('student_report', {
         defaultValue: 'PENDING'
     },
     reportData: {
-        type: Sequelize.TEXT('long'),
+        type: Sequelize.TEXT,
         allowNull: false,
         get() {
             const rawValue = this.getDataValue('reportData');
@@ -65,7 +65,18 @@ const StudentReport = db.define('student_report', {
     }
 }, {
     tableName: 'StudentReports',
-    freezeTableName: true
+    freezeTableName: true,
+    indexes: [
+        {
+            fields: ['schoolId']
+        },
+        {
+            fields: ['assessmentName']
+        },
+        {
+            fields: ['schoolId', 'assessmentName']
+        }
+    ]
 });
 
 export default StudentReport;

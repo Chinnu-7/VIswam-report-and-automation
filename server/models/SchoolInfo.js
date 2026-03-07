@@ -18,6 +18,14 @@ const SchoolInfo = db.define('school_info', {
     whatsappNo: {
         type: Sequelize.STRING,
         allowNull: true
+    },
+    registered: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0
+    },
+    participated: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0
     }
 }, {
     tableName: 'SchoolInfos',
