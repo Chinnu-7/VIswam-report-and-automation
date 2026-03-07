@@ -453,7 +453,8 @@ export const updateSchoolsBatch = async (req, res) => {
 
     try {
         await SchoolInfo.bulkCreate(schools, {
-            updateOnDuplicate: ['schoolName', 'principalEmail', 'whatsappNo', 'registered', 'participated']
+            updateOnDuplicate: ['schoolName', 'principalEmail', 'whatsappNo', 'registered', 'participated'],
+            conflictAttributes: ['schoolId']
         });
 
         // Also ensure user accounts exist for these principals
@@ -482,7 +483,11 @@ export const updateSchoolsBatch = async (req, res) => {
             return res.json({ message: `(Offline Mode) Mock synced ${schools.length} schools from Google Sheets` });
         }
 
-        res.status(500).json({ message: 'Error syncing schools', error: error.message });
+        res.status(500).json({
+            message: 'Error syncing schools',
+            error: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 };
 
