@@ -575,74 +575,19 @@ const AdminDashboard = () => {
                     </div>
                 )}
 
-                {/* Options Row */}
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-                    <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Assessment</label>
-                        <select
-                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-primary"
-                            value={assessmentName}
-                            onChange={(e) => setAssessmentName(e.target.value)}
+                {/* Upload Button */}
+                {studentFiles.length > 0 && (
+                    <div className="flex justify-center">
+                        <button
+                            onClick={handleUpload}
+                            disabled={studentFiles.length === 0 || uploading}
+                            className="bg-primary text-white py-3 px-10 rounded-xl font-bold text-base hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-primary/20"
                         >
-                            <option value="">Select Assessment</option>
-                            <option value="Samagra">Samagra</option>
-                            <option value="Sodhana 1">Sodhana 1</option>
-                            <option value="Sodhana 2">Sodhana 2</option>
-                            <option value="Sodhana 3">Sodhana 3</option>
-                            <option value="Sodhana 4">Sodhana 4</option>
-                        </select>
+                            <FileUp size={20} />
+                            {uploading ? 'Processing...' : `Upload ${studentFiles.length} File${studentFiles.length > 1 ? 's' : ''}`}
+                        </button>
                     </div>
-                    <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">QP</label>
-                        <select
-                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-primary"
-                            value={qp}
-                            onChange={(e) => setQp(e.target.value)}
-                        >
-                            <option value="">Select QP</option>
-                            <option value="SCERT 1">SCERT 1</option>
-                            <option value="SCERT 2">SCERT 2</option>
-                            <option value="NCERT 1">NCERT 1</option>
-                            <option value="NCERT 2">NCERT 2</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">School Name</label>
-                        <input
-                            type="text"
-                            placeholder="e.g. Vignyan School"
-                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-primary"
-                            value={schoolName}
-                            onChange={(e) => setSchoolName(e.target.value)}
-                        />
-                    </div>
-                    <button
-                        onClick={handleRecalculate}
-                        disabled={uploading || loading}
-                        className="bg-teal-600 text-white py-3 px-6 rounded-xl font-bold hover:bg-teal-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                    >
-                        <RefreshCw size={18} />
-                        {loading ? 'Processing...' : 'Recalculate'}
-                    </button>
-                    <button
-                        onClick={handleUpload}
-                        disabled={studentFiles.length === 0 || uploading}
-                        className="bg-primary text-white py-3 px-6 rounded-xl font-bold hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                    >
-                        <FileUp size={18} />
-                        {uploading ? 'Processing...' : 'Upload Data'}
-                    </button>
-                </div>
-
-                <div className="flex items-center gap-4">
-                    <button
-                        onClick={downloadStudentTemplate}
-                        className="text-primary hover:text-emerald-700 text-xs font-bold flex items-center gap-1 transition-colors"
-                    >
-                        <FileSpreadsheet size={14} />
-                        Download Template
-                    </button>
-                </div>
+                )}
             </div>
 
             {message && (
