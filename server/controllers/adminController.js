@@ -357,15 +357,18 @@ export const generatePrincipalPdf = async (req, res) => {
 
         console.log(`Generating PDF for school: [${cleanSchoolId}], assessment: [${cleanAssessment}]...`);
 
-        // 1. Find a sample report to get the QP and verify existence
-        // Using LIKE and trimmed strings for robustness (MySQL LIKE is case-insensitive by default)
-        const sampleReport = await StudentReport.findOne({
+        // 1. Find a sample report - debug by fetching all for school first
+        const allSchoolReports = await StudentReport.findAll({
             where: {
-                schoolId: { [Op.like]: cleanSchoolId },
-                assessmentName: { [Op.like]: cleanAssessment },
-                status: { [Op.in]: ['PENDING', 'APPROVED'] }
+                schoolId: { [Op.like]: `%${cleanSchoolId}%` }
             }
         });
+
+        console.log(`Found ${allSchoolReports.length} reports for school ${cleanSchoolId}`);
+
+        const sampleReport = allSchoolReports.find(r =>
+            String(r.assessmentName || '').trim().toLowerCase() === cleanAssessment.toLowerCase()
+        );
 
         if (!sampleReport) {
             return res.status(404).json({ message: 'No reports found for this school/assessment' });
