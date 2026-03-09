@@ -352,11 +352,19 @@ export const generatePrincipalPdf = async (req, res) => {
     }
 
     try {
-        console.log(`Generating PDF for school ${schoolId}, assessment ${assessmentName}...`);
+        const cleanSchoolId = String(schoolId || '').trim();
+        const cleanAssessment = String(assessmentName || '').trim();
+
+        console.log(`Generating PDF for school: [${cleanSchoolId}], assessment: [${cleanAssessment}]...`);
 
         // 1. Find a sample report to get the QP and verify existence
+        // Using iLike and trimmed strings for robustness
         const sampleReport = await StudentReport.findOne({
-            where: { schoolId, assessmentName }
+            where: {
+                schoolId: { [Op.iLike]: cleanSchoolId },
+                assessmentName: { [Op.iLike]: cleanAssessment },
+                status: { [Op.in]: ['PENDING', 'APPROVED'] }
+            }
         });
 
         if (!sampleReport) {
