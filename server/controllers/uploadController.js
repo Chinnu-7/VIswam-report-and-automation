@@ -203,14 +203,16 @@ export const uploadStudentData = async (req, res) => {
                 const studentName = String(row[idxName] || `Student ${rollNo}`).trim();
 
                 let rawQp = String(row[idxQp] || globalQp || '').trim().toUpperCase();
-                let studentQp = rawQp;
+                let studentQp = '';
 
-                // Map numeric codes like "1" or "2" to "SCERT 1", "SCERT 2" etc.
-                if (rawQp === '1') studentQp = 'SCERT 1';
-                else if (rawQp === '2') studentQp = 'SCERT 2';
-                else if (rawQp === '3') studentQp = 'NCERT 1';
-                else if (rawQp === '4') studentQp = 'NCERT 2';
-                else if (!studentQp) studentQp = 'SCERT 1'; // Fallback
+                // Robust mapping for numeric and string PaperCodes
+                if (rawQp === '1' || rawQp.includes('SCERT1') || rawQp === 'SCERT 1') studentQp = 'SCERT 1';
+                else if (rawQp === '2' || rawQp.includes('SCERT2') || rawQp === 'SCERT 2') studentQp = 'SCERT 2';
+                else if (rawQp === '3' || rawQp.includes('NCERT1') || rawQp === 'NCERT 1') studentQp = 'NCERT 1';
+                else if (rawQp === '4' || rawQp.includes('NCERT2') || rawQp === 'NCERT 2') studentQp = 'NCERT 2';
+                else studentQp = rawQp || 'SCERT 1'; // Default to SCERT 1 if empty
+
+                console.log(`[Upload] Row ${i} (Roll: ${rollNo}): RawQP="${rawQp}", MappedQP="${studentQp}"`);
 
                 if (!keyCache[studentQp]) {
                     console.log(`[Upload] Loading Answer Key for: ${studentQp}`);
