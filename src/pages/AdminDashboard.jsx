@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/axios';
-import { CheckCircle, XCircle, Trash2, Search, Filter, AlertCircle, FileText, Upload, FileSpreadsheet, FileUp, RefreshCw, Download, LayoutDashboard } from 'lucide-react';
+import { CheckCircle, XCircle, Trash2, Search, Filter, AlertCircle, FileText, Upload, FileSpreadsheet, FileUp, RefreshCw, Download, LayoutDashboard, CloudUpload, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import * as xlsx from 'xlsx';
 
@@ -23,6 +23,8 @@ const AdminDashboard = () => {
     const [studentFiles, setStudentFiles] = useState([]);
     const [uploading, setUploading] = useState(false);
     const [forceAll, setForceAll] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
+    const [duplicateModal, setDuplicateModal] = useState({ open: false, fileName: '', message: '', grades: [], onConfirm: null });
 
     const userInfo = JSON.parse(localStorage.getItem('userInfo'));
     const config = {
@@ -271,11 +273,23 @@ const AdminDashboard = () => {
                 try {
                     const res = await api.post('/upload/students', formData, config);
                     successCount++;
-                    totalStudents += (res.data.count || 0); // Assuming backend might return count
+                    totalStudents += (res.data.count || 0);
                 } catch (err) {
                     if (err.response?.status === 409 && !forceAll) {
-                        const confirmForce = window.confirm(`${err.response.data.message}\n\nDo you want to overwrite data for this school? (Click 'Cancel' to skip this file)`);
-                        if (confirmForce) {
+                        // Show modal and wait for user decision
+                        const userChoice = await new Promise((resolve) => {
+                            setDuplicateModal({
+                                open: true,
+                                fileName: file.name,
+                                message: err.response.data.message,
+                                grades: err.response.data.grades || [],
+                                onConfirm: (confirmed) => {
+                                    setDuplicateModal(prev => ({ ...prev, open: false }));
+                                    resolve(confirmed);
+                                }
+                            });
+                        });
+                        if (userChoice) {
                             formData.append('force', 'true');
                             await api.post('/upload/students', formData, config);
                             successCount++;
@@ -299,6 +313,36 @@ const AdminDashboard = () => {
             setIsError(true);
         } finally {
             setUploading(false);
+        }
+    };
+
+    // Drag and drop handlers
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+    const handleDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+        const files = Array.from(e.dataTransfer.files).filter(f => f.name.endsWith('.xlsx') || f.name.endsWith('.xls'));
+        if (files.length > 0) {
+            setStudentFiles(prev => [...prev, ...files]);
+            const first = files[0];
+            const parts = first.name.split('_');
+            if (parts.length >= 2) {
+                let detectedAssessment = parts[0].replace(/(\d+)$/, ' $1');
+                if (['Sodhana 1', 'Sodhana 2', 'Sodhana 3', 'Sodhana 4', 'Samagra'].includes(detectedAssessment)) {
+                    setAssessmentName(detectedAssessment);
+                }
+                setSchoolName(`ID: ${parts[1]}`);
+            }
         }
     };
 
@@ -411,124 +455,194 @@ const AdminDashboard = () => {
                 </button>
             </div>
 
-            {/* Quick Upload Section for Admins */}
-            <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8 grid grid-cols-1 md:grid-cols-5 gap-6 items-end">
-                <div className="md:col-span-1">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">
-                        Files ({studentFiles.length})
-                    </label>
-                    <div className="relative group">
-                        <input
-                            type="file"
-                            multiple
-                            accept=".xlsx, .xls"
-                            onChange={(e) => {
-                                const files = Array.from(e.target.files);
-                                setStudentFiles(prev => [...prev, ...files]);
-
-                                // Auto-fill fields from the FIRST selected file
-                                if (files.length > 0) {
-                                    const first = files[0];
-                                    const parts = first.name.split('_');
-                                    if (parts.length >= 2) {
-                                        let detectedAssessment = parts[0].replace(/(\d+)$/, ' $1');
-                                        if (['Sodhana 1', 'Sodhana 2', 'Sodhana 3', 'Sodhana 4', 'Samagra'].includes(detectedAssessment)) {
-                                            setAssessmentName(detectedAssessment);
-                                        }
-                                        setSchoolName(`ID: ${parts[1]}`);
-                                    }
-                                }
-                            }}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                        />
-                        <div className={`border-2 border-dashed border-slate-200 rounded-xl p-3 flex flex-col items-center justify-center transition-colors group-hover:border-primary ${studentFiles.length > 0 ? 'bg-primary/5 border-primary' : 'bg-slate-50'}`}>
-                            <span className="text-xs font-bold text-slate-600 truncate w-full text-center">
-                                {studentFiles.length > 0 ? `${studentFiles.length} files` : 'Select Excel(s)'}
-                            </span>
+            {/* Duplicate Confirmation Modal */}
+            {duplicateModal.open && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 p-8 max-w-md w-full mx-4">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
+                                <AlertCircle size={24} className="text-amber-600" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-slate-800">Data Already Exists</h3>
+                                <p className="text-sm text-slate-500">{duplicateModal.fileName}</p>
+                            </div>
+                        </div>
+                        <p className="text-sm text-slate-600 mb-2">{duplicateModal.message}</p>
+                        {duplicateModal.grades.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mb-4">
+                                {duplicateModal.grades.map(g => (
+                                    <span key={g} className="px-3 py-1 bg-amber-50 text-amber-700 text-xs font-bold rounded-full border border-amber-200">Grade {g}</span>
+                                ))}
+                            </div>
+                        )}
+                        <p className="text-sm text-slate-500 mb-6">Do you want to overwrite the existing data?</p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => duplicateModal.onConfirm(false)}
+                                className="flex-1 px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl font-bold text-sm hover:bg-slate-200 transition-colors"
+                            >
+                                Skip
+                            </button>
+                            <button
+                                onClick={() => duplicateModal.onConfirm(true)}
+                                className="flex-1 px-4 py-2.5 bg-amber-500 text-white rounded-xl font-bold text-sm hover:bg-amber-600 transition-colors"
+                            >
+                                Overwrite
+                            </button>
                         </div>
                     </div>
-                    {studentFiles.length > 0 && (
-                        <div className="flex justify-between mt-2">
-                            <button
-                                onClick={() => setStudentFiles([])}
-                                className="text-red-500 hover:text-red-700 text-[10px] font-bold"
-                            >
-                                Clear All
-                            </button>
-                            <label className="flex items-center gap-1 text-[10px] font-bold text-slate-500 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={forceAll}
-                                    onChange={(e) => setForceAll(e.target.checked)}
-                                    className="w-3 h-3 rounded border-slate-300 text-primary"
-                                />
-                                Force All
-                            </label>
+                </div>
+            )}
+
+            {/* Upload Section */}
+            <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8 space-y-6">
+                {/* Drag & Drop Zone */}
+                <div
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    className={`relative border-2 border-dashed rounded-2xl p-10 flex flex-col items-center justify-center transition-all duration-200 cursor-pointer
+                        ${isDragging ? 'border-primary bg-primary/5 scale-[1.01]' : studentFiles.length > 0 ? 'border-primary/50 bg-primary/5' : 'border-slate-300 bg-slate-50 hover:border-primary hover:bg-primary/5'}`}
+                >
+                    <input
+                        type="file"
+                        multiple
+                        accept=".xlsx, .xls"
+                        onChange={(e) => {
+                            const files = Array.from(e.target.files);
+                            setStudentFiles(prev => [...prev, ...files]);
+                            if (files.length > 0) {
+                                const first = files[0];
+                                const parts = first.name.split('_');
+                                if (parts.length >= 2) {
+                                    let detectedAssessment = parts[0].replace(/(\d+)$/, ' $1');
+                                    if (['Sodhana 1', 'Sodhana 2', 'Sodhana 3', 'Sodhana 4', 'Samagra'].includes(detectedAssessment)) {
+                                        setAssessmentName(detectedAssessment);
+                                    }
+                                    setSchoolName(`ID: ${parts[1]}`);
+                                }
+                            }
+                        }}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    />
+                    <CloudUpload size={40} className={`mb-3 transition-colors ${isDragging ? 'text-primary' : 'text-slate-400'}`} />
+                    <p className="text-base font-bold text-slate-700 mb-1">Drag and Drop your files here</p>
+                    <p className="text-sm text-slate-400 mb-4">or</p>
+                    <span className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold text-sm hover:bg-emerald-600 transition-colors pointer-events-none">
+                        Browse Files
+                    </span>
+                    <p className="text-xs text-slate-400 mt-3">Supports .xlsx and .xls files</p>
+                </div>
+
+                {/* Selected Files List */}
+                {studentFiles.length > 0 && (
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                            <p className="text-sm font-bold text-slate-600">{studentFiles.length} file{studentFiles.length > 1 ? 's' : ''} selected</p>
+                            <div className="flex items-center gap-4">
+                                <label className="flex items-center gap-2 text-xs font-bold text-slate-500 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={forceAll}
+                                        onChange={(e) => setForceAll(e.target.checked)}
+                                        className="w-3.5 h-3.5 rounded border-slate-300 text-primary focus:ring-primary"
+                                    />
+                                    Force Overwrite All
+                                </label>
+                                <button
+                                    onClick={() => setStudentFiles([])}
+                                    className="text-red-500 hover:text-red-700 text-xs font-bold flex items-center gap-1 transition-colors"
+                                >
+                                    <Trash2 size={12} /> Clear All
+                                </button>
+                            </div>
                         </div>
-                    )}
+                        <div className="flex flex-wrap gap-2">
+                            {studentFiles.map((file, idx) => (
+                                <div key={idx} className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-medium text-slate-600">
+                                    <FileSpreadsheet size={14} className="text-primary" />
+                                    <span className="max-w-[200px] truncate">{file.name}</span>
+                                    <button
+                                        onClick={() => setStudentFiles(prev => prev.filter((_, i) => i !== idx))}
+                                        className="text-slate-400 hover:text-red-500 transition-colors ml-1"
+                                    >
+                                        <X size={12} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Options Row */}
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                    <div>
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Assessment</label>
+                        <select
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-primary"
+                            value={assessmentName}
+                            onChange={(e) => setAssessmentName(e.target.value)}
+                        >
+                            <option value="">Select Assessment</option>
+                            <option value="Samagra">Samagra</option>
+                            <option value="Sodhana 1">Sodhana 1</option>
+                            <option value="Sodhana 2">Sodhana 2</option>
+                            <option value="Sodhana 3">Sodhana 3</option>
+                            <option value="Sodhana 4">Sodhana 4</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">QP</label>
+                        <select
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-primary"
+                            value={qp}
+                            onChange={(e) => setQp(e.target.value)}
+                        >
+                            <option value="">Select QP</option>
+                            <option value="SCERT 1">SCERT 1</option>
+                            <option value="SCERT 2">SCERT 2</option>
+                            <option value="NCERT 1">NCERT 1</option>
+                            <option value="NCERT 2">NCERT 2</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">School Name</label>
+                        <input
+                            type="text"
+                            placeholder="e.g. Vignyan School"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-primary"
+                            value={schoolName}
+                            onChange={(e) => setSchoolName(e.target.value)}
+                        />
+                    </div>
+                    <button
+                        onClick={handleRecalculate}
+                        disabled={uploading || loading}
+                        className="bg-teal-600 text-white py-3 px-6 rounded-xl font-bold hover:bg-teal-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                        <RefreshCw size={18} />
+                        {loading ? 'Processing...' : 'Recalculate'}
+                    </button>
+                    <button
+                        onClick={handleUpload}
+                        disabled={studentFiles.length === 0 || uploading}
+                        className="bg-primary text-white py-3 px-6 rounded-xl font-bold hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                        <FileUp size={18} />
+                        {uploading ? 'Processing...' : 'Upload Data'}
+                    </button>
+                </div>
+
+                <div className="flex items-center gap-4">
                     <button
                         onClick={downloadStudentTemplate}
-                        className="text-primary hover:text-emerald-700 text-[10px] font-bold flex items-center gap-1 mt-2 transition-colors"
+                        className="text-primary hover:text-emerald-700 text-xs font-bold flex items-center gap-1 transition-colors"
                     >
-                        <FileSpreadsheet size={12} />
+                        <FileSpreadsheet size={14} />
                         Download Template
                     </button>
                 </div>
-                <div>
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Assessment</label>
-                    <select
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-primary"
-                        value={assessmentName}
-                        onChange={(e) => setAssessmentName(e.target.value)}
-                    >
-                        <option value="">Select Assessment</option>
-                        <option value="Samagra">Samagra</option>
-                        <option value="Sodhana 1">Sodhana 1</option>
-                        <option value="Sodhana 2">Sodhana 2</option>
-                        <option value="Sodhana 3">Sodhana 3</option>
-                        <option value="Sodhana 4">Sodhana 4</option>
-                    </select>
-                </div>
-                <div>
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">QP</label>
-                    <select
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-primary"
-                        value={qp}
-                        onChange={(e) => setQp(e.target.value)}
-                    >
-                        <option value="">Select QP</option>
-                        <option value="SCERT 1">SCERT 1</option>
-                        <option value="SCERT 2">SCERT 2</option>
-                        <option value="NCERT 1">NCERT 1</option>
-                        <option value="NCERT 2">NCERT 2</option>
-                    </select>
-                </div>
-                <div>
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">School Name</label>
-                    <input
-                        type="text"
-                        placeholder="e.g. Vignyan School"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-primary"
-                        value={schoolName}
-                        onChange={(e) => setSchoolName(e.target.value)}
-                    />
-                </div>
-                <button
-                    onClick={handleRecalculate}
-                    disabled={uploading || loading}
-                    className="bg-teal-600 text-white py-3 px-6 rounded-xl font-bold hover:bg-teal-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                    <RefreshCw size={18} />
-                    {loading ? 'Processing...' : 'Recalculate Grades'}
-                </button>
-                <button
-                    onClick={handleUpload}
-                    disabled={studentFiles.length === 0 || uploading}
-                    className="bg-primary text-white py-3 px-6 rounded-xl font-bold hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                    <FileUp size={18} />
-                    {uploading ? 'Processing Batch...' : 'Upload Data'}
-                </button>
             </div>
 
             {message && (
