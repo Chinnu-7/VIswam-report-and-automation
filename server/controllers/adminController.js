@@ -358,11 +358,11 @@ export const generatePrincipalPdf = async (req, res) => {
         console.log(`Generating PDF for school: [${cleanSchoolId}], assessment: [${cleanAssessment}]...`);
 
         // 1. Find a sample report to get the QP and verify existence
-        // Using iLike and trimmed strings for robustness
+        // Using LIKE and trimmed strings for robustness (MySQL LIKE is case-insensitive by default)
         const sampleReport = await StudentReport.findOne({
             where: {
-                schoolId: { [Op.iLike]: cleanSchoolId },
-                assessmentName: { [Op.iLike]: cleanAssessment },
+                schoolId: { [Op.like]: cleanSchoolId },
+                assessmentName: { [Op.like]: cleanAssessment },
                 status: { [Op.in]: ['PENDING', 'APPROVED'] }
             }
         });
