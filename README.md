@@ -49,15 +49,5 @@ The project is optimized for deployment via Vercel. Push your changes to GitHub 
 - **Database**: MySQL (Remote/Production) or PostgreSQL (Ready).
 - **Automation**: n8n, Google Chrome (headless).
 
-## Deployment
-
-### Environment Variables
-- `DB_HOST`: Database host (e.g., `sql12.freesqldatabase.com`)
-- `DB_NAME`: Database name
-- `DB_USER`: Username
-- `DB_PASS`: Password
-- `N8N_WEBHOOK_URL`: Your n8n webhook URL
-- `APP_URL`: The public URL of your deployed application (for n8n report rendering)
-
 ## License
 MIT

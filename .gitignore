@@ -8,6 +8,8 @@ database.sqlite
 # Environment variables
 .env
 .env.local
+.env.production.local
+.env.vercel.preview
 
 # Docker
 Dockerfile

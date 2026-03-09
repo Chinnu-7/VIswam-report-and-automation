@@ -20,8 +20,9 @@ const AdminDashboard = () => {
     const [assessmentName, setAssessmentName] = useState('');
     const [qp, setQp] = useState('');
     const [schoolName, setSchoolName] = useState('');
-    const [studentFile, setStudentFile] = useState(null);
+    const [studentFiles, setStudentFiles] = useState([]);
     const [uploading, setUploading] = useState(false);
+    const [forceAll, setForceAll] = useState(false);
 
     const userInfo = JSON.parse(localStorage.getItem('userInfo'));
     const config = {
@@ -72,6 +73,10 @@ const AdminDashboard = () => {
                 grouped[key].studentCount += 1;
                 if (report.isEmailSent) {
                     grouped[key].isEmailSent = true;
+                }
+                // NEW: Pass through the joined omrUploadDate
+                if (report.school_info) {
+                    grouped[key].omrUploadDate = report.school_info.omrUploadDate;
                 }
             });
 
@@ -133,113 +138,21 @@ const AdminDashboard = () => {
     };
 
     const handleSyncSchools = async () => {
-        let url = 'https://docs.google.com/spreadsheets/d/1fl5NW2skc_8NC0x3vxE9Fcfm6HGF1-e2lOTy4IMs7N0/export?format=csv';
-
-
         setLoading(true);
         try {
-            setMessage('Fetching and parsing school data...');
+            setMessage('Syncing schools from Google Sheet...');
             setIsError(false);
 
-            const response = await fetch(url);
-            if (!response.ok) throw new Error('Failed to fetch data. Ensure the Google Sheet is "Published to the web" as CSV.');
+            // New Backend-Driven Sync: No need for frontend parsing
+            const res = await api.post('/schools/sync-all', {}, config);
 
-            const text = response.data ? (typeof response.data === 'string' ? response.data : JSON.stringify(response.data)) : await response.text();
-
-            if (text.includes('<html') || text.includes('<!DOCTYPE')) {
-                throw new Error('Received HTML instead of data. Please ensure: File > Share > Publish to web > CSV.');
-            }
-
-            // ROBUST MULTI-LINE CSV PARSER
-            const parseCSVText = (csv) => {
-                const rows = [];
-                let currentRow = [];
-                let currentField = '';
-                let inQuotes = false;
-
-                for (let i = 0; i < csv.length; i++) {
-                    const char = csv[i];
-                    const nextChar = csv[i + 1];
-
-                    if (inQuotes) {
-                        if (char === '"' && nextChar === '"') {
-                            currentField += '"';
-                            i++; // Skip next quote
-                        } else if (char === '"') {
-                            inQuotes = false;
-                        } else {
-                            currentField += char;
-                        }
-                    } else {
-                        if (char === '"') {
-                            inQuotes = true;
-                        } else if (char === ',') {
-                            currentRow.push(currentField.trim());
-                            currentField = '';
-                        } else if (char === '\n' || char === '\r') {
-                            if (currentField || currentRow.length > 0) {
-                                currentRow.push(currentField.trim());
-                                rows.push(currentRow);
-                                currentRow = [];
-                                currentField = '';
-                            }
-                            if (char === '\r' && nextChar === '\n') i++; // Skip \n in \r\n
-                        } else {
-                            currentField += char;
-                        }
-                    }
-                }
-                if (currentField || currentRow.length > 0) {
-                    currentRow.push(currentField.trim());
-                    rows.push(currentRow);
-                }
-                return rows;
-            };
-
-            const allRows = parseCSVText(text);
-            if (allRows.length < 2) throw new Error('CSV is empty or invalid');
-
-            const headers = allRows[0].map(h => h.toLowerCase().replace(/[^a-z0-9]/g, ''));
-            const dataRows = allRows.slice(1).map(row => {
-                const obj = {};
-                headers.forEach((h, i) => { if (h) obj[h] = row[i]; });
-                return obj;
-            });
-
-            // Normalized header matching keys
-            const keyNSF = 'nsfuserid';
-            const keyEmail = 'schoolemailid';
-            const keyContact = 'poccontactno';
-
-            const consolidatedSchools = dataRows.map(row => {
-                const id = row[keyNSF] || row['schoolid'] || row['id'] || row['schoolcode'];
-                if (!id) return null;
-
-                const idUpper = String(id).toUpperCase();
-
-                return {
-                    schoolId: idUpper,
-                    schoolName: row['schoolname'] || row['nsfschoolname'] || row['name'] || idUpper,
-                    principalEmail: row[keyEmail] || row['principalemail'] || row['email'] || '',
-                    whatsappNo: row[keyContact] || row['contactnumber'] || row['whatsapp'] || row['phone'] || '',
-                    registered: parseInt(row['totalstudentsregistered'] || row['registered'] || 0, 10) || 0,
-                    participated: parseInt(row['noofomrsreceived'] || row['participated'] || 0, 10) || 0
-                };
-            }).filter(s => s && s.schoolId && s.principalEmail);
-
-            if (consolidatedSchools.length === 0) {
-                console.log('Headers found:', headers);
-                console.log('Sample data row:', dataRows[0]);
-                throw new Error('No valid school records found. Check if your headers are correct.');
-            }
-
-            const res = await api.post('/schools/sync', { schools: consolidatedSchools }, config);
-            setMessage(`${res.data.message} Synced ${consolidatedSchools.length} schools.`);
+            setMessage(`${res.data.message || 'Schools synced successfully.'}`);
             setIsError(false);
             setTimeout(() => setMessage(''), 7000);
         } catch (err) {
             console.error('Sync Error:', err);
-            setMessage('Sync Error: ' + err.message);
+            const serverError = err.response?.data?.error || err.response?.data?.message || err.message;
+            setMessage('Sync Error: ' + serverError);
             setIsError(true);
         } finally {
             setLoading(false);
@@ -320,44 +233,69 @@ const AdminDashboard = () => {
     };
 
     const handleUpload = async () => {
-        if (!studentFile) return;
-        const formData = new FormData();
-        formData.append('file', studentFile);
-        formData.append('assessmentName', assessmentName || 'Sodhana 1');
-        formData.append('qp', qp);
-        formData.append('schoolName', schoolName || 'Vignyan');
+        if (studentFiles.length === 0) return;
 
         setUploading(true);
-        try {
-            setMessage('Uploading student data...');
-            setIsError(false);
-            const res = await api.post('/upload/students', formData, config);
-            setMessage(res.data.message);
-            setStudentFile(null);
-            fetchReports();
-            setTimeout(() => setMessage(''), 3000);
-        } catch (err) {
-            console.error('Upload Error Details:', err);
-            let msg = err.response?.data?.message || 'Upload failed';
-            let detail = err.response?.data?.error || '';
+        let successCount = 0;
+        let failCount = 0;
+        let totalStudents = 0;
 
-            // Fallback for non-JSON responses (e.g., HTML 500/404)
-            if (!err.response?.data?.message && typeof err.response?.data === 'string') {
-                if (err.response.data.includes('Proxy error')) {
-                    msg = 'Network Error (Proxy)';
-                } else if (err.response.data.includes('<!DOCTYPE html>')) {
-                    msg = 'Server Error (HTML Response)';
-                    detail = 'Check server console for details';
-                } else {
-                    msg = 'Server Error';
-                    detail = err.response.data.substring(0, 100);
+        try {
+            for (let i = 0; i < studentFiles.length; i++) {
+                const file = studentFiles[i];
+                const formData = new FormData();
+                formData.append('file', file);
+
+                // Detection logic per file
+                let currentAssessment = assessmentName || 'Sodhana 1';
+                let currentSchool = schoolName;
+                let currentQp = qp;
+
+                const parts = file.name.split('_');
+                if (parts.length >= 2) {
+                    let detectedAssessment = parts[0].replace(/(\d+)$/, ' $1');
+                    if (['Sodhana 1', 'Sodhana 2', 'Sodhana 3', 'Sodhana 4', 'Samagra'].includes(detectedAssessment)) {
+                        currentAssessment = detectedAssessment;
+                    }
+                    currentSchool = `ID: ${parts[1]}`;
                 }
-            } else if (!err.response) {
-                msg = 'Network Error';
-                detail = 'No response from server';
+
+                formData.append('assessmentName', currentAssessment);
+                formData.append('qp', currentQp);
+                formData.append('schoolName', currentSchool);
+                if (forceAll) formData.append('force', 'true');
+
+                setMessage(`Uploading (${i + 1}/${studentFiles.length}): ${file.name}...`);
+                setIsError(false);
+
+                try {
+                    const res = await api.post('/upload/students', formData, config);
+                    successCount++;
+                    totalStudents += (res.data.count || 0); // Assuming backend might return count
+                } catch (err) {
+                    if (err.response?.status === 409 && !forceAll) {
+                        const confirmForce = window.confirm(`${err.response.data.message}\n\nDo you want to overwrite data for this school? (Click 'Cancel' to skip this file)`);
+                        if (confirmForce) {
+                            formData.append('force', 'true');
+                            await api.post('/upload/students', formData, config);
+                            successCount++;
+                        } else {
+                            failCount++;
+                        }
+                    } else {
+                        console.error(`Upload failed for ${file.name}:`, err);
+                        failCount++;
+                    }
+                }
             }
 
-            setMessage(`Error: ${msg} ${detail ? `(${detail})` : ''} [Status: ${err.response?.status || 'N/A'}]`);
+            setMessage(`Batch Complete: ${successCount} successful, ${failCount} skipped/failed.`);
+            setStudentFiles([]);
+            fetchReports();
+            setTimeout(() => setMessage(''), 5000);
+        } catch (err) {
+            console.error('Batch Upload Error:', err);
+            setMessage('Batch Upload failed unexpectedly.');
             setIsError(true);
         } finally {
             setUploading(false);
@@ -476,20 +414,58 @@ const AdminDashboard = () => {
             {/* Quick Upload Section for Admins */}
             <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8 grid grid-cols-1 md:grid-cols-5 gap-6 items-end">
                 <div className="md:col-span-1">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Student File</label>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">
+                        Files ({studentFiles.length})
+                    </label>
                     <div className="relative group">
                         <input
                             type="file"
+                            multiple
                             accept=".xlsx, .xls"
-                            onChange={(e) => setStudentFile(e.target.files[0])}
+                            onChange={(e) => {
+                                const files = Array.from(e.target.files);
+                                setStudentFiles(prev => [...prev, ...files]);
+
+                                // Auto-fill fields from the FIRST selected file
+                                if (files.length > 0) {
+                                    const first = files[0];
+                                    const parts = first.name.split('_');
+                                    if (parts.length >= 2) {
+                                        let detectedAssessment = parts[0].replace(/(\d+)$/, ' $1');
+                                        if (['Sodhana 1', 'Sodhana 2', 'Sodhana 3', 'Sodhana 4', 'Samagra'].includes(detectedAssessment)) {
+                                            setAssessmentName(detectedAssessment);
+                                        }
+                                        setSchoolName(`ID: ${parts[1]}`);
+                                    }
+                                }
+                            }}
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                         />
-                        <div className={`border-2 border-dashed border-slate-200 rounded-xl p-3 flex items-center justify-center transition-colors group-hover:border-primary ${studentFile ? 'bg-primary/5 border-primary' : 'bg-slate-50'}`}>
-                            <span className="text-xs font-bold text-slate-600 truncate max-w-[150px]">
-                                {studentFile ? studentFile.name : 'Select Excel'}
+                        <div className={`border-2 border-dashed border-slate-200 rounded-xl p-3 flex flex-col items-center justify-center transition-colors group-hover:border-primary ${studentFiles.length > 0 ? 'bg-primary/5 border-primary' : 'bg-slate-50'}`}>
+                            <span className="text-xs font-bold text-slate-600 truncate w-full text-center">
+                                {studentFiles.length > 0 ? `${studentFiles.length} files` : 'Select Excel(s)'}
                             </span>
                         </div>
                     </div>
+                    {studentFiles.length > 0 && (
+                        <div className="flex justify-between mt-2">
+                            <button
+                                onClick={() => setStudentFiles([])}
+                                className="text-red-500 hover:text-red-700 text-[10px] font-bold"
+                            >
+                                Clear All
+                            </button>
+                            <label className="flex items-center gap-1 text-[10px] font-bold text-slate-500 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={forceAll}
+                                    onChange={(e) => setForceAll(e.target.checked)}
+                                    className="w-3 h-3 rounded border-slate-300 text-primary"
+                                />
+                                Force All
+                            </label>
+                        </div>
+                    )}
                     <button
                         onClick={downloadStudentTemplate}
                         className="text-primary hover:text-emerald-700 text-[10px] font-bold flex items-center gap-1 mt-2 transition-colors"
@@ -547,11 +523,11 @@ const AdminDashboard = () => {
                 </button>
                 <button
                     onClick={handleUpload}
-                    disabled={!studentFile || uploading}
+                    disabled={studentFiles.length === 0 || uploading}
                     className="bg-primary text-white py-3 px-6 rounded-xl font-bold hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                     <FileUp size={18} />
-                    {uploading ? 'Uploading...' : 'Upload Data'}
+                    {uploading ? 'Processing Batch...' : 'Upload Data'}
                 </button>
             </div>
 
@@ -610,6 +586,7 @@ const AdminDashboard = () => {
                                 <th className="px-6 py-4">School</th>
                                 <th className="px-6 py-4">Assessment</th>
                                 <th className="px-6 py-4">Students</th>
+                                <th className="px-6 py-4">Dispatch</th>
                                 <th className="px-6 py-4">Approval</th>
                                 <th className="px-6 py-4">Notified</th>
                                 <th className="px-6 py-4 text-center">Preview</th>
@@ -618,7 +595,7 @@ const AdminDashboard = () => {
                         <tbody className="divide-y divide-slate-50">
                             {loading ? (
                                 <tr>
-                                    <td colSpan="6" className="px-6 py-20 text-center">
+                                    <td colSpan="7" className="px-6 py-20 text-center">
                                         <div className="flex flex-col items-center gap-3">
                                             <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
                                             <p className="text-slate-400 font-medium">Loading reports...</p>
@@ -627,7 +604,7 @@ const AdminDashboard = () => {
                                 </tr>
                             ) : reports.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" className="px-6 py-20 text-center text-slate-400">
+                                    <td colSpan="7" className="px-6 py-20 text-center text-slate-400">
                                         No {filter.toLowerCase()} reports found matching this criteria.
                                     </td>
                                 </tr>
@@ -643,7 +620,9 @@ const AdminDashboard = () => {
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="text-slate-700 font-bold">{report.schoolName || 'Unknown'}</div>
-                                        <div className="text-[10px] text-slate-400">{report.schoolId}</div>
+                                        <div className="text-[10px] text-slate-400">
+                                            {report.schoolId}
+                                        </div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded font-bold">
@@ -651,6 +630,19 @@ const AdminDashboard = () => {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-slate-600 font-medium">{report.studentCount} Students</td>
+                                    <td className="px-6 py-4">
+                                        <div className="text-xs font-bold text-slate-600">
+                                            {(() => {
+                                                if (!report.omrUploadDate) return 'N/A';
+                                                const d = new Date(report.omrUploadDate);
+                                                d.setDate(d.getDate() + 5);
+                                                return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+                                            })()}
+                                        </div>
+                                        <div className="text-[10px] text-slate-400">
+                                            {report.omrUploadDate ? `Uploaded: ${new Date(report.omrUploadDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}` : ''}
+                                        </div>
+                                    </td>
                                     <td className="px-6 py-4">
                                         <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${report.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700' :
                                             report.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
@@ -660,9 +652,22 @@ const AdminDashboard = () => {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${report.isEmailSent ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500'}`}>
-                                            {report.isEmailSent ? 'SENT' : 'UNSENT'}
-                                        </span>
+                                        {report.isEmailSent ? (
+                                            <div className="flex flex-col items-start gap-1">
+                                                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-indigo-100 text-indigo-700">
+                                                    SENT
+                                                </span>
+                                                {report.emailSentDate && (
+                                                    <span className="text-[10px] text-slate-500 font-medium font-mono">
+                                                        {new Date(report.emailSentDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-500">
+                                                UNSENT
+                                            </span>
+                                        )}
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex justify-center">

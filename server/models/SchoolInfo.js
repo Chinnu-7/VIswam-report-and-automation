@@ -26,6 +26,10 @@ const SchoolInfo = db.define('school_info', {
     participated: {
         type: Sequelize.INTEGER,
         defaultValue: 0
+    },
+    omrUploadDate: {
+        type: Sequelize.DATE,
+        allowNull: true
     }
 }, {
     tableName: 'SchoolInfos',

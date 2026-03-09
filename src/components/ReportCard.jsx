@@ -256,7 +256,7 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
         </div>
     );
 
-    const studentsPerPage = 25;
+    const studentsPerPage = 18; // Further reduced for safety
     const studentPages = [];
     for (let i = 0; i < studentData.length; i += studentsPerPage) {
         studentPages.push(studentData.slice(i, i + studentsPerPage));
@@ -304,14 +304,19 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                         display: block !important;
                     }
                     .page {
-                        width: 100% !important;
+                        width: 210mm !important;
+                        height: 290mm !important;
                         margin: 0 !important;
-                        padding: 0 !important; /* Let @page margin handle it */
+                        padding: 10mm 10mm 25mm 10mm !important;
                         box-shadow: none !important;
-                        page-break-after: always !important;
-                        break-after: always !important;
                         position: relative !important;
-                        min-height: 277mm !important;
+                        overflow: hidden !important;
+                        box-sizing: border-box !important;
+                        page-break-after: always !important;
+                    }
+                    .page:last-child {
+                        page-break-after: avoid !important;
+                        break-after: avoid !important;
                     }
                     .page-content {
                         padding: 0 !important;
@@ -319,15 +324,16 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                     }
                     .page-footer {
                         position: absolute !important;
-                        bottom: 0 !important;
-                        left: 0 !important;
-                        right: 0 !important;
-                        height: 20mm !important;
+                        bottom: 5mm !important; /* 5mm from bottom of the .page container */
+                        left: 10mm !important;
+                        right: 10mm !important;
+                        height: 15mm !important;
                         border-top: 1px solid #e2e8f0 !important;
                         display: flex !important;
                         justify-content: space-between !important;
                         align-items: flex-end !important;
                         page-break-inside: avoid !important;
+                        background-color: white !important;
                     }
                     .page-breaker { display: none !important; }
                 }

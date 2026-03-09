@@ -2,7 +2,7 @@ import fs from 'fs';
 import axios from 'axios';
 import FormData from 'form-data';
 
-async function testUpload() {
+async function testUploadInvalid() {
     try {
         console.log("1. Logging in...");
         const loginRes = await axios.post('http://localhost:5000/api/auth/login', {
@@ -12,11 +12,11 @@ async function testUpload() {
         const token = loginRes.data.token;
         console.log("✅ Logged in successfully.");
 
-        console.log("2. Uploading file...");
+        console.log("2. Uploading file with INVALID school ID...");
         const form = new FormData();
         form.append('file', fs.createReadStream('Sodhana1_518759_2025-2026.xlsx'));
-        // Using a schoolId that exists in the local database
-        form.append('schoolId', '36040301016');
+        // Using an invalid schoolId that doesn't exist
+        form.append('schoolId', '518759');
         form.append('assessmentName', 'Sodhana 1');
         form.append('qp', 'SCERT 1');
 
@@ -31,4 +31,4 @@ async function testUpload() {
         console.error("❌ Upload Error:", e.response ? e.response.data : e.message);
     }
 }
-testUpload();
+testUploadInvalid();

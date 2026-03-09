@@ -7,6 +7,7 @@ import puppeteerCore from 'puppeteer-core';
 import chromium from '@sparticuz/chromium';
 import FormData from 'form-data';
 import { Op } from 'sequelize';
+import bcrypt from 'bcryptjs';
 import * as gradingService from '../services/gradingService.js';
 
 // Helper for internal use (upload/approval)
@@ -40,12 +41,19 @@ export const performRecalculate = async (schoolId, assessmentName, qp = null) =>
     const stats = gradingService.computeCohortStats(plainReports);
     const updatedReports = gradingService.assignRelativeGrades(plainReports, stats);
 
-    for (const updated of updatedReports) {
-        await StudentReport.update(
-            { reportData: updated.reportData },
-            { where: { id: updated.id } }
-        );
-    }
+    // OPTIMIZED: Bulk update instead of row-by-row loop
+    // sequelize.bulkCreate with updateOnDuplicate is much faster for Vercel timeouts
+    await StudentReport.bulkCreate(
+        updatedReports.map(r => ({
+            id: r.id,
+            reportData: r.reportData // Sequelize will handle stringification due to model setter
+        })),
+        {
+            updateOnDuplicate: ['reportData'],
+            conflictAttributes: ['id']
+        }
+    );
+
     return updatedReports.length;
 };
 
@@ -95,7 +103,13 @@ export const getReports = async (req, res) => {
         }
 
 
-        const reports = await StudentReport.findAll({ where });
+        const reports = await StudentReport.findAll({
+            where,
+            include: [{
+                model: SchoolInfo,
+                attributes: ['omrUploadDate', 'schoolName']
+            }]
+        });
         const parsedReports = reports.map(r => {
             const data = r.get({ plain: true });
             if (typeof data.reportData === 'string') {
@@ -221,7 +235,43 @@ export const approveReportsBySchool = async (req, res) => {
     }
 };
 
-async function processN8nTriggersMulti(req, reportsArray) {
+// New Automated Dispatch Function for Cron Jobs
+export const runAutomatedDispatch = async (req, res) => {
+    try {
+        console.log('--- Starting Automated Email Dispatch ---');
+
+        // 1. Find all reports that are APPROVED but NOT YET SENT
+        const approvedReports = await StudentReport.findAll({
+            where: {
+                status: 'APPROVED',
+                isEmailSent: false
+            }
+        });
+
+        if (approvedReports.length === 0) {
+            console.log('No approved reports pending dispatch.');
+            return res.json({ message: 'No reports pending dispatch today.', count: 0 });
+        }
+
+        // 2. Process them using the multi-trigger logic
+        // This logic handles grouping by school and checking the 5-day dispatch window.
+        const triggerResults = await processN8nTriggersMulti(req, approvedReports, true);
+
+        const sentCount = triggerResults.filter(r => r.status === 'Triggered').length;
+        console.log(`Automated dispatch complete. Sent reports for ${sentCount} schools.`);
+
+        res.json({
+            message: `Automated dispatch processed for ${approvedReports.length} reports.`,
+            sentSchoolsCount: sentCount,
+            results: triggerResults
+        });
+    } catch (error) {
+        console.error('Error in automated dispatch:', error);
+        res.status(500).json({ message: 'Automated dispatch failed', error: error.message });
+    }
+};
+
+async function processN8nTriggersMulti(req, reportsArray, isAutomated = false) {
     const reportsBySchool = reportsArray.reduce((acc, report) => {
         if (!acc[report.schoolId]) {
             acc[report.schoolId] = [];
@@ -233,91 +283,123 @@ async function processN8nTriggersMulti(req, reportsArray) {
     const triggerResults = [];
 
     for (const [schoolId, reports] of Object.entries(reportsBySchool)) {
-        // Get Principal Email
-        const school = await SchoolInfo.findOne({ where: { schoolId } });
-        const principalEmail = school ? school.principalEmail : null;
-        const schoolName = school ? school.schoolName : 'Unknown School';
+        try {
+            // Get Principal Email
+            const school = await SchoolInfo.findOne({ where: { schoolId } });
+            const principalEmail = school ? school.principalEmail : null;
+            const schoolName = school ? school.schoolName : 'Unknown School';
 
-        if (principalEmail) {
-            // Trigger n8n with LIST of students
-            try {
-                const sampleReportId = reports.length > 0 ? reports[0].id : '';
-                const qp = reports.length > 0 ? reports[0].qp : '';
+            if (!principalEmail) {
+                console.warn(`No principal email found for school ${schoolId}`);
+                triggerResults.push({ schoolId, status: 'No Email Found' });
+                continue;
+            }
 
-                let pdfBuffer = null;
-                try {
-                    console.log(`Generating PDF for school ${schoolId}...`);
-                    let browser;
-                    if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
-                        const executablePath = await chromium.executablePath();
-                        browser = await puppeteerCore.launch({
-                            args: chromium.args,
-                            defaultViewport: chromium.defaultViewport,
-                            executablePath: executablePath,
-                            headless: chromium.headless,
-                            ignoreHTTPSErrors: true,
-                        });
-                    } else {
-                        const localPuppeteer = (await import('puppeteer')).default;
-                        browser = await localPuppeteer.launch({
-                            headless: 'new',
-                            args: ['--no-sandbox', '--disable-setuid-sandbox']
-                        });
+            // Calculate Dispatch Date (Upload + 5 days)
+            let isDispatchDay = false;
+            if (school.omrUploadDate) {
+                const uploadDate = new Date(school.omrUploadDate);
+                const dispatchDate = new Date(uploadDate);
+                dispatchDate.setDate(dispatchDate.getDate() + 5);
+
+                const today = new Date();
+
+                // For automated runs, we trigger if today is >= dispatch date
+                // For manual approval, we usually only trigger exactly on dispatch day
+                if (isAutomated) {
+                    if (today >= dispatchDate) isDispatchDay = true;
+                } else {
+                    if (dispatchDate.toDateString() === today.toDateString()) {
+                        isDispatchDay = true;
                     }
-                    const page = await browser.newPage();
-                    const reportUrl = `${req.protocol}://${req.get('host')}/report/${sampleReportId}?view=principal&download=true&qp=${encodeURIComponent(qp || '')}`;
-
-                    await page.goto(reportUrl, { waitUntil: 'networkidle0', timeout: 45000 });
-                    pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
-                    await browser.close();
-                    console.log(`PDF generated successfully for ${schoolId}`);
-                } catch (pdfErr) {
-                    console.error(`Error generating PDF for ${schoolId}:`, pdfErr);
-                    // Continue to send webhook even if PDF fails? Depends on desired behaviour.
-                    throw new Error("Failed to generate PDF: " + pdfErr.message);
                 }
+            }
 
-                const form = new FormData();
-                form.append('status', 'Approved');
-                form.append('email', principalEmail);
-                form.append('phone', school ? (school.whatsappNo || '') : '');
-                form.append('name', 'Principal');
-                form.append('school_name', schoolName);
-                form.append('remarks', 'Excellent performance overall.');
-                form.append('schoolId', schoolId);
-                form.append('students', JSON.stringify(reports.map(r => ({
-                    id: r.id,
-                    name: r.studentName,
-                    rollNo: r.rollNo,
-                    class: r.class
-                }))));
+            // ONLY proceed with PDF generation and n8n if it's the dispatch day/past it
+            if (!isDispatchDay) {
+                console.log(`[Approval] School ${schoolId} is not yet on dispatch day. Skipping.`);
+                triggerResults.push({ schoolId, status: 'Not Dispatch Day' });
+                continue;
+            }
 
-                if (pdfBuffer) {
-                    form.append('data', pdfBuffer, {
-                        filename: `${schoolName.replace(/[^a-z0-9]/gi, '_')}_Report.pdf`,
-                        contentType: 'application/pdf'
+            // Trigger n8n with LIST of students
+            const sampleReportId = reports.length > 0 ? reports[0].id : '';
+            const qp = reports.length > 0 ? reports[0].qp : '';
+
+            let pdfBuffer = null;
+            try {
+                console.log(`Generating PDF for school ${schoolId} (Dispatch Day)...`);
+                let browser;
+                if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+                    const executablePath = await chromium.executablePath();
+                    browser = await puppeteerCore.launch({
+                        args: chromium.args,
+                        defaultViewport: chromium.defaultViewport,
+                        executablePath: executablePath,
+                        headless: chromium.headless,
+                        ignoreHTTPSErrors: true,
+                    });
+                } else {
+                    const localPuppeteer = (await import('puppeteer')).default;
+                    browser = await localPuppeteer.launch({
+                        headless: 'new',
+                        args: ['--no-sandbox', '--disable-setuid-sandbox']
                     });
                 }
+                const page = await browser.newPage();
+                const protocol = req ? req.protocol : 'https';
+                const host = req ? req.get('host') : 'viswam-report-card.vercel.app';
+                const reportUrl = `${protocol}://${host}/report/${sampleReportId}?view=principal&download=true&qp=${encodeURIComponent(qp || '')}`;
 
-                await axios.post(process.env.N8N_WEBHOOK_URL, form, {
-                    headers: form.getHeaders()
-                });
-
-                // Update isEmailSent to true after successfully triggering webhook
-                const reportIds = reports.map(r => r.id);
-                await StudentReport.update(
-                    { isEmailSent: true },
-                    { where: { id: { [Op.in]: reportIds } } }
-                );
-
-                triggerResults.push({ schoolId, status: 'Triggered', count: reports.length });
-            } catch (err) {
-                console.error(`Failed to trigger n8n for school ${schoolId}:`, err.message);
-                triggerResults.push({ schoolId, status: 'Failed', error: err.message });
+                await page.goto(reportUrl, { waitUntil: 'networkidle0', timeout: 45000 });
+                pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
+                await browser.close();
+                console.log(`PDF generated successfully for ${schoolId}`);
+            } catch (pdfErr) {
+                console.error(`Error generating PDF for ${schoolId}:`, pdfErr);
+                throw new Error("Failed to generate PDF: " + pdfErr.message);
             }
-        } else {
-            console.warn(`No principal email found for school ${schoolId}`);
-            triggerResults.push({ schoolId, status: 'No Email Found' });
+
+            const form = new FormData();
+            form.append('status', 'Approved');
+            form.append('email', principalEmail);
+            form.append('phone', school ? (school.whatsappNo || '') : '');
+            form.append('name', 'Principal');
+            form.append('school_name', schoolName);
+            form.append('assessment_name', assessmentName);
+            form.append('remarks', 'Excellent performance overall.');
+            form.append('schoolId', schoolId);
+            form.append('sendEmail', 'true');
+            form.append('sendWhatsApp', 'false');
+            form.append('students', JSON.stringify(reports.map(r => ({
+                id: r.id,
+                name: r.studentName,
+                rollNo: r.rollNo,
+                class: r.class
+            }))));
+
+            if (pdfBuffer) {
+                form.append('data', pdfBuffer, {
+                    filename: `${schoolId}.pdf`, // Updated per user request
+                    contentType: 'application/pdf'
+                });
+            }
+
+            await axios.post(process.env.N8N_WEBHOOK_URL, form, {
+                headers: form.getHeaders()
+            });
+
+            // Update isEmailSent to true after successfully triggering webhook
+            const reportIds = reports.map(r => r.id);
+            await StudentReport.update(
+                { isEmailSent: true, emailSentDate: new Date() },
+                { where: { id: { [Op.in]: reportIds } } }
+            );
+
+            triggerResults.push({ schoolId, status: 'Triggered', count: reports.length });
+        } catch (err) {
+            console.error(`Failed to trigger n8n for school ${schoolId}:`, err.message);
+            triggerResults.push({ schoolId, status: 'Failed', error: err.message });
         }
     }
 
@@ -452,59 +534,103 @@ export const updateSchoolsBatch = async (req, res) => {
         return res.status(400).json({ message: 'Invalid schools data' });
     }
 
-    // Safety check: Ensure DB is actually connected before bulk operations
     try {
-        await sequelize.authenticate();
-    } catch (dbError) {
-        console.error('Sync failed: Database not reachable:', dbError.message);
-        return res.status(503).json({
-            message: 'Database connection failed. Please try again in 10 seconds while the database wakes up.',
-            error: dbError.message
-        });
-    }
+        // 1. SANITIZE AND MAP: Convert raw input to clean objects first
+        const sanitized = schools.map(s => {
+            let validDate = null;
+            if (s.omrUploadDate) {
+                const d = new Date(s.omrUploadDate);
+                if (!isNaN(d.getTime())) {
+                    validDate = d;
+                }
+            }
 
-    try {
-        await SchoolInfo.bulkCreate(schools, {
-            updateOnDuplicate: ['schoolName', 'principalEmail', 'whatsappNo', 'registered', 'participated'],
-            conflictAttributes: ['schoolId']
+            return {
+                schoolId: String(s.schoolId || '').trim().toUpperCase(),
+                schoolName: String(s.schoolName || '').trim(),
+                principalEmail: String(s.principalEmail || '').trim().toLowerCase(),
+                whatsappNo: String(s.whatsappNo || '').trim(),
+                registered: parseInt(s.registered) || 0,
+                participated: parseInt(s.participated) || 0,
+                omrUploadDate: validDate
+            };
+        }).filter(s => s.schoolId && s.principalEmail && s.principalEmail.includes('@'));
+
+        // 2. DEDUPLICATE: Ensure schoolId is unique in the final batch
+        const schoolsMap = new Map();
+        sanitized.forEach(s => {
+            // If multiple rows for same schoolId exist in Google Sheet, 
+            // the LAST one wins (or we could merge, but overwriting is simpler)
+            schoolsMap.set(s.schoolId, s);
         });
+
+        const uniqueSchools = Array.from(schoolsMap.values());
+        console.log(`Processing ${uniqueSchools.length} unique schools (from ${schools.length} input rows)`);
+
+        if (uniqueSchools.length === 0) {
+            return res.status(400).json({ message: 'No valid school records found after sanitization.' });
+        }
+
+        // CHUNKED UPSERT: Avoid packet size or timeout issues on shared MySQL/Postgres
+        const chunks = [];
+        const chunkSize = 50;
+        for (let i = 0; i < uniqueSchools.length; i += chunkSize) {
+            chunks.push(uniqueSchools.slice(i, i + chunkSize));
+        }
+
+        console.log(`Syncing ${uniqueSchools.length} schools in ${chunks.length} chunks...`);
+        for (const chunk of chunks) {
+            await SchoolInfo.bulkCreate(chunk, {
+                updateOnDuplicate: ['schoolName', 'principalEmail', 'whatsappNo', 'registered', 'participated', 'omrUploadDate'],
+                conflictAttributes: ['schoolId']
+            });
+        }
 
         // OPTIMIZED: Bulk Check/Create Users to avoid Vercel timeouts (10s limit)
-        const emails = schools.map(s => s.principalEmail).filter(Boolean);
+        // Filter out clearly invalid emails like 'na' or 'pending'
+        const validEmails = uniqueSchools
+            .map(s => s.principalEmail)
+            .filter(email => email && email.includes('@') && email.length > 3);
+
         const existingUsers = await User.findAll({
-            where: { email: { [Op.in]: emails } },
+            where: { email: { [Op.in]: validEmails } },
             attributes: ['email']
         });
         const existingEmailsSet = new Set(existingUsers.map(u => u.email.toLowerCase()));
 
-        const newUsersToHash = schools.filter(school =>
-            school.principalEmail && !existingEmailsSet.has(school.principalEmail.toLowerCase())
-        );
-
-        let newUsersCreatedCount = 0;
-        if (newUsersToHash.length > 0) {
-            const bcrypt = (await import('bcryptjs' + '')).default;
-            const salt = await bcrypt.genSalt(10);
-
-            console.log(`Hashing and bulk creating ${newUsersToHash.length} new principal accounts...`);
-
-            const newUsersData = await Promise.all(newUsersToHash.map(async (school) => {
-                const hashedPassword = await bcrypt.hash(`${school.schoolId}@123`, salt);
-                return {
-                    email: school.principalEmail.toLowerCase(),
-                    password: hashedPassword,
+        // DEDUPLICATE: If multiple schools share the same principalEmail in the CSV, 
+        // we only want to create ONE user account.
+        const usersToCreateMap = new Map();
+        uniqueSchools.forEach(school => {
+            const email = school.principalEmail.toLowerCase();
+            if (email.includes('@') && !existingEmailsSet.has(email) && !usersToCreateMap.has(email)) {
+                usersToCreateMap.set(email, {
+                    email: email,
+                    password: 'password123', // Default password
                     role: 'principal',
                     schoolId: school.schoolId
-                };
-            }));
+                });
+            }
+        });
 
-            await User.bulkCreate(newUsersData);
-            newUsersCreatedCount = newUsersData.length;
+        const newUsersData = Array.from(usersToCreateMap.values());
+        let newUsersCreatedCount = 0;
+
+        if (newUsersData.length > 0) {
+            // Speed Optimization: Pre-hash passwords manually to avoid slow individualHooks
+            const salt = await bcrypt.genSalt(10);
+            const hashedUsers = await Promise.all(newUsersData.map(async (u) => ({
+                ...u,
+                password: await bcrypt.hash(u.password, salt)
+            })));
+
+            await User.bulkCreate(hashedUsers, { validate: true });
+            newUsersCreatedCount = hashedUsers.length;
         }
 
         res.json({
-            message: `Successfully synced ${schools.length} schools and ensures ${newUsersCreatedCount} principal accounts are ready.`,
-            count: schools.length
+            message: `Successfully synced ${uniqueSchools.length} schools and ensures ${newUsersCreatedCount} principal accounts are ready.`,
+            count: uniqueSchools.length
         });
     } catch (error) {
         console.error('Error syncing schools:', error);
@@ -515,11 +641,118 @@ export const updateSchoolsBatch = async (req, res) => {
             return res.json({ message: `(Offline Mode) Mock synced ${schools.length} schools from Google Sheets` });
         }
 
+        // Detailed Sequelize validation error extraction
+        let detailMessage = error.message;
+        if (error.errors && Array.isArray(error.errors)) {
+            detailMessage = error.errors.map(e => `${e.path}: ${e.message}`).join(', ');
+        }
+
         res.status(500).json({
             message: 'Error syncing schools',
-            error: error.message,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+            error: detailMessage
         });
+    }
+};
+
+export const syncSchoolsFromGoogleSheet = async (req, res) => {
+    const url = 'https://docs.google.com/spreadsheets/d/1fl5NW2skc_8NC0x3vxE9Fcfm6HGF1-e2lOTy4IMs7N0/export?format=csv';
+
+    try {
+        console.log('[Sync] Fetching school data from Google Sheet...');
+        const response = await axios.get(url);
+        const text = response.data;
+
+        if (typeof text !== 'string' || text.includes('<html') || text.includes('<!DOCTYPE')) {
+            throw new Error('Received HTML instead of CSV data. Check Google Sheet publishing.');
+        }
+
+        // ROBUST MULTI-LINE CSV PARSER (Backend implementation)
+        const parseCSV = (csv) => {
+            const rows = [];
+            let currentRow = [];
+            let currentField = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < csv.length; i++) {
+                const char = csv[i];
+                const nextChar = csv[i + 1];
+
+                if (inQuotes) {
+                    if (char === '"' && nextChar === '"') {
+                        currentField += '"';
+                        i++;
+                    } else if (char === '"') {
+                        inQuotes = false;
+                    } else {
+                        currentField += char;
+                    }
+                } else {
+                    if (char === '"') {
+                        inQuotes = true;
+                    } else if (char === ',') {
+                        currentRow.push(currentField.trim());
+                        currentField = '';
+                    } else if (char === '\n' || char === '\r') {
+                        if (currentField || currentRow.length > 0) {
+                            currentRow.push(currentField.trim());
+                            rows.push(currentRow);
+                            currentRow = [];
+                            currentField = '';
+                        }
+                        if (char === '\r' && nextChar === '\n') i++;
+                    } else {
+                        currentField += char;
+                    }
+                }
+            }
+            if (currentField || currentRow.length > 0) {
+                currentRow.push(currentField.trim());
+                rows.push(currentRow);
+            }
+            return rows;
+        };
+
+        const allRows = parseCSV(text);
+        if (allRows.length < 2) throw new Error('CSV is empty or invalid');
+
+        const headers = allRows[0].map(h => String(h).toLowerCase().replace(/[^a-z0-9]/g, ''));
+        const dataRows = allRows.slice(1).map(row => {
+            const obj = {};
+            headers.forEach((h, i) => { if (h) obj[h] = row[i]; });
+            return obj;
+        });
+
+        const keyNSF = 'nsfuserid';
+        const keyEmail = 'schoolemailid';
+        const keyContact = 'poccontactno';
+        const keyOMRDate = 'dateofuploadingomrtodrive';
+
+        const rawSchools = dataRows.map(row => {
+            const id = row[keyNSF] || row['schoolid'] || row['id'] || row['schoolcode'];
+            if (!id) return null;
+
+            return {
+                schoolId: id,
+                schoolName: row['schoolname'] || row['nsfschoolname'] || row['name'] || id,
+                principalEmail: row[keyEmail] || row['principalemail'] || row['email'] || '',
+                whatsappNo: row[keyContact] || row['contactnumber'] || row['whatsapp'] || row['phone'] || '',
+                registered: parseInt(row['totalstudentsregistered'] || row['registered'] || 0, 10) || 0,
+                participated: parseInt(row['noofomrsreceived'] || row['participated'] || 0, 10) || 0,
+                omrUploadDate: row[keyOMRDate] || null
+            };
+        }).filter(s => s && s.schoolId && s.principalEmail);
+
+        if (rawSchools.length === 0) {
+            throw new Error('No valid school records found in CSV.');
+        }
+
+        // Inject into updateSchoolsBatch to reuse logic
+        req.body.schools = rawSchools;
+        return updateSchoolsBatch(req, res);
+
+    } catch (err) {
+        console.error('[Sync] Google Sheet fetch failed:', err.message);
+        res.status(500).json({ message: 'Sync failed: ' + err.message });
     }
 };
 

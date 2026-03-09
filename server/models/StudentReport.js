@@ -62,6 +62,10 @@ const StudentReport = db.define('student_report', {
     isEmailSent: {
         type: Sequelize.BOOLEAN,
         defaultValue: false
+    },
+    emailSentDate: {
+        type: Sequelize.DATE,
+        allowNull: true
     }
 }, {
     tableName: 'StudentReports',

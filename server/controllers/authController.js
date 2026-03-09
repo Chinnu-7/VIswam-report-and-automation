@@ -24,7 +24,7 @@ export const login = async (req, res) => {
             });
         }
 
-        const user = await User.findOne({ where: { email } });
+        const user = await User.findOne({ where: { email: providedEmail } });
 
         if (user && (await user.comparePassword(password))) {
             console.log('Login success for:', email);

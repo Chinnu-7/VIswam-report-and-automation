@@ -66,8 +66,8 @@
       "parameters": {
         "fromEmail": "your-email@gmail.com",
         "toEmail": "={{ $('Fetch Contacts from Sheet').first().json[\"Principal Email\"] || $('Webhook Trigger').first().json[\"body\"][\"email\"] }}",
-        "subject": "Approval Status - {{ $('Webhook Trigger').first().json[\"body\"][\"school_name\"] }}",
-        "text": "Hello {{ $('Webhook Trigger').first().json[\"body\"][\"name\"] }},\n\nYour school {{ $('Webhook Trigger').first().json[\"body\"][\"school_name\"] }} has been APPROVED.\n\nPlease find the school report card attached to this email.\n\nRemarks: {{ $('Webhook Trigger').first().json[\"body\"][\"remarks\"] }}\n\nRegards,\nNorthSouth Foundation Team",
+        "subject": "PSA Assessment Report – Grade 7",
+        "text": "Dear Sir/Madam,\n\nThank you for your support in conducting the PSA assessment for Grade 7 students. We are pleased to share your school’s PSA assessment report, which highlights students’ current learning levels and readiness for competency-based assessments.\n\nThis initiative is sponsored by Federation for Democratic Reforms (FDR) , with implementation support from Viswam Edutech , and assessment partnership with North South Foundation.\n\nWe hope the report will support your academic review and planning. \n\nWith Regards,\nFederation for Democratic Reforms",
         "appendAttachements": true,
         "attachmentsUi": {
           "attachmentValues": [
@@ -95,7 +95,7 @@
     {
       "parameters": {
         "fileContent": "data",
-        "fileName": "={{$node[\"Webhook Trigger\"].json[\"body\"][\"school_name\"]}}_Report.pdf",
+        "fileName": "={{$node[\"Webhook Trigger\"].json[\"body\"][\"school_name\"].replace(/[^a-z0-9]/gi, '_')}}_{{$node[\"Webhook Trigger\"].json[\"body\"][\"assessment_name\"].replace(/[^a-z0-9]/gi, '_')}}.pdf",
         "options": {}
       },
       "id": "Upload To Drive",
@@ -297,7 +297,7 @@
       "main": [
         [
           {
-            "node": "Send WhatsApp Approved",
+            "node": "Log Success to Sheet",
             "type": "main",
             "index": 0
           }

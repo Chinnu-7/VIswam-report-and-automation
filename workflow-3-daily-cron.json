@@ -1,0 +1,68 @@
+{
+    "name": "Viswam Daily Email Dispatch",
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "cronExpression",
+                            "expression": "0 9 * * *"
+                        }
+                    ]
+                }
+            },
+            "id": "CronTrigger",
+            "name": "Daily at 9:00 AM",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.1,
+            "position": [
+                400,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://viswam-report-card.vercel.app/api/automation/run-dispatch",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "Content-Type",
+                            "value": "application/json"
+                        }
+                    ]
+                },
+                "options": {
+                    "timeout": 60000
+                }
+            },
+            "id": "TriggerBackend",
+            "name": "Trigger Dispatch API",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                600,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Daily at 9:00 AM": {
+            "main": [
+                [
+                    {
+                        "node": "Trigger Dispatch API",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "active": true,
+    "settings": {
+        "executionOrder": "v1"
+    }
+}
