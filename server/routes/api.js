@@ -37,6 +37,7 @@ router.delete('/reports', protect, adminOnly, adminController.deleteReports); //
 
 // Automation Queue (Polling for n8n)
 router.get('/reports/automation/queue', adminController.getAutomationQueue);
+router.get('/debug-reports', adminController.debugReports);
 router.post('/reports/automation/mark-sent', adminController.markAsSent);
 router.post('/automation/run-dispatch', adminController.runAutomatedDispatch);
 
