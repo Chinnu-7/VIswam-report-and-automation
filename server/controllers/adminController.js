@@ -161,24 +161,6 @@ export const getReportById = async (req, res) => {
     }
 };
 
-export const debugReports = async (req, res) => {
-    try {
-        const { id, listSchools } = req.query;
-        if (id) {
-            const report = await StudentReport.findByPk(id);
-            return res.json(report);
-        }
-        if (listSchools) {
-            const schools = await SchoolInfo.findAll();
-            return res.json(schools);
-        }
-        const reports = await StudentReport.findAll({ limit: 10, order: [['createdAt', 'DESC']] });
-        res.json(reports);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-};
-
 export const getSchoolInfo = async (req, res) => {
     try {
         const { id } = req.params;
