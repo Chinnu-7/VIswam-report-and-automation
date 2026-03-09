@@ -322,79 +322,16 @@ async function processN8nTriggersMulti(req, reportsArray, isAutomated = false) {
                 continue;
             }
 
-            // Trigger n8n with LIST of students
-            const sampleReportId = reports.length > 0 ? reports[0].id : '';
-            const qp = reports.length > 0 ? reports[0].qp : '';
-
-            let pdfBuffer = null;
-            try {
-                console.log(`Generating PDF for school ${schoolId} (Dispatch Day)...`);
-                let browser;
-                if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
-                    const executablePath = await chromium.executablePath();
-                    browser = await puppeteerCore.launch({
-                        args: chromium.args,
-                        defaultViewport: chromium.defaultViewport,
-                        executablePath: executablePath,
-                        headless: chromium.headless,
-                        ignoreHTTPSErrors: true,
-                    });
-                } else {
-                    const localPuppeteer = (await import('puppeteer')).default;
-                    browser = await localPuppeteer.launch({
-                        headless: 'new',
-                        args: ['--no-sandbox', '--disable-setuid-sandbox']
-                    });
-                }
-                const page = await browser.newPage();
-                const protocol = req ? req.protocol : 'https';
-                const host = req ? req.get('host') : 'viswam-report-card.vercel.app';
-                const reportUrl = `${protocol}://${host}/report/${sampleReportId}?view=principal&download=true&qp=${encodeURIComponent(qp || '')}`;
-
-                await page.goto(reportUrl, { waitUntil: 'networkidle0', timeout: 45000 });
-                pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
-                await browser.close();
-                console.log(`PDF generated successfully for ${schoolId}`);
-            } catch (pdfErr) {
-                console.error(`Error generating PDF for ${schoolId}:`, pdfErr);
-                throw new Error("Failed to generate PDF: " + pdfErr.message);
-            }
-
-            const form = new FormData();
-            form.append('status', 'Approved');
-            form.append('email', principalEmail);
-            form.append('phone', school ? (school.whatsappNo || '') : '');
-            form.append('name', 'Principal');
-            form.append('school_name', schoolName);
-            form.append('assessment_name', assessmentName);
-            form.append('remarks', 'Excellent performance overall.');
-            form.append('schoolId', schoolId);
-            form.append('sendEmail', 'true');
-            form.append('sendWhatsApp', 'false');
-            form.append('students', JSON.stringify(reports.map(r => ({
-                id: r.id,
-                name: r.studentName,
-                rollNo: r.rollNo,
-                class: r.class
-            }))));
-
-            if (pdfBuffer) {
-                form.append('data', pdfBuffer, {
-                    filename: `${schoolId}.pdf`, // Updated per user request
-                    contentType: 'application/pdf'
-                });
-            }
-
-            await axios.post(process.env.N8N_WEBHOOK_URL, form, {
-                headers: form.getHeaders()
+            // Trigger n8n with LIGHTWEIGHT payload
+            // n8n will now handle the PDF download and grouping
+            await axios.post(process.env.N8N_WEBHOOK_URL, {
+                schoolId,
+                assessmentName,
+                schoolName,
+                principalEmail,
+                studentCount: reports.length,
+                timestamp: new Date().toISOString()
             });
-
-            // Update isEmailSent to true after successfully triggering webhook
-            const reportIds = reports.map(r => r.id);
-            await StudentReport.update(
-                { isEmailSent: true, emailSentDate: new Date() },
-                { where: { id: { [Op.in]: reportIds } } }
-            );
 
             triggerResults.push({ schoolId, status: 'Triggered', count: reports.length });
         } catch (err) {
@@ -405,6 +342,94 @@ async function processN8nTriggersMulti(req, reportsArray, isAutomated = false) {
 
     return triggerResults;
 }
+
+export const generatePrincipalPdf = async (req, res) => {
+    const { schoolId } = req.params;
+    const { assessmentName } = req.query;
+
+    if (!schoolId || !assessmentName) {
+        return res.status(400).json({ message: 'schoolId and assessmentName are required' });
+    }
+
+    try {
+        console.log(`Generating PDF for school ${schoolId}, assessment ${assessmentName}...`);
+
+        // 1. Find a sample report to get the QP and verify existence
+        const sampleReport = await StudentReport.findOne({
+            where: { schoolId, assessmentName }
+        });
+
+        if (!sampleReport) {
+            return res.status(404).json({ message: 'No reports found for this school/assessment' });
+        }
+
+        const qp = sampleReport.qp || '';
+
+        // 2. Launch Puppeteer (Production or Local)
+        let browser;
+        if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+            const executablePath = await chromium.executablePath();
+            browser = await puppeteerCore.launch({
+                args: chromium.args,
+                defaultViewport: chromium.defaultViewport,
+                executablePath: executablePath,
+                headless: chromium.headless,
+                ignoreHTTPSErrors: true,
+            });
+        } else {
+            const localPuppeteer = (await import('puppeteer')).default;
+            browser = await localPuppeteer.launch({
+                headless: 'new',
+                args: ['--no-sandbox', '--disable-setuid-sandbox']
+            });
+        }
+
+        const page = await browser.newPage();
+        // Use the internal render route
+        const protocol = req.protocol;
+        const host = req.get('host');
+        const reportUrl = `${protocol}://${host}/report/${sampleReport.id}?view=principal&download=true&qp=${encodeURIComponent(qp)}`;
+
+        await page.goto(reportUrl, { waitUntil: 'networkidle0', timeout: 45000 });
+        const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
+        await browser.close();
+
+        // 3. Send PDF binary
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=${schoolId}.pdf`);
+        res.send(pdfBuffer);
+
+    } catch (error) {
+        console.error('Error generating PDF:', error);
+        res.status(500).json({ message: 'Failed to generate PDF', error: error.message });
+    }
+};
+
+export const markSchoolNotified = async (req, res) => {
+    const { schoolId } = req.params;
+    const { assessmentName } = req.query;
+
+    if (!schoolId || !assessmentName) {
+        return res.status(400).json({ message: 'schoolId and assessmentName are required' });
+    }
+
+    try {
+        await StudentReport.update(
+            { isEmailSent: true, emailSentDate: new Date() },
+            {
+                where: {
+                    schoolId,
+                    assessmentName,
+                    status: 'APPROVED'
+                }
+            }
+        );
+        res.json({ message: `Successfully marked school ${schoolId} as notified for ${assessmentName}` });
+    } catch (error) {
+        console.error('Error marking school as notified:', error);
+        res.status(500).json({ message: 'Failed to update notification status' });
+    }
+};
 
 export const rejectReports = async (req, res) => {
     const { ids } = req.body;

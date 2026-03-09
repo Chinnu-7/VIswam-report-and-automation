@@ -45,6 +45,10 @@ router.post('/schools/sync', protect, adminOnly, adminController.updateSchoolsBa
 router.post('/schools/sync-all', adminController.syncSchoolsFromGoogleSheet); // Backend-driven sync (no protect for easy cron/n8n)
 router.get('/schools/:id', protect, adminController.getSchoolInfo);
 
+// n8n Specific Routes (Pull-based)
+router.get('/reports/school/:schoolId/pdf', adminController.generatePrincipalPdf);
+router.post('/reports/school/:schoolId/mark-notified', adminController.markSchoolNotified);
+
 // Render Route (Public for n8n/Api2Pdf, or could be protected if needed)
 router.get('/reports/:id/render', renderController.renderReportHtml);
 
