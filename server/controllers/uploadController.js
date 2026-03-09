@@ -182,11 +182,16 @@ export const uploadStudentData = async (req, res) => {
                 continue;
             }
 
-            const mStart = isFinalFormat ? headers.indexOf('16') : headers.findIndex(h => h.includes('m1') || h === 'q1');
-            const sStart = isFinalFormat ? headers.indexOf('31') : headers.findIndex(h => h.includes('s1') || h === 'q16');
-            const eStart = isFinalFormat ? headers.indexOf('1') : headers.findIndex(h => h.includes('e1') || h === 'q31');
+            const mStart = headers.findIndex(h => h === '16' || h === 'm1' || h === 'q16' || h.includes('maths 1') || h.includes('maths q1'));
+            const sStart = headers.findIndex(h => h === '31' || h === 's1' || h === 'q31' || h.includes('science 1') || h.includes('science q1'));
+            const eStart = headers.findIndex(h => h === '1' || h === 'e1' || h === 'q1' || h.includes('english 1') || h.includes('english q1'));
 
-            console.log(`[Upload] Sheet: ${sheetName}, RollsIdx: ${idxRollNo}, QpIdx: ${idxQp}, MStart: ${mStart}, SStart: ${sStart}, EStart: ${eStart}`);
+            console.log(`[Upload] Sheet: ${sheetName}, RollsIdx: ${idxRollNo}, QpIdx: ${idxQp}, E:${eStart}, M:${mStart}, S:${sStart}`);
+
+            if (eStart === -1 && mStart === -1 && sStart === -1) {
+                console.log(`[Upload] Skipping sheet ${sheetName}: Could not find subject start columns (1, 16, 31)`);
+                continue;
+            }
 
             const keyCache = {};
             const sheetReports = [];
