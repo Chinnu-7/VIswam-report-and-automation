@@ -289,7 +289,7 @@ export const uploadStudentData = async (req, res) => {
         }
 
         await StudentReport.bulkCreate(allReportsToCreate);
-        await performRecalculate(req.body.schoolName, assessmentName || 'Sodhana 1');
+        await performRecalculate(actualSchoolId, assessmentName || 'Sodhana 1');
 
         res.json({
             message: `Successfully uploaded ${allReportsToCreate.length} students across ${sheetResults.length} grades.`,

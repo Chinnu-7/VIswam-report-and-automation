@@ -163,20 +163,32 @@ export const getReportById = async (req, res) => {
 
 export const debugReports = async (req, res) => {
     try {
-        const { id, listSchools, schoolId, status } = req.query;
+        const { id, listSchools, schoolId, status, fixAndApprove, assessmentName } = req.query;
         if (id) {
             const report = await StudentReport.findByPk(id);
             return res.json(report);
+        }
+        if (listSchools) {
+            const schools = await SchoolInfo.findAll();
+            return res.json(schools);
+        }
+        if (fixAndApprove && schoolId && assessmentName) {
+            console.log(`[Debug] Fix and Approve for ${schoolId} / ${assessmentName}`);
+            await performRecalculate(schoolId, assessmentName);
+            await StudentReport.update(
+                { status: 'APPROVED' },
+                { where: { schoolId, assessmentName } }
+            );
+            // Trigger n8n
+            const reports = await StudentReport.findAll({ where: { schoolId, assessmentName, status: 'APPROVED' } });
+            await processN8nTriggersMulti(req, reports);
+            return res.json({ message: `Fixed and approved ${reports.length} reports for ${schoolId}` });
         }
         if (schoolId) {
             const where = { schoolId };
             if (status) where.status = status;
             const reports = await StudentReport.findAll({ where, limit: 100 });
             return res.json(reports);
-        }
-        if (listSchools) {
-            const schools = await SchoolInfo.findAll();
-            return res.json(schools);
         }
         const reports = await StudentReport.findAll({ limit: 10, order: [['createdAt', 'DESC']] });
         res.json(reports);
