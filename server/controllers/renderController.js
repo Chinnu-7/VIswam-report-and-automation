@@ -19,83 +19,81 @@ const getBase64Image = (fileName) => {
     return '';
 };
 
-export const renderReportHtml = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const report = await StudentReport.findByPk(id);
+export const getReportHtmlString = async (id) => {
+    const report = await StudentReport.findByPk(id);
 
-        if (!report) {
-            return res.status(404).send('<h1>Report not found</h1>');
+    if (!report) {
+        throw new Error('Report not found');
+    }
+
+    const data = report.get({ plain: true });
+    const reportData = data.reportData;
+    const relativeGrading = reportData.relative_grading || {};
+
+    const fdrLogo = getBase64Image('fdr-logo-new.png');
+    const nsfLogo = getBase64Image('NSF logo 2.jpeg');
+    const viswamLogo = getBase64Image('Viswam.png');
+
+    const primaryColor = '#1e3a8a';
+    const accentColor = '#dc2626';
+
+    const getGradeColor = (grade) => {
+        if (!grade) return '#64748B';
+        const g = String(grade).toUpperCase();
+        if (['O', 'A+', 'A', 'B+'].includes(g)) return '#15803d'; // Greenish
+        if (['B', 'C+', 'C'].includes(g)) return '#ea580c'; // Orange
+        if (g === 'D') return '#dc2626'; // Red
+        return '#64748B';
+    };
+
+    const getGradeBg = (grade) => {
+        if (!grade) return '#F1F5F9';
+        const g = String(grade).toUpperCase();
+        if (g === 'O') return '#dcfce7';
+        if (g === 'A+') return '#bbf7d0';
+        if (g === 'A') return '#86efac';
+        if (g === 'B+') return '#4ade80';
+        if (g === 'B') return '#ffedd5';
+        if (g === 'C+') return '#fed7aa';
+        if (g === 'C') return '#fdba74';
+        if (g === 'D') return '#fee2e2';
+        return '#F1F5F9';
+    };
+
+    const subjects = [
+        { key: 'english', label: 'English', score: reportData.english_score || 0, color: '#4338ca' },
+        { key: 'maths', label: 'Mathematics', score: reportData.maths_score || 0, color: '#15803d' },
+        { key: 'science', label: 'Science', score: reportData.science_score || 0, color: '#b45309' }
+    ];
+
+    const renderLOs = (subjectKey) => {
+        const loMapping = reportData.lo_mapping?.[subjectKey] || {};
+        const scores = reportData[subjectKey] || {};
+
+        const items = Object.entries(scores).map(([code, score]) => ({
+            code,
+            text: loMapping[code] || code,
+            score: Math.round(score * 100)
+        }));
+
+        const strengths = items.filter(i => i.score >= 75).sort((a, b) => b.score - a.score).slice(0, 5);
+        const improvements = items.filter(i => i.score < 50 && i.score >= 0).sort((a, b) => a.score - b.score).slice(0, 7);
+
+        let html = '';
+        if (strengths.length > 0) {
+            html += `<div class="lo-section"><h5 style="color:#15803d">✅ Strengths</h5><ul>`;
+            strengths.forEach(s => html += `<li>${s.text} : <b>${s.score}%</b></li>`);
+            html += `</ul></div>`;
         }
+        if (improvements.length > 0) {
+            html += `<div class="lo-section"><h5 style="color:#b45309">⚠️ Areas for Development (AOD)</h5><ul>`;
+            improvements.forEach(i => html += `<li>${i.text} : <b>${i.score}%</b></li>`);
+            html += `</ul></div>`;
+        }
+        return html;
+    };
 
-        const data = report.get({ plain: true });
-        const reportData = data.reportData;
-        const relativeGrading = reportData.relative_grading || {};
-
-        const fdrLogo = getBase64Image('fdr-logo-new.png');
-        const nsfLogo = getBase64Image('NSF logo 2.jpeg');
-        const viswamLogo = getBase64Image('Viswam.png');
-
-        const primaryColor = '#1e3a8a';
-        const accentColor = '#dc2626';
-
-        const getGradeColor = (grade) => {
-            if (!grade) return '#64748B';
-            const g = String(grade).toUpperCase();
-            if (['O', 'A+', 'A', 'B+'].includes(g)) return '#15803d'; // Greenish
-            if (['B', 'C+', 'C'].includes(g)) return '#ea580c'; // Orange
-            if (g === 'D') return '#dc2626'; // Red
-            return '#64748B';
-        };
-
-        const getGradeBg = (grade) => {
-            if (!grade) return '#F1F5F9';
-            const g = String(grade).toUpperCase();
-            if (g === 'O') return '#dcfce7';
-            if (g === 'A+') return '#bbf7d0';
-            if (g === 'A') return '#86efac';
-            if (g === 'B+') return '#4ade80';
-            if (g === 'B') return '#ffedd5';
-            if (g === 'C+') return '#fed7aa';
-            if (g === 'C') return '#fdba74';
-            if (g === 'D') return '#fee2e2';
-            return '#F1F5F9';
-        };
-
-        const subjects = [
-            { key: 'english', label: 'English', score: reportData.english_score || 0, color: '#4338ca' },
-            { key: 'maths', label: 'Mathematics', score: reportData.maths_score || 0, color: '#15803d' },
-            { key: 'science', label: 'Science', score: reportData.science_score || 0, color: '#b45309' }
-        ];
-
-        const renderLOs = (subjectKey) => {
-            const loMapping = reportData.lo_mapping?.[subjectKey] || {};
-            const scores = reportData[subjectKey] || {};
-
-            const items = Object.entries(scores).map(([code, score]) => ({
-                code,
-                text: loMapping[code] || code,
-                score: Math.round(score * 100)
-            }));
-
-            const strengths = items.filter(i => i.score >= 75).sort((a, b) => b.score - a.score).slice(0, 5);
-            const improvements = items.filter(i => i.score < 50 && i.score >= 0).sort((a, b) => a.score - b.score).slice(0, 7);
-
-            let html = '';
-            if (strengths.length > 0) {
-                html += `<div class="lo-section"><h5 style="color:#15803d">✅ Strengths</h5><ul>`;
-                strengths.forEach(s => html += `<li>${s.text} : <b>${s.score}%</b></li>`);
-                html += `</ul></div>`;
-            }
-            if (improvements.length > 0) {
-                html += `<div class="lo-section"><h5 style="color:#b45309">⚠️ Areas for Development (AOD)</h5><ul>`;
-                improvements.forEach(i => html += `<li>${i.text} : <b>${i.score}%</b></li>`);
-                html += `</ul></div>`;
-            }
-            return html;
-        };
-
-        const html = `
+    const html = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -235,8 +233,18 @@ export const renderReportHtml = async (req, res) => {
     </div>
 </body>
 </html>`;
+    return html;
+};
+
+export const renderReportHtml = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const html = await getReportHtmlString(id);
         res.send(html);
     } catch (error) {
+        if (error.message === 'Report not found') {
+            return res.status(404).send('<h1>Report not found</h1>');
+        }
         console.error('Error rendering HTML report:', error);
         res.status(500).send('Error rendering report');
     }

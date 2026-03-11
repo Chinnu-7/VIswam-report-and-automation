@@ -433,46 +433,45 @@ export const generatePrincipalPdf = async (req, res) => {
 
         const qp = sampleReport.qp || '';
 
-        // 2. Build Render URL
-        const protocol = req.headers['x-forwarded-proto'] || req.protocol;
-        const host = req.get('host');
-        const reportUrl = `${protocol}://${host}/api/reports/${sampleReport.id}/render?view=principal&download=true&qp=${encodeURIComponent(qp)}`;
+        // 2. Build HTML in memory instead of fetching it over HTTP (avoid Vercel deadlocks)
+        const { getReportHtmlString } = await import('./renderController.js');
+        const htmlString = await getReportHtmlString(sampleReport.id);
 
-        console.log(`Passing URL to PDF generator: ${reportUrl}`);
+        console.log(`HTML built in memory, launching Puppeteer...`);
 
-        // 3. Fast PDF generation using a public API service instead of headless Chrome (avoids 10s Vercel timeout)
-        const pdfApiUrl = `https://v2.api2pdf.com/chrome/pdf/url`;
-        const response = await axios.post(pdfApiUrl, {
-            url: reportUrl,
-            options: {
-                landscape: false,
-                printBackground: true,
-                format: 'A4',
-                marginTop: 0,
-                marginBottom: 0,
-                marginLeft: 0,
-                marginRight: 0
-            }
-        }, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'd5ccbed1-b0db-42cf-90e6-a8360fbc3cb5' // Public fallback API key, or process.env.API2PDF_KEY
-            }
-        });
-
-        if (!response.data || !response.data.FileUrl) {
-            throw new Error('PDF Generation failed from external service');
+        // 3. Launch Puppeteer (Production or Local)
+        let browser;
+        if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+            const chromium = (await import('@sparticuz/chromium')).default;
+            const puppeteerCore = (await import('puppeteer-core')).default;
+            
+            const executablePath = await chromium.executablePath();
+            browser = await puppeteerCore.launch({
+                args: chromium.args,
+                defaultViewport: chromium.defaultViewport,
+                executablePath: executablePath,
+                headless: chromium.headless,
+                ignoreHTTPSErrors: true,
+            });
+        } else {
+            const localPuppeteer = (await import('puppeteer')).default;
+            browser = await localPuppeteer.launch({
+                headless: 'new',
+                args: ['--no-sandbox', '--disable-setuid-sandbox']
+            });
         }
 
-        const externalPdfUrl = response.data.FileUrl;
-        console.log(`PDF Generated successfully at ${externalPdfUrl}`);
+        const page = await browser.newPage();
+        
+        // Inject HTML directly into the page
+        await page.setContent(htmlString, { waitUntil: 'networkidle0', timeout: 90000 });
+        const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
+        await browser.close();
 
-        // 4. Download and stream the PDF binary back to n8n
-        const pdfResponse = await axios.get(externalPdfUrl, { responseType: 'arraybuffer' });
-
+        // 4. Send PDF binary back to n8n
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename=${schoolId}.pdf`);
-        res.send(pdfResponse.data);
+        res.send(pdfBuffer);
 
     } catch (error) {
         console.error('Error generating PDF:', error);
