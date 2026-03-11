@@ -455,7 +455,7 @@ export const generatePrincipalPdf = async (req, res) => {
         }, {
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'd5ccbed1-b0db-42cf-90e6-a8360fbc3cb5' // Public fallback API key, or process.env.API2PDF_KEY
+                'Authorization': process.env.API2PDF_KEY || '626f6345-0d02-4740-b615-ce4e21a71ca2'
             }
         });
 
