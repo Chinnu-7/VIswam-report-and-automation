@@ -318,10 +318,18 @@ async function processN8nTriggersMulti(req, reportsArray, isAutomated = false) {
 
     const triggerResults = [];
 
-    for (const [schoolId, reports] of Object.entries(reportsBySchool)) {
+    for (const [schoolIdGroup, reports] of Object.entries(reportsBySchool)) {
         try {
             // Get Principal Email
-            const school = await SchoolInfo.findOne({ where: { schoolId } });
+            let school = await SchoolInfo.findOne({ where: { schoolId: schoolIdGroup } });
+            
+            // FALLBACK: If schoolId was blank or missing, try finding the school by name
+            const schoolNameFromReport = reports[0]?.schoolName;
+            if (!school && schoolNameFromReport) {
+                school = await SchoolInfo.findOne({ where: { schoolName: schoolNameFromReport } });
+            }
+
+            const schoolId = school ? school.schoolId : schoolIdGroup;
             const principalEmail = school ? school.principalEmail : null;
             const whatsappNo = school ? school.whatsappNo : '';
             const schoolName = school ? school.schoolName : 'Unknown School';
