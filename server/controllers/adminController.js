@@ -225,8 +225,13 @@ export const approveReports = async (req, res) => {
         );
 
         // 2. Trigger n8n for each school (grouped)
+        // ONLY trigger for reports that haven't been sent yet
         const approvedReports = await StudentReport.findAll({
-            where: { id: { [Op.in]: ids } }
+            where: { 
+                id: { [Op.in]: ids },
+                status: 'APPROVED',
+                isEmailSent: false 
+            }
         });
 
         const triggerResults = await processN8nTriggersMulti(req, approvedReports);
@@ -256,10 +261,12 @@ export const approveReportsBySchool = async (req, res) => {
             }
         );
 
+        // ONLY trigger for reports that haven't been sent yet
         const approvedReports = await StudentReport.findAll({
             where: {
                 schoolId: { [Op.in]: schoolIds },
-                status: 'APPROVED'
+                status: 'APPROVED',
+                isEmailSent: false
             }
         });
 
@@ -368,6 +375,8 @@ async function processN8nTriggersMulti(req, reportsArray, isAutomated = false) {
             // Trigger n8n with LIGHTWEIGHT payload
             // n8n will handle the PDF download, email, and WhatsApp notification
             console.log(`[Automation] Triggering n8n for school ${schoolId} (${schoolName}), email: ${principalEmail}`);
+            
+            // Send exactly ONE payload per school/assessment group
             await axios.post(process.env.N8N_WEBHOOK_URL, {
                 schoolId,
                 assessmentName,
@@ -378,14 +387,13 @@ async function processN8nTriggersMulti(req, reportsArray, isAutomated = false) {
                 timestamp: new Date().toISOString()
             });
 
-            // Mark all reports for this school as sent immediately
+            // IMPORTANT: Mark only the reports in THIS trigger as sent
+            const reportIds = reports.map(r => r.id);
             await StudentReport.update(
                 { isEmailSent: true, emailSentDate: new Date() },
                 {
                     where: {
-                        schoolId,
-                        assessmentName,
-                        status: 'APPROVED'
+                        id: { [Op.in]: reportIds }
                     }
                 }
             );
@@ -456,7 +464,7 @@ export const generatePrincipalPdf = async (req, res) => {
         }, {
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': '7361f879-1c09-42b0-aee9-56ec533ee754'
+                'Authorization': process.env.API2PDF_KEY || '7361f879-1c09-42b0-aee9-56ec533ee754'
             }
         });
 
@@ -466,14 +474,11 @@ export const generatePrincipalPdf = async (req, res) => {
         }
 
         const externalPdfUrl = response.data.FileUrl;
-        console.log(`PDF Generated successfully at ${externalPdfUrl}`);
+        console.log(`PDF Generated successfully at ${externalPdfUrl}. redirecting client...`);
 
-        // 4. Download and stream the PDF binary back to n8n
-        const pdfResponse = await axios.get(externalPdfUrl, { responseType: 'arraybuffer' });
-
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename=${schoolId}.pdf`);
-        res.send(pdfResponse.data);
+        // 4. Expert Optimization: Redirect instead of streaming
+        // This prevents Vercel/Netlify timeout issues and "Connection Aborted" in n8n
+        res.redirect(302, externalPdfUrl);
 
     } catch (error) {
         console.error('Error generating PDF:', error.message);
