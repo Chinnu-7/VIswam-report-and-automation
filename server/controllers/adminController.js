@@ -41,18 +41,18 @@ export const performRecalculate = async (schoolId, assessmentName, qp = null) =>
     const stats = gradingService.computeCohortStats(plainReports);
     const updatedReports = gradingService.assignRelativeGrades(plainReports, stats);
 
-    // OPTIMIZED: Bulk update instead of row-by-row loop
-    // sequelize.bulkCreate with updateOnDuplicate is much faster for Vercel timeouts
-    await StudentReport.bulkCreate(
-        updatedReports.map(r => ({
-            id: r.id,
-            reportData: r.reportData // Sequelize will handle stringification due to model setter
-        })),
-        {
-            updateOnDuplicate: ['reportData'],
-            conflictAttributes: ['id']
-        }
-    );
+    // OPTIMIZED: Promise.all with individual updates is much more reliable
+    // for JSON columns in Postgres than bulkCreate upserting.
+    const BATCH_SIZE = 50;
+    for (let i = 0; i < updatedReports.length; i += BATCH_SIZE) {
+        const batch = updatedReports.slice(i, i + BATCH_SIZE);
+        await Promise.all(batch.map(r => 
+            StudentReport.update(
+                { reportData: r.reportData },
+                { where: { id: r.id } }
+            )
+        ));
+    }
 
     return updatedReports.length;
 };
