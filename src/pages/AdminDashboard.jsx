@@ -25,6 +25,7 @@ const AdminDashboard = () => {
     const [forceAll, setForceAll] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
     const [duplicateModal, setDuplicateModal] = useState({ open: false, fileName: '', message: '', grades: [], onConfirm: null });
+    const [uploadResults, setUploadResults] = useState([]);
 
     const userInfo = JSON.parse(localStorage.getItem('userInfo'));
     const config = {
@@ -238,9 +239,11 @@ const AdminDashboard = () => {
         if (studentFiles.length === 0) return;
 
         setUploading(true);
+        setUploadResults([]);
         let successCount = 0;
         let failCount = 0;
         let totalStudents = 0;
+        const results = [];
 
         try {
             for (let i = 0; i < studentFiles.length; i++) {
@@ -274,11 +277,13 @@ const AdminDashboard = () => {
                     const res = await api.post('/upload/students', formData, config);
                     successCount++;
                     totalStudents += (res.data.count || 0);
+                    results.push({ fileName: file.name, status: 'SUCCESS', message: res.data.message });
                 } catch (err) {
                     if (err.response?.status === 409 && !forceAll) {
                         // Show modal and wait for user decision
                         const userChoice = await new Promise((resolve) => {
                             setDuplicateModal({
+                                hideOutsideClick: true, // Custom prop for clarity if needed
                                 open: true,
                                 fileName: file.name,
                                 message: err.response.data.message,
@@ -291,18 +296,26 @@ const AdminDashboard = () => {
                         });
                         if (userChoice) {
                             formData.append('force', 'true');
-                            await api.post('/upload/students', formData, config);
+                            const retryRes = await api.post('/upload/students', formData, config);
+                            results.push({ fileName: file.name, status: 'SUCCESS', message: 'Uploaded with overwrite' });
                             successCount++;
                         } else {
                             failCount++;
+                            results.push({ fileName: file.name, status: 'SKIPPED', message: 'User chose to skip duplicate' });
                         }
                     } else {
                         console.error(`Upload failed for ${file.name}:`, err);
                         failCount++;
+                        results.push({ 
+                            fileName: file.name, 
+                            status: 'FAILED', 
+                            message: err.response?.data?.message || 'Unexpected failure' 
+                        });
                     }
                 }
             }
 
+            setUploadResults(results);
             setMessage(`Batch Complete: ${successCount} successful, ${failCount} skipped/failed.`);
             setStudentFiles([]);
             fetchReports();
@@ -594,6 +607,63 @@ const AdminDashboard = () => {
                 <div className={`${isError ? 'bg-red-50 border-red-100 text-red-600' : 'bg-emerald-50 border-emerald-100 text-emerald-600'} px-6 py-4 rounded-2xl font-bold flex items-center gap-3 animate-bounce shadow-sm`}>
                     {isError ? <AlertCircle size={20} /> : <CheckCircle size={20} />}
                     {message}
+                </div>
+            )}
+
+            {uploadResults.length > 0 && (
+                <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8 space-y-6 animate-in slide-in-from-top duration-500">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h3 className="text-xl font-bold text-slate-900">Upload Summary</h3>
+                            <p className="text-sm text-slate-500">Details of the latest batch upload</p>
+                        </div>
+                        <button 
+                            onClick={() => setUploadResults([])}
+                            className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-all"
+                        >
+                            <X size={24} />
+                        </button>
+                    </div>
+                    <div className="grid gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                        {uploadResults.map((result, idx) => (
+                            <div key={idx} className={`flex items-start gap-4 p-4 rounded-2xl border transition-all hover:scale-x-[1.01] ${
+                                result.status === 'SUCCESS' ? 'bg-emerald-50/30 border-emerald-100' :
+                                result.status === 'SKIPPED' ? 'bg-amber-50/30 border-amber-100' :
+                                'bg-red-50/30 border-red-100'
+                            }`}>
+                                {result.status === 'SUCCESS' ? (
+                                    <div className="bg-emerald-100 p-2 rounded-xl">
+                                        <CheckCircle size={20} className="text-emerald-600" />
+                                    </div>
+                                ) : result.status === 'SKIPPED' ? (
+                                    <div className="bg-amber-100 p-2 rounded-xl">
+                                        <AlertCircle size={20} className="text-amber-600" />
+                                    </div>
+                                ) : (
+                                    <div className="bg-red-100 p-2 rounded-xl">
+                                        <XCircle size={20} className="text-red-600" />
+                                    </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <p className="text-sm font-bold text-slate-800 truncate">{result.fileName}</p>
+                                        <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${
+                                            result.status === 'SUCCESS' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' :
+                                            result.status === 'SKIPPED' ? 'bg-amber-100 text-amber-700 border border-amber-200' :
+                                            'bg-red-100 text-red-700 border border-red-200'
+                                        }`}>
+                                            {result.status}
+                                        </span>
+                                    </div>
+                                    <p className={`text-xs font-medium ${
+                                        result.status === 'SUCCESS' ? 'text-emerald-600' :
+                                        result.status === 'SKIPPED' ? 'text-amber-600' :
+                                        'text-red-600'
+                                    }`}>{result.message}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
 

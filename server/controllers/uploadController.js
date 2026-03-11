@@ -3,7 +3,7 @@ import SchoolInfo from '../models/SchoolInfo.js';
 import User from '../models/User.js';
 import * as xlsx from 'xlsx';
 import { Op } from 'sequelize';
-import { performRecalculate } from './adminController.js';
+import { performRecalculate, performSchoolSync, updateSchoolsBatch } from './adminController.js';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -149,11 +149,28 @@ export const uploadStudentData = async (req, res) => {
 
         // Verify school exists in DB to prevent Foreign Key violations
         console.log(`[Upload] Verifying existence of schoolId: "${actualSchoolId}"`);
-        const schoolExists = await SchoolInfo.findByPk(actualSchoolId);
+        let schoolExists = await SchoolInfo.findByPk(actualSchoolId);
+        
         if (!schoolExists) {
-            console.log(`[Upload] School ID "${actualSchoolId}" NOT FOUND. Returning 404.`);
+            console.log(`[Upload] School ID "${actualSchoolId}" NOT FOUND. Attempting Auto-Sync...`);
+            try {
+                const rawSchools = await performSchoolSync();
+                // We need a mock req/res for updateSchoolsBatch or just call the logic
+                // Since updateSchoolsBatch is exported, let's use it by mocking the response
+                const mockRes = { json: (data) => data, status: () => ({ json: (data) => data }) };
+                await updateSchoolsBatch({ body: { schools: rawSchools } }, mockRes);
+                
+                // Retry lookup
+                schoolExists = await SchoolInfo.findByPk(actualSchoolId);
+            } catch (syncErr) {
+                console.error('[Upload] Auto-Sync failed:', syncErr.message);
+            }
+        }
+
+        if (!schoolExists) {
+            console.log(`[Upload] School ID "${actualSchoolId}" STILL NOT FOUND. Returning 404.`);
             return res.status(404).json({
-                message: `School with ID "${actualSchoolId}" not found in database. Please sync schools first.`,
+                message: `School with ID "${actualSchoolId}" not found in database. Please ensure it exists in the Google Sheet and try again.`,
                 schoolId: actualSchoolId
             });
         }
