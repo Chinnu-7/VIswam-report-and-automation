@@ -68,7 +68,7 @@ app.get('/api', (req, res) => {
     res.json({
         message: 'Viswam Report Card Automation API is running',
         dbInitialized: isDbInitialized,
-        version: 'v1.2.0-supabase',
+        version: 'v1.2.1-puppeteer-fix',
         timestamp: new Date().toISOString()
     });
 });
