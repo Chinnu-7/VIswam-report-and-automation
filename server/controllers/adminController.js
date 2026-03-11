@@ -420,35 +420,31 @@ export const generatePrincipalPdf = async (req, res) => {
         const cleanSchoolId = String(schoolId || '').trim();
         const cleanAssessment = String(assessmentName || '').trim();
 
-        console.log(`Generating PDF for school: [${cleanSchoolId}], assessment: [${cleanAssessment}]...`);
+        console.log(`Generating Principal PDF for school: [${cleanSchoolId}], assessment: [${cleanAssessment}]...`);
 
-        // 1. Find a sample report - debug by fetching all for school first
-        const allSchoolReports = await StudentReport.findAll({
+        // 1. Fetch ALL reports for this school/assessment
+        const reports = await StudentReport.findAll({
             where: {
-                schoolId: { [Op.like]: `%${cleanSchoolId}%` }
+                schoolId: cleanSchoolId,
+                assessmentName: cleanAssessment
             }
         });
 
-        console.log(`Found ${allSchoolReports.length} reports for school ${cleanSchoolId}`);
-
-        const sampleReport = allSchoolReports.find(r =>
-            String(r.assessmentName || '').trim().toLowerCase() === cleanAssessment.toLowerCase()
-        );
-
-        if (!sampleReport) {
+        if (reports.length === 0) {
             return res.status(404).json({ message: 'No reports found for this school/assessment' });
         }
 
-        const qp = sampleReport.qp || '';
+        // 2. Fetch School Info for participation stats
+        const schoolInfo = await SchoolInfo.findOne({ where: { schoolId: cleanSchoolId } });
 
-        // 2. Build HTML in memory instead of fetching it over HTTP (avoid Vercel deadlocks)
-        const { getReportHtmlString } = await import('./renderController.js');
-        const htmlString = await getReportHtmlString(sampleReport.id);
+        // 3. Build Multi-Page HTML
+        const { getPrincipalReportHtmlString } = await import('./renderController.js');
+        const qp = reports[0]?.qp || '';
+        const htmlString = await getPrincipalReportHtmlString(reports, schoolInfo, cleanAssessment, qp);
 
-        console.log(`HTML built in memory. Passing to Api2Pdf for high-speed generation...`);
+        console.log(`HTML built. PDF Generation via Api2Pdf...`);
 
-        // 3. Fast PDF generation using Api2Pdf HTML-to-PDF endpoint
-        // Using the user-provided key: 7361f879-1c09-42b0-aee9-56ec533ee754
+        // 4. PDF generation using Api2Pdf
         const pdfApiUrl = `https://v2.api2pdf.com/chrome/pdf/html`;
         const response = await axios.post(pdfApiUrl, {
             html: htmlString,
@@ -469,16 +465,10 @@ export const generatePrincipalPdf = async (req, res) => {
         });
 
         if (!response.data || !response.data.FileUrl) {
-            console.error('Api2Pdf Error Response:', response.data);
-            throw new Error('PDF Generation failed from external service');
+            throw new Error('PDF Generation failed');
         }
 
-        const externalPdfUrl = response.data.FileUrl;
-        console.log(`PDF Generated successfully at ${externalPdfUrl}. redirecting client...`);
-
-        // 4. Expert Optimization: Redirect instead of streaming
-        // This prevents Vercel/Netlify timeout issues and "Connection Aborted" in n8n
-        res.redirect(302, externalPdfUrl);
+        res.redirect(302, response.data.FileUrl);
 
     } catch (error) {
         console.error('Error generating PDF:', error.message);
