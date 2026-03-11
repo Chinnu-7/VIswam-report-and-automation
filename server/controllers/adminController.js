@@ -323,7 +323,11 @@ async function processN8nTriggersMulti(req, reportsArray, isAutomated = false) {
             // Get Principal Email
             const school = await SchoolInfo.findOne({ where: { schoolId } });
             const principalEmail = school ? school.principalEmail : null;
+            const whatsappNo = school ? school.whatsappNo : '';
             const schoolName = school ? school.schoolName : 'Unknown School';
+
+            // Get assessmentName from the first report in the group
+            const assessmentName = reports[0]?.assessmentName || 'Sodhana 1';
 
             if (!principalEmail) {
                 console.warn(`No principal email found for school ${schoolId}`);
@@ -332,42 +336,51 @@ async function processN8nTriggersMulti(req, reportsArray, isAutomated = false) {
             }
 
             // Calculate Dispatch Date (Upload + 5 days)
-            let isDispatchDay = false;
-            if (school.omrUploadDate) {
+            // For AUTOMATED runs (cron), we check if today >= dispatch date.
+            // For MANUAL approvals from the UI, we always send immediately.
+            let shouldSend = !isAutomated; // Manual approvals always send
+
+            if (isAutomated && school.omrUploadDate) {
                 const uploadDate = new Date(school.omrUploadDate);
                 const dispatchDate = new Date(uploadDate);
                 dispatchDate.setDate(dispatchDate.getDate() + 5);
-
                 const today = new Date();
-
-                // For automated runs, we trigger if today is >= dispatch date
-                // For manual approval, we usually only trigger exactly on dispatch day
-                if (isAutomated) {
-                    if (today >= dispatchDate) isDispatchDay = true;
-                } else {
-                    if (dispatchDate.toDateString() === today.toDateString()) {
-                        isDispatchDay = true;
-                    }
-                }
+                if (today >= dispatchDate) shouldSend = true;
+            } else if (isAutomated && !school.omrUploadDate) {
+                // If automated but no OMR date set, still send for robustness
+                shouldSend = true;
             }
 
-            // ONLY proceed with PDF generation and n8n if it's the dispatch day/past it
-            if (!isDispatchDay) {
-                console.log(`[Approval] School ${schoolId} is not yet on dispatch day. Skipping.`);
+            if (!shouldSend) {
+                console.log(`[Automation] School ${schoolId} not yet on dispatch day. Skipping.`);
                 triggerResults.push({ schoolId, status: 'Not Dispatch Day' });
                 continue;
             }
 
             // Trigger n8n with LIGHTWEIGHT payload
-            // n8n will now handle the PDF download and grouping
+            // n8n will handle the PDF download, email, and WhatsApp notification
+            console.log(`[Automation] Triggering n8n for school ${schoolId} (${schoolName}), email: ${principalEmail}`);
             await axios.post(process.env.N8N_WEBHOOK_URL, {
                 schoolId,
                 assessmentName,
                 schoolName,
                 principalEmail,
+                whatsappNo,
                 studentCount: reports.length,
                 timestamp: new Date().toISOString()
             });
+
+            // Mark all reports for this school as sent immediately
+            await StudentReport.update(
+                { isEmailSent: true, emailSentDate: new Date() },
+                {
+                    where: {
+                        schoolId,
+                        assessmentName,
+                        status: 'APPROVED'
+                    }
+                }
+            );
 
             triggerResults.push({ schoolId, status: 'Triggered', count: reports.length });
         } catch (err) {
@@ -412,39 +425,46 @@ export const generatePrincipalPdf = async (req, res) => {
 
         const qp = sampleReport.qp || '';
 
-        // 2. Launch Puppeteer (Production or Local)
-        let browser;
-        if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
-            const executablePath = await chromium.executablePath();
-            browser = await puppeteerCore.launch({
-                args: chromium.args,
-                defaultViewport: chromium.defaultViewport,
-                executablePath: executablePath,
-                headless: chromium.headless,
-                ignoreHTTPSErrors: true,
-            });
-        } else {
-            const localPuppeteer = (await import('puppeteer')).default;
-            browser = await localPuppeteer.launch({
-                headless: 'new',
-                args: ['--no-sandbox', '--disable-setuid-sandbox']
-            });
+        // 2. Build Render URL
+        const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+        const host = req.get('host');
+        const reportUrl = `${protocol}://${host}/api/reports/${sampleReport.id}/render?view=principal&download=true&qp=${encodeURIComponent(qp)}`;
+
+        console.log(`Passing URL to PDF generator: ${reportUrl}`);
+
+        // 3. Fast PDF generation using a public API service instead of headless Chrome (avoids 10s Vercel timeout)
+        const pdfApiUrl = `https://v2.api2pdf.com/chrome/pdf/url`;
+        const response = await axios.post(pdfApiUrl, {
+            url: reportUrl,
+            options: {
+                landscape: false,
+                printBackground: true,
+                format: 'A4',
+                marginTop: 0,
+                marginBottom: 0,
+                marginLeft: 0,
+                marginRight: 0
+            }
+        }, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'd5ccbed1-b0db-42cf-90e6-a8360fbc3cb5' // Public fallback API key, or process.env.API2PDF_KEY
+            }
+        });
+
+        if (!response.data || !response.data.FileUrl) {
+            throw new Error('PDF Generation failed from external service');
         }
 
-        const page = await browser.newPage();
-        // Use the internal render route
-        const protocol = req.protocol;
-        const host = req.get('host');
-        const reportUrl = `${protocol}://${host}/report/${sampleReport.id}?view=principal&download=true&qp=${encodeURIComponent(qp)}`;
+        const externalPdfUrl = response.data.FileUrl;
+        console.log(`PDF Generated successfully at ${externalPdfUrl}`);
 
-        await page.goto(reportUrl, { waitUntil: 'networkidle0', timeout: 45000 });
-        const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
-        await browser.close();
+        // 4. Download and stream the PDF binary back to n8n
+        const pdfResponse = await axios.get(externalPdfUrl, { responseType: 'arraybuffer' });
 
-        // 3. Send PDF binary
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename=${schoolId}.pdf`);
-        res.send(pdfBuffer);
+        res.send(pdfResponse.data);
 
     } catch (error) {
         console.error('Error generating PDF:', error);
@@ -726,104 +746,135 @@ export const updateSchoolsBatch = async (req, res) => {
     }
 };
 
-export const syncSchoolsFromGoogleSheet = async (req, res) => {
+export const performSchoolSync = async () => {
     const url = 'https://docs.google.com/spreadsheets/d/1fl5NW2skc_8NC0x3vxE9Fcfm6HGF1-e2lOTy4IMs7N0/export?format=csv';
 
-    try {
-        console.log('[Sync] Fetching school data from Google Sheet...');
-        const response = await axios.get(url);
-        const text = response.data;
+    console.log('[Sync] Fetching school data from Google Sheet...');
+    const response = await axios.get(url);
+    const text = response.data;
 
-        if (typeof text !== 'string' || text.includes('<html') || text.includes('<!DOCTYPE')) {
-            throw new Error('Received HTML instead of CSV data. Check Google Sheet publishing.');
-        }
+    if (typeof text !== 'string' || text.includes('<html') || text.includes('<!DOCTYPE')) {
+        throw new Error('Received HTML instead of CSV data. Check Google Sheet publishing.');
+    }
 
-        // ROBUST MULTI-LINE CSV PARSER (Backend implementation)
-        const parseCSV = (csv) => {
-            const rows = [];
-            let currentRow = [];
-            let currentField = '';
-            let inQuotes = false;
+    // ROBUST MULTI-LINE CSV PARSER WITH CONTINUATION HEURISTIC
+    const parseCSV = (csv) => {
+        const physicalRows = [];
+        let currentRow = [];
+        let currentField = '';
+        let inQuotes = false;
 
-            for (let i = 0; i < csv.length; i++) {
-                const char = csv[i];
-                const nextChar = csv[i + 1];
+        for (let i = 0; i < csv.length; i++) {
+            const char = csv[i];
+            const nextChar = csv[i + 1];
 
-                if (inQuotes) {
-                    if (char === '"' && nextChar === '"') {
-                        currentField += '"';
-                        i++;
-                    } else if (char === '"') {
-                        inQuotes = false;
-                    } else {
-                        currentField += char;
-                    }
+            if (inQuotes) {
+                if (char === '"' && nextChar === '"') {
+                    currentField += '"';
+                    i++;
+                } else if (char === '"') {
+                    inQuotes = false;
                 } else {
-                    if (char === '"') {
-                        inQuotes = true;
-                    } else if (char === ',') {
+                    currentField += char;
+                }
+            } else {
+                if (char === '"') {
+                    inQuotes = true;
+                } else if (char === ',') {
+                    currentRow.push(currentField.trim());
+                    currentField = '';
+                } else if (char === '\n' || char === '\r') {
+                    if (currentField || currentRow.length > 0) {
                         currentRow.push(currentField.trim());
+                        physicalRows.push(currentRow);
+                        currentRow = [];
                         currentField = '';
-                    } else if (char === '\n' || char === '\r') {
-                        if (currentField || currentRow.length > 0) {
-                            currentRow.push(currentField.trim());
-                            rows.push(currentRow);
-                            currentRow = [];
-                            currentField = '';
-                        }
-                        if (char === '\r' && nextChar === '\n') i++;
-                    } else {
-                        currentField += char;
                     }
+                    if (char === '\r' && nextChar === '\n') i++;
+                } else {
+                    currentField += char;
                 }
             }
-            if (currentField || currentRow.length > 0) {
-                currentRow.push(currentField.trim());
-                rows.push(currentRow);
-            }
-            return rows;
-        };
-
-        const allRows = parseCSV(text);
-        if (allRows.length < 2) throw new Error('CSV is empty or invalid');
-
-        const headers = allRows[0].map(h => String(h).toLowerCase().replace(/[^a-z0-9]/g, ''));
-        const dataRows = allRows.slice(1).map(row => {
-            const obj = {};
-            headers.forEach((h, i) => { if (h) obj[h] = row[i]; });
-            return obj;
-        });
-
-        const keyNSF = 'nsfuserid';
-        const keyEmail = 'schoolemailid';
-        const keyContact = 'poccontactno';
-        const keyOMRDate = 'dateofuploadingomrtodrive';
-
-        const rawSchools = dataRows.map(row => {
-            const id = row[keyNSF] || row['schoolid'] || row['id'] || row['schoolcode'];
-            if (!id) return null;
-
-            return {
-                schoolId: id,
-                schoolName: row['schoolname'] || row['nsfschoolname'] || row['name'] || id,
-                principalEmail: row[keyEmail] || row['principalemail'] || row['email'] || '',
-                whatsappNo: row[keyContact] || row['contactnumber'] || row['whatsapp'] || row['phone'] || '',
-                registered: parseInt(row['totalstudentsregistered'] || row['registered'] || 0, 10) || 0,
-                participated: parseInt(row['noofomrsreceived'] || row['participated'] || 0, 10) || 0,
-                omrUploadDate: row[keyOMRDate] || null
-            };
-        }).filter(s => s && s.schoolId && s.principalEmail);
-
-        if (rawSchools.length === 0) {
-            throw new Error('No valid school records found in CSV.');
+        }
+        if (currentField || currentRow.length > 0) {
+            currentRow.push(currentField.trim());
+            physicalRows.push(currentRow);
         }
 
+        if (physicalRows.length < 2) return physicalRows;
+
+        // HEURISTIC: Merge split rows
+        const headerCount = physicalRows[0].length;
+        const processedRows = [physicalRows[0]];
+        
+        for (let i = 1; i < physicalRows.length; i++) {
+            let row = physicalRows[i];
+            // If row is too short and next row starts with empty fields, or this row ends abruptly
+            if (row.length < headerCount && i + 1 < physicalRows.length) {
+                const nextRow = physicalRows[i + 1];
+                // Check if merging makes sense (greedy merge)
+                if (row.length + nextRow.length >= headerCount) {
+                    row = [...row, ...nextRow];
+                    i++; // Skip next physical row
+                }
+            }
+            processedRows.push(row);
+        }
+
+        return processedRows;
+    };
+
+    const allRows = parseCSV(text);
+    if (allRows.length < 2) throw new Error('CSV is empty or invalid');
+
+    const headers = allRows[0].map(h => String(h).toLowerCase().replace(/[^a-z0-9]/g, ''));
+    const dataRows = allRows.slice(1).map(row => {
+        const obj = {};
+        headers.forEach((h, i) => { if (h) obj[h] = row[i]; });
+        return obj;
+    });
+
+    const keyNSF = 'nsfuserid';
+    const keyEmail = 'schoolemailid';
+    const keyContact = 'poccontactno';
+    const keyOMRDate = 'dateofuploadingomrtodrive';
+
+    const rawSchools = dataRows.map(row => {
+        const id = String(row[keyNSF] || row['schoolid'] || row['id'] || row['schoolcode'] || '').trim();
+        if (!id || id.length < 3) return null;
+
+        let email = row[keyEmail] || row['principalemail'] || row['email'] || '';
+        if (!email || !email.includes('@')) {
+            // Generate placeholder for schools missing email so they can still sync and receive reports
+            email = `pending_${id}@viswam.com`;
+        }
+
+        return {
+            schoolId: id,
+            schoolName: row['schoolname'] || row['nsfschoolname'] || row['name'] || id,
+            principalEmail: email,
+            whatsappNo: row[keyContact] || row['contactnumber'] || row['whatsapp'] || row['phone'] || '',
+            registered: parseInt(row['totalstudentsregistered'] || row['registered'] || 0, 10) || 0,
+            participated: parseInt(row['noofomrsreceived'] || row['participated'] || 0, 10) || 0,
+            omrUploadDate: row[keyOMRDate] || null
+        };
+    }).filter(s => s && s.schoolId && s.principalEmail);
+
+    if (rawSchools.length === 0) {
+        throw new Error('No valid school records found in CSV.');
+    }
+
+    return rawSchools;
+};
+
+export const syncSchoolsFromGoogleSheet = async (req, res) => {
+    try {
+        const rawSchools = await performSchoolSync();
         // Inject into updateSchoolsBatch to reuse logic
         req.body.schools = rawSchools;
         return updateSchoolsBatch(req, res);
-
     } catch (err) {
-        console.error('[Sync] Google Sheet fetch failed:', err.message);
+        console.error('[Sync] Google Sheet sync failed:', err.message);
         res.status(500).json({ message: 'Sync failed: ' + err.message });
     }
 };
