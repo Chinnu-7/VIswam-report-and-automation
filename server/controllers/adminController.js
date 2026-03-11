@@ -437,41 +437,41 @@ export const generatePrincipalPdf = async (req, res) => {
         const { getReportHtmlString } = await import('./renderController.js');
         const htmlString = await getReportHtmlString(sampleReport.id);
 
-        console.log(`HTML built in memory, launching Puppeteer...`);
+        console.log(`HTML built in memory. Passing to Api2Pdf...`);
 
-        // 3. Launch Puppeteer (Production or Local)
-        let browser;
-        if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
-            const chromium = (await import('@sparticuz/chromium')).default;
-            const puppeteerCore = (await import('puppeteer-core')).default;
-            
-            const executablePath = await chromium.executablePath();
-            browser = await puppeteerCore.launch({
-                args: chromium.args,
-                defaultViewport: chromium.defaultViewport,
-                executablePath: executablePath,
-                headless: chromium.headless,
-                ignoreHTTPSErrors: true,
-            });
-        } else {
-            const localPuppeteer = (await import('puppeteer')).default;
-            browser = await localPuppeteer.launch({
-                headless: 'new',
-                args: ['--no-sandbox', '--disable-setuid-sandbox']
-            });
+        // 3. Fast PDF generation using Api2Pdf HTML-to-PDF endpoint
+        const pdfApiUrl = `https://v2.api2pdf.com/chrome/pdf/html`;
+        const response = await axios.post(pdfApiUrl, {
+            html: htmlString,
+            options: {
+                landscape: false,
+                printBackground: true,
+                format: 'A4',
+                marginTop: 0,
+                marginBottom: 0,
+                marginLeft: 0,
+                marginRight: 0
+            }
+        }, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'd5ccbed1-b0db-42cf-90e6-a8360fbc3cb5' // Public fallback API key, or process.env.API2PDF_KEY
+            }
+        });
+
+        if (!response.data || !response.data.FileUrl) {
+            throw new Error('PDF Generation failed from external service');
         }
 
-        const page = await browser.newPage();
-        
-        // Inject HTML directly into the page
-        await page.setContent(htmlString, { waitUntil: 'networkidle0', timeout: 90000 });
-        const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
-        await browser.close();
+        const externalPdfUrl = response.data.FileUrl;
+        console.log(`PDF Generated successfully at ${externalPdfUrl}`);
 
-        // 4. Send PDF binary back to n8n
+        // 4. Download and stream the PDF binary back to n8n
+        const pdfResponse = await axios.get(externalPdfUrl, { responseType: 'arraybuffer' });
+
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename=${schoolId}.pdf`);
-        res.send(pdfBuffer);
+        res.send(pdfResponse.data);
 
     } catch (error) {
         console.error('Error generating PDF:', error);
