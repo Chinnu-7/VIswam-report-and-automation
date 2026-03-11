@@ -167,6 +167,8 @@ app.use(express.static(distPath));
 app.get('*all', (req, res) => {
     if (!req.path.startsWith('/api')) {
         res.sendFile(path.join(distPath, 'index.html'));
+    } else {
+        res.status(404).json({ message: 'API Route Not Found' });
     }
 });
 
