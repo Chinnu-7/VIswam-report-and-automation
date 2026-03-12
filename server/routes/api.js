@@ -37,7 +37,6 @@ router.delete('/reports', protect, adminOnly, adminController.deleteReports); //
 
 // Automation Queue (Polling for n8n)
 router.get('/reports/automation/queue', adminController.getAutomationQueue);
-router.get('/debug-reports', adminController.debugReports);
 router.post('/reports/automation/mark-sent', adminController.markAsSent);
 router.post('/automation/run-dispatch', adminController.runAutomatedDispatch);
 
@@ -61,23 +60,5 @@ router.get('/keep-alive', (req, res) => {
         message: 'Server is active and warm'
     });
 });
-
-// TEMP: Diagnostic route
-router.get('/db-status', async (req, res) => {
-    try {
-        const User = (await import('../models/User.js')).default;
-        const count = await User.count();
-        const admin = await User.findOne({ where: { email: 'admin@viswam.com' } });
-        res.json({
-            status: 'connected',
-            userCount: count,
-            adminExists: !!admin,
-            envUrlPresent: !!(process.env.DATABASE_URL || process.env.NETLIFY_DATABASE_URL)
-        });
-    } catch (err) {
-        res.status(500).json({ status: 'error', message: err.message });
-    }
-});
-
 
 export default router;

@@ -180,7 +180,7 @@ export const uploadStudentData = async (req, res) => {
             const sheet = workbook.Sheets[sheetName];
             const rows = xlsx.utils.sheet_to_json(sheet, { header: 1 });
 
-            const extractedGrade = sheetName.replace(/[^\d]/g, '').slice(0, 1) || '7';
+            const extractedGrade = sheetName.replace(/[^\d]/g, '') || '7';
 
             const firstRowHeaders = rows[0] ? rows[0].map(h => String(h).toLowerCase().trim()) : [];
             const secondRowHeaders = rows[1] ? rows[1].map(h => String(h).toLowerCase().trim()) : [];

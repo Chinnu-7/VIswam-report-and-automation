@@ -41,18 +41,12 @@ export const performRecalculate = async (schoolId, assessmentName, qp = null) =>
     const stats = gradingService.computeCohortStats(plainReports);
     const updatedReports = gradingService.assignRelativeGrades(plainReports, stats);
 
-    // OPTIMIZED: Promise.all with individual updates is much more reliable
-    // for JSON columns in Postgres than bulkCreate upserting.
-    const BATCH_SIZE = 50;
-    for (let i = 0; i < updatedReports.length; i += BATCH_SIZE) {
-        const batch = updatedReports.slice(i, i + BATCH_SIZE);
-        await Promise.all(batch.map(r => 
-            StudentReport.update(
-                { reportData: r.reportData },
-                { where: { id: r.id } }
-            )
-        ));
-    }
+    // OPTIMIZED: Using bulkCreate with updateOnDuplicate is the fastest way to 
+    // update JSON columns in Postgres for large cohorts without Vercel timeouts.
+    await StudentReport.bulkCreate(updatedReports, {
+        updateOnDuplicate: ['reportData'],
+        conflictAttributes: ['id']
+    });
 
     return updatedReports.length;
 };
@@ -125,14 +119,11 @@ export const getReports = async (req, res) => {
         res.json(parsedReports);
     } catch (error) {
         console.error('Error fetching reports:', error);
-
-        // OFFLINE BYPASS: If DB connection drops, return empty array instead of 500 error
-        if (error.message.includes('TIMEOUT') || error.message.includes('ECONNREFUSED') || error.message.includes('Access denied') || error.message.includes('No database selected') || error.message.includes('Connection lost')) {
-            console.log('Mocking empty getReports due to offline DB');
-            return res.json([]);
-        }
-
-        res.status(500).json({ message: 'Error fetching data' });
+        res.status(500).json({ 
+            message: 'Error fetching data', 
+            error: error.message,
+            code: error.message.includes('TIMEOUT') ? 'DB_TIMEOUT' : 'INTERNAL_SERVER_ERROR'
+        });
     }
 };
 
@@ -161,41 +152,7 @@ export const getReportById = async (req, res) => {
     }
 };
 
-export const debugReports = async (req, res) => {
-    try {
-        const { id, listSchools, schoolId, status, fixAndApprove, assessmentName } = req.query;
-        if (id) {
-            const report = await StudentReport.findByPk(id);
-            return res.json(report);
-        }
-        if (listSchools) {
-            const schools = await SchoolInfo.findAll();
-            return res.json(schools);
-        }
-        if (fixAndApprove && schoolId && assessmentName) {
-            console.log(`[Debug] Fix and Approve for ${schoolId} / ${assessmentName}`);
-            await performRecalculate(schoolId, assessmentName);
-            await StudentReport.update(
-                { status: 'APPROVED' },
-                { where: { schoolId, assessmentName } }
-            );
-            // Trigger n8n
-            const reports = await StudentReport.findAll({ where: { schoolId, assessmentName, status: 'APPROVED' } });
-            await processN8nTriggersMulti(req, reports);
-            return res.json({ message: `Fixed and approved ${reports.length} reports for ${schoolId}. N8N trigger called.` });
-        }
-        if (schoolId) {
-            const where = { schoolId };
-            if (status) where.status = status;
-            const reports = await StudentReport.findAll({ where, limit: 100 });
-            return res.json(reports);
-        }
-        const reports = await StudentReport.findAll({ limit: 10, order: [['createdAt', 'DESC']] });
-        res.json(reports);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-};
+// Debug routes removed for security
 
 export const getSchoolInfo = async (req, res) => {
     try {
@@ -730,12 +687,6 @@ export const updateSchoolsBatch = async (req, res) => {
         });
     } catch (error) {
         console.error('Error syncing schools:', error);
-
-        // If DB is offline, let's mock success so the frontend doesn't hang or crash
-        if (error.message.includes('TIMEOUT') || error.message.includes('ECONNREFUSED') || error.message.includes('Access denied')) {
-            console.log('Mocking school sync success due to offline DB');
-            return res.json({ message: `(Offline Mode) Mock synced ${schools.length} schools from Google Sheets` });
-        }
 
         // Detailed Sequelize validation error extraction
         let detailMessage = error.message;

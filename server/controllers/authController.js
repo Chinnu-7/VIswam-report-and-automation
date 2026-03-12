@@ -2,7 +2,10 @@ import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 
 const generateToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET || 'secret123', {
+    if (!process.env.JWT_SECRET) {
+        throw new Error('CRITICAL: JWT_SECRET is not defined in environment variables');
+    }
+    return jwt.sign({ id }, process.env.JWT_SECRET, {
         expiresIn: '30d'
     });
 };
@@ -12,18 +15,6 @@ export const login = async (req, res) => {
     const providedEmail = email ? email.trim().toLowerCase() : '';
 
     try {
-        // FIXED ADMIN BYPASS FOR WHEN DATABASE FAILS
-        if (providedEmail === 'admin@viswam.com' && password === 'admin123') {
-            console.log('Login success (Bypass) for:', email);
-            return res.json({
-                id: 99999,
-                email: 'admin@viswam.com',
-                role: 'admin',
-                schoolId: null,
-                token: generateToken(99999)
-            });
-        }
-
         const user = await User.findOne({ where: { email: providedEmail } });
 
         if (user && (await user.comparePassword(password))) {

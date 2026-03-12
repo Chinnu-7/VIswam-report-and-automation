@@ -35,20 +35,16 @@ const initializeDb = async () => {
         await sequelize.authenticate();
         console.log('Database connection authenticated successfully');
 
-        // Only sync if strictly necessary or in development
-        // For production Vercel, we should avoid 'alter: true' on every cold start
-        if (process.env.NODE_ENV !== 'production') {
+        // Only sync in development or if explicitly requested via env
+        if (process.env.NODE_ENV !== 'production' || process.env.FORCE_DB_SYNC === 'true') {
             await SchoolInfo.sync({ alter: true });
             await User.sync({ alter: true });
             await StudentReport.sync({ alter: false });
-            console.log('Database models synced (Development mode)');
+            console.log('Database models synced');
         } else {
-            // In production, just verify the connection and optionally do a basic sync.
-            // ORDER MATTERS: SchoolInfo must be synced first as others reference it.
-            await SchoolInfo.sync();
-            await User.sync();
-            await StudentReport.sync();
-            console.log('Database connection and tables synced (Production mode)');
+            // In production, just verify the connection is alive
+            await sequelize.authenticate();
+            console.log('Database connection verified (Production mode - Sync skipped)');
         }
 
         await seedAdmin();
@@ -68,62 +64,8 @@ app.get('/api', (req, res) => {
     res.json({
         message: 'Viswam Report Card Automation API is running',
         dbInitialized: isDbInitialized,
-        version: 'v1.2.4-principal-report-fix-v2',
+        version: 'v1.2.5-hardened',
         timestamp: new Date().toISOString()
-    });
-});
-
-// Debug route to see the EXACT DB error (helpful for credentials/DNS checks)
-app.get('/api/debug-db', async (req, res) => {
-    try {
-        await sequelize.authenticate();
-        res.json({ success: true, message: 'Database connection authenticated successfully' });
-    } catch (err) {
-        res.status(500).json({
-            success: false,
-            error: err.message,
-            name: err.name,
-            code: err.original ? err.original.code : null,
-            env_check: {
-                DATABASE_URL_SET: !!process.env.DATABASE_URL,
-                NODE_ENV: process.env.NODE_ENV,
-                VERCEL: process.env.VERCEL
-            }
-        });
-    }
-});
-
-// Debug route to check visible files (to fix Answer Key XLSX resolution on Vercel)
-app.get('/api/debug-files', (req, res) => {
-    const checkDir = (dir) => {
-        try {
-            return fs.readdirSync(dir).filter(f => f.endsWith('.xlsx'));
-        } catch (e) {
-            return e.message;
-        }
-    };
-
-    res.json({
-        cwd: {
-            path: process.cwd(),
-            files: checkDir(process.cwd())
-        },
-        dirname: {
-            path: __dirname,
-            files: checkDir(__dirname)
-        },
-        dirnameParent2: {
-            path: path.resolve(__dirname, '../../'),
-            files: checkDir(path.resolve(__dirname, '../../'))
-        },
-        dirnameParent3: {
-            path: path.resolve(__dirname, '../../../'),
-            files: checkDir(path.resolve(__dirname, '../../../'))
-        },
-        varTask: {
-            path: '/var/task',
-            files: checkDir('/var/task')
-        }
     });
 });
 
@@ -145,11 +87,6 @@ app.use(async (req, res, next) => {
     } catch (err) {
         clearTimeout(timeout);
         console.error('Middleware Error:', err.message);
-        // FORCE BYPASS for Authentication ONLY
-        if (req.path.includes('/auth/login')) {
-            console.log('Bypassing DB check for Login only:', req.path);
-            return next();
-        }
         res.status(503).json({ message: 'Database initialization failed', error: err.message });
     }
 });
