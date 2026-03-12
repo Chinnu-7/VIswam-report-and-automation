@@ -68,7 +68,7 @@ app.get('/api', (req, res) => {
     res.json({
         message: 'Viswam Report Card Automation API is running',
         dbInitialized: isDbInitialized,
-        version: 'v1.2.3-principal-report-fix',
+        version: 'v1.2.4-principal-report-fix-v2',
         timestamp: new Date().toISOString()
     });
 });
