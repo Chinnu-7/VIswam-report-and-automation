@@ -425,10 +425,14 @@ export const generatePrincipalPdf = async (req, res) => {
             throw new Error('PDF Generation failed');
         }
 
-        if (json === 'true' || req.headers.accept?.includes('application/json')) {
+        // Only return JSON if explicitly requested. 
+        // n8n HTTP Request node often sends Accept: application/json by default, 
+        // which was causing it to download the JSON metadata instead of the PDF file.
+        if (json === 'true') {
             return res.json({ fileUrl: response.data.FileUrl });
         }
 
+        // Default behavior: Redirect to the temporary direct download link
         res.redirect(302, response.data.FileUrl);
 
     } catch (error) {
