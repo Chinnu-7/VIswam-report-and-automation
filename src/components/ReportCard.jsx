@@ -156,26 +156,37 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
         if (!items || items.length === 0) return null;
 
         return (
-            <div style={{ marginBottom: '0.2rem' }}>
+            <div style={{ marginBottom: '0.5rem' }}>
                 <h5 style={{
-                    fontSize: '0.75rem',
-                    margin: '0 0 0.1rem 0',
-                    color: isStrength ? '#15803d' : '#b45309', // Green for Strength, Amber for Improvement
+                    fontSize: '0.8rem',
+                    margin: '0 0 0.3rem 0',
+                    color: isStrength ? '#16a34a' : '#d97706', // Richer green/orange
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.2rem',
-                    fontWeight: '600'
+                    gap: '0.4rem',
+                    fontWeight: '700',
+                    fontFamily: 'Inter, sans-serif'
                 }}>
-                    {isStrength ? '✅ Strengths' : '⚠️ Areas for Development (AOD)'}
+                    {isStrength ? (
+                        <span style={{ fontSize: '0.9rem' }}>✅</span>
+                    ) : (
+                        <span style={{ fontSize: '0.9rem' }}>⚠️</span>
+                    )}
+                    {isStrength ? 'Strengths' : 'Areas for Development (AOD)'}
                 </h5>
-                <ul style={{ margin: 0, paddingLeft: '1.2rem', listStyleType: 'disc', fontSize: '0.65rem', color: '#334155' }}>
-                    {items.map((item, idx) => {
-                        return (
-                            <li key={idx} style={{ marginBottom: '0.1rem', paddingLeft: '0.1rem' }}>
-                                <span>{item}</span>
-                            </li>
-                        );
-                    })}
+                <ul style={{ 
+                    margin: 0, 
+                    paddingLeft: '1.2rem', 
+                    listStyleType: 'disc', 
+                    fontSize: '0.7rem', 
+                    color: '#1e293b',
+                    lineHeight: '1.4'
+                }}>
+                    {items.map((item, idx) => (
+                        <li key={idx} style={{ marginBottom: '0.2rem' }}>
+                            {item}
+                        </li>
+                    ))}
                 </ul>
             </div>
         );
@@ -417,85 +428,92 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                gap: '1rem',
-                                marginBottom: '0.2rem'
+                                gap: '2rem',
+                                marginBottom: '0.8rem',
+                                position: 'relative',
+                                width: '100%'
                             }}>
                                 <img
                                     src={fdrLogo}
                                     alt="FDR Logo"
-                                    style={{ height: '50px', objectFit: 'contain' }}
+                                    style={{ height: '65px', objectFit: 'contain', position: 'absolute', left: '0' }}
                                 />
                                 <h1 style={{
                                     margin: 0,
                                     color: primaryColor,
-                                    fontSize: '1.2rem',
-                                    fontWeight: 'bold',
-                                    textTransform: 'uppercase'
+                                    fontSize: '1.9rem',
+                                    fontWeight: '900',
+                                    textTransform: 'uppercase',
+                                    textAlign: 'center',
+                                    letterSpacing: '0.03em',
+                                    lineHeight: '1.1'
                                 }}>
                                     Foundation for Democratic Reforms
                                 </h1>
                             </div>
-                            <h2 style={{ fontSize: '1.1rem', margin: '0.2rem 0', fontWeight: 'bold', color: primaryColor }}>
+                            
+                            <h2 style={{ fontSize: '1.5rem', margin: '0.3rem 0', fontWeight: '800', color: '#1e40af', textAlign: 'center' }}>
                                 Student Performance Report
                             </h2>
 
                             <div style={{
                                 display: 'flex',
                                 justifyContent: 'center',
-                                gap: '0.4rem',
-                                fontSize: '0.8rem',
-                                color: '#64748B',
-                                marginTop: '0.1rem',
-                                flexWrap: 'wrap'
+                                gap: '1.2rem',
+                                fontSize: '0.95rem',
+                                color: '#475569',
+                                fontWeight: '700',
+                                marginTop: '0.4rem',
+                                marginBottom: '0.6rem'
                             }}>
-                                <span><strong>School:</strong> {schoolName}</span>
-                                <span>•</span>
-                                <span><strong>Assessment:</strong> {assessmentName}{qp ? ` - ${qp}` : ''}</span>
-                                <span>•</span>
-                                <span><strong>Date:</strong> 06 JAN 2026</span>
-                                <span>•</span>
-                                <span><strong>Grade:</strong> {studentData[0]?.grade || 7}</span>
+                                <span><strong style={{ color: primaryColor }}>School:</strong> {schoolName}</span>
+                                <span style={{ color: '#cbd5e1' }}>|</span>
+                                <span><strong style={{ color: primaryColor }}>Assessment:</strong> {assessmentName}{qp ? ` - ${qp}` : ''}</span>
+                                <span style={{ color: '#cbd5e1' }}>|</span>
+                                <span><strong style={{ color: primaryColor }}>Date:</strong> 06 JAN 2026</span>
+                                <span style={{ color: '#cbd5e1' }}>|</span>
+                                <span><strong style={{ color: primaryColor }}>Grade:</strong> {studentData[0]?.grade || 7}</span>
                             </div>
                         </header>
 
                         {/* Overview Section */}
-                        <div className="page-content">
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.4rem', marginBottom: '0.3rem' }}>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                    <h3 style={{ fontSize: '1rem', margin: '0 0 0.3rem 0', color: primaryColor, borderLeft: `10px solid ${primaryColor}`, paddingLeft: '0.6rem' }}>Participation</h3>
+                        <div className="page                            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(250px, 1fr) 2fr', gap: '1.2rem', marginBottom: '1.5rem' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                    <h3 style={{ fontSize: '1.1rem', margin: '0 0 0.8rem 0', color: primaryColor, borderLeft: `8px solid ${primaryColor}`, paddingLeft: '0.8rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Participation</h3>
                                     <div style={{
-                                        backgroundColor: '#F8FAFC',
-                                        borderRadius: '8px',
-                                        padding: '0.4rem',
-                                        border: '2px solid #E2E8F0',
+                                        backgroundColor: '#ffffff',
+                                        borderRadius: '16px',
+                                        padding: '1.2rem',
+                                        border: '2px solid #f1f5f9',
                                         textAlign: 'center',
-                                        height: '95px',
+                                        height: '115px',
                                         display: 'flex',
-                                        flexDirection: 'column',
                                         alignItems: 'center',
-                                        justifyContent: 'center'
+                                        justifyContent: 'center',
+                                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
                                     }}>
-                                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', width: '100%', padding: '0 0.5rem' }}>
+                                        <div style={{ display: 'flex', gap: '2rem', alignItems: 'center', width: '100%' }}>
                                             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                                <div style={{ fontSize: '1.8rem', fontWeight: '900', color: primaryColor, lineHeight: '1' }}>{totalRegistered}</div>
-                                                <div style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 'bold', marginTop: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Registered</div>
+                                                <div style={{ fontSize: '2.8rem', fontWeight: '900', color: '#0f172a', lineHeight: '1' }}>{totalRegistered}</div>
+                                                <div style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: '800', marginTop: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>REGISTERED</div>
                                             </div>
-                                            <div style={{ width: '1px', height: '40px', backgroundColor: '#CBD5E1' }}></div>
+                                            <div style={{ width: '2px', height: '60px', backgroundColor: '#f1f5f9' }}></div>
                                             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                                <div style={{ fontSize: '1.8rem', fontWeight: '900', color: primaryColor, lineHeight: '1' }}>{totalParticipated}</div>
-                                                <div style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 'bold', marginTop: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Participated</div>
+                                                <div style={{ fontSize: '2.8rem', fontWeight: '900', color: '#0f172a', lineHeight: '1' }}>{totalParticipated}</div>
+                                                <div style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: '800', marginTop: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>PARTICIPATED</div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 <div>
-                                    <h3 style={{ fontSize: '1rem', margin: '0 0 0.5rem 0', color: primaryColor, borderLeft: `10px solid ${primaryColor}`, paddingLeft: '0.6rem' }}>Overall Grade Distribution</h3>
+                                    <h3 style={{ fontSize: '1.1rem', margin: '0 0 0.8rem 0', color: primaryColor, borderLeft: `8px solid ${primaryColor}`, paddingLeft: '0.8rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Overall Grade Distribution</h3>
                                     <div style={{
-                                        border: '2px solid #e2e8f0',
-                                        borderRadius: '8px',
-                                        height: '95px',
+                                        border: '2px solid #f1f5f9',
+                                        borderRadius: '16px',
+                                        height: '115px',
                                         backgroundColor: 'white',
-                                        padding: '0.1rem'
+                                        padding: '0.8rem 1rem 0.2rem 1rem',
+                                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
                                     }}>
                                         {(() => {
                                             const gradeDistribution = studentData.reduce((acc, curr) => {
@@ -505,28 +523,28 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                                             }, {});
 
                                             const distributionData = [
-                                                { grade: 'O', count: gradeDistribution['O'] || 0, color: '#15803d' },
-                                                { grade: 'A+', count: gradeDistribution['A+'] || 0, color: '#15803d' },
-                                                { grade: 'A', count: gradeDistribution['A'] || 0, color: '#15803d' },
-                                                { grade: 'B+', count: gradeDistribution['B+'] || 0, color: '#15803d' },
-                                                { grade: 'B', count: gradeDistribution['B'] || 0, color: '#ea580c' },
-                                                { grade: 'C+', count: gradeDistribution['C+'] || 0, color: '#ea580c' },
-                                                { grade: 'C', count: gradeDistribution['C'] || 0, color: '#ea580c' },
-                                                { grade: 'D', count: gradeDistribution['D'] || 0, color: '#dc2626' }
+                                                { grade: 'O', count: gradeDistribution['O'] || 0, color: '#10b981' },
+                                                { grade: 'A+', count: gradeDistribution['A+'] || 0, color: '#10b981' },
+                                                { grade: 'A', count: gradeDistribution['A'] || 0, color: '#059669' },
+                                                { grade: 'B+', count: gradeDistribution['B+'] || 0, color: '#34d399' },
+                                                { grade: 'B', count: gradeDistribution['B'] || 0, color: '#f59e0b' },
+                                                { grade: 'C+', count: gradeDistribution['C+'] || 0, color: '#f97316' },
+                                                { grade: 'C', count: gradeDistribution['C'] || 0, color: '#fb923c' },
+                                                { grade: 'D', count: gradeDistribution['D'] || 0, color: '#ef4444' }
                                             ];
 
                                             return (
                                                 <ResponsiveContainer width="100%" height="100%">
                                                     <BarChart
                                                         data={distributionData}
-                                                        margin={{ top: 25, right: 10, left: -20, bottom: 0 }}
+                                                        margin={{ top: 20, right: 10, left: -25, bottom: 0 }}
                                                         style={{ pointerEvents: 'none' }}
                                                     >
-                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                                        <XAxis dataKey="grade" tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
-                                                        <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} allowDecimals={false} />
-                                                        <Bar dataKey="count" radius={[4, 4, 0, 0]} barSize={35} legendType="none" isAnimationActive={false}>
-                                                            <LabelList dataKey="count" position="top" fontSize={12} fontWeight="bold" />
+                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                                        <XAxis dataKey="grade" tick={{ fontSize: 11, fontWeight: '700', fill: '#475569' }} axisLine={false} tickLine={false} />
+                                                        <YAxis tick={{ fontSize: 11, fontWeight: '600', fill: '#94a3b8' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                                                        <Bar dataKey="count" radius={[6, 6, 0, 0]} barSize={42} legendType="none" isAnimationActive={false}>
+                                                            <LabelList dataKey="count" position="top" fontSize={12} fontWeight="800" fill="#1e293b" offset={8} />
                                                             {
                                                                 distributionData.map((entry, index) => (
                                                                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -541,40 +559,25 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                                 </div>
                             </div>
 
-                            <div>
-                                <h3 style={{ fontSize: '1rem', margin: '0 0 0.5rem 0', color: primaryColor, borderLeft: `10px solid ${primaryColor}`, paddingLeft: '0.6rem' }}>Focus Areas & Remarks</h3>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', alignItems: 'start' }}>
-                                    <div>
-                                        <div style={{ textAlign: 'center', marginBottom: '0.4rem', paddingBottom: '0.2rem', borderBottom: `10px solid ${colors.english}` }}>
-                                            <h4 style={{ margin: 0, color: colors.english, textTransform: 'uppercase', fontSize: '0.8rem' }}>English</h4>
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <h3 style={{ fontSize: '1.1rem', margin: '0 0 1rem 0', color: primaryColor, borderLeft: `8px solid ${primaryColor}`, paddingLeft: '0.8rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Focus Areas & Remarks</h3>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.2rem' }}>
+                                    {[
+                                        { label: 'ENGLISH', items: { s: englishStrengths, a: englishImprovements }, color: '#6366f1' },
+                                        { label: 'MATHEMATICS', items: { s: mathStrengths, a: mathImprovements }, color: '#0ea5e9' },
+                                        { label: 'SCIENCE', items: { s: scienceStrengths, a: scienceImprovements }, color: '#ec4899' }
+                                    ].map((sub, idx) => (
+                                        <div key={idx}>
+                                            <div style={{ textAlign: 'center', marginBottom: '0.8rem' }}>
+                                                <h4 style={{ margin: 0, color: sub.color, textTransform: 'uppercase', fontSize: '1rem', fontWeight: '900', letterSpacing: '0.05em' }}>{sub.label}</h4>
+                                                <div style={{ height: '6px', backgroundColor: sub.color, marginTop: '5px', borderRadius: '3px', opacity: '0.9' }}></div>
+                                            </div>
+                                            <div style={{ backgroundColor: '#ffffff', border: '2px solid #f8fafc', borderRadius: '16px', padding: '1rem', minHeight: '220px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.03)' }}>
+                                                {renderTopicList('Strengths', sub.items.s, sub.color, true)}
+                                                {sub.items.s.length > 0 && sub.items.a.length > 0 && <div style={{ height: '0.8rem' }}></div>}
+                                                {renderTopicList('Areas for Development (AOD)', sub.items.a, sub.color, false)}
+                                            </div>
                                         </div>
-                                        <div style={{ border: '1px solid #F1F5F9', borderRadius: '8px', padding: '0.4rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-                                            {renderTopicList('✅ Strengths', englishStrengths, colors.english, true)}
-                                            {englishStrengths.length > 0 && englishImprovements.length > 0 && <div style={{ height: '0.3rem' }}></div>}
-                                            {renderTopicList('⚠️ Areas for Development (AOD)', englishImprovements, colors.english, false)}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div style={{ textAlign: 'center', marginBottom: '0.4rem', paddingBottom: '0.2rem', borderBottom: `10px solid ${colors.maths}` }}>
-                                            <h4 style={{ margin: 0, color: colors.maths, textTransform: 'uppercase', fontSize: '0.8rem' }}>Mathematics</h4>
-                                        </div>
-                                        <div style={{ border: '1px solid #F1F5F9', borderRadius: '8px', padding: '0.4rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-                                            {renderTopicList('✅ Strengths', mathStrengths, colors.maths, true)}
-                                            {mathStrengths.length > 0 && mathImprovements.length > 0 && <div style={{ height: '0.3rem' }}></div>}
-                                            {renderTopicList('⚠️ Areas for Development (AOD)', mathImprovements, colors.maths, false)}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div style={{ textAlign: 'center', marginBottom: '0.4rem', paddingBottom: '0.2rem', borderBottom: `10px solid ${colors.science}` }}>
-                                            <h4 style={{ margin: 0, color: colors.science, textTransform: 'uppercase', fontSize: '0.8rem' }}>Science</h4>
-                                        </div>
-                                        <div style={{ border: '1px solid #F1F5F9', borderRadius: '8px', padding: '0.4rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-                                            {renderTopicList('✅ Strengths', scienceStrengths, colors.science, true)}
-                                            {scienceStrengths.length > 0 && scienceImprovements.length > 0 && <div style={{ height: '0.3rem' }}></div>}
-                                            {renderTopicList('⚠️ Areas for Development (AOD)', scienceImprovements, colors.science, false)}
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                             <div style={{ marginTop: 'auto' }}>
                                 <RelativeGradingTable compact={true} />
