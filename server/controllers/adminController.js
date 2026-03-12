@@ -367,7 +367,7 @@ async function processN8nTriggersMulti(req, reportsArray, isAutomated = false) {
 
 export const generatePrincipalPdf = async (req, res) => {
     const { schoolId } = req.params;
-    const { assessmentName } = req.query;
+    const { assessmentName, json } = req.query;
 
     if (!schoolId || !assessmentName) {
         return res.status(400).json({ message: 'schoolId and assessmentName are required' });
@@ -423,6 +423,10 @@ export const generatePrincipalPdf = async (req, res) => {
 
         if (!response.data || !response.data.FileUrl) {
             throw new Error('PDF Generation failed');
+        }
+
+        if (json === 'true' || req.headers.accept?.includes('application/json')) {
+            return res.json({ fileUrl: response.data.FileUrl });
         }
 
         res.redirect(302, response.data.FileUrl);

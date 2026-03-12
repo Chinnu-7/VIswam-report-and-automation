@@ -265,9 +265,10 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
 
     const getAttention = (subjectKey) => {
         return reports.filter(r => {
-            const g = subjectKey === 'overall' ? r.reportData?.relative_grading?.overall?.grade : r.reportData?.relative_grading?.[subjectKey]?.grade;
+            const gradeObj = subjectKey === 'overall' ? r.reportData?.relative_grading?.overall : r.reportData?.relative_grading?.[subjectKey];
+            const g = String(gradeObj?.grade || '').toUpperCase();
             return ['C', 'D'].includes(g);
-        }).sort((a, b) => Number(a.rollNo) - Number(b.rollNo)).slice(0, 20);
+        }).sort((a, b) => Number(a.rollNo) - Number(b.rollNo)).slice(0, 30);
     };
 
     const studentsPerPage = 25;
@@ -380,26 +381,27 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
         </header>
 
         <section-title>Students Needing Attention (Grade C & D)</section-title>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5mm;">
+        <div style="display: flex; flex-wrap: wrap; gap: 4mm;">
             ${['overall', 'english', 'maths', 'science'].map(key => `
-                <div class="card" style="padding: 3mm; min-height: 40mm;">
-                    <div style="font-weight: 800; font-size: 0.8rem; color:${primaryColor}; border-bottom: 1px solid #E2E8F0; margin-bottom: 3mm;">${key === 'overall' ? 'Overall Performance' : (key.charAt(0).toUpperCase() + key.slice(1))}</div>
+                <div class="card" style="flex: 0 0 48%; padding: 3mm; min-height: 40mm; box-sizing: border-box;">
+                    <div style="font-weight: 800; font-size: 0.8rem; color:${primaryColor}; border-bottom: 2px solid #E2E8F0; margin-bottom: 2mm; padding-bottom: 1mm;">${key === 'overall' ? 'Overall Performance' : (key.charAt(0).toUpperCase() + key.slice(1))}</div>
                     <table style="width:100%; border-collapse: collapse; font-size: 0.65rem;">
                         <thead>
                             <tr style="border-bottom: 1px solid #E2E8F0; color: #64748B;">
                                 <th style="text-align: left; padding: 1mm;">SNo</th>
                                 <th style="text-align: left; padding: 1mm;">Student Id</th>
-                                <th style="text-align: left; padding: 1mm;">Grade</th>
+                                <th style="text-align: right; padding: 1mm;">Grade</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${getAttention(key).map((r, i) => {
-                                const g = key === 'overall' ? r.reportData?.relative_grading?.overall?.grade : r.reportData?.relative_grading?.[key]?.grade;
+                                const gradeObj = key === 'overall' ? r.reportData?.relative_grading?.overall : r.reportData?.relative_grading?.[key];
+                                const g = String(gradeObj?.grade || '').toUpperCase();
                                 return `
                                 <tr style="border-bottom: 1px solid #F1F5F9;">
                                     <td style="padding: 1.2mm 1mm;">${i + 1}</td>
                                     <td style="padding: 1.2mm 1mm;">${r.rollNo}</td>
-                                    <td style="padding: 1.2mm 1mm; font-weight: 800; color: ${getGradeColor(g)}">${g || '-'}</td>
+                                    <td style="padding: 1.2mm 1mm; text-align: right; font-weight: 800; color: ${getGradeColor(g)}">${g || '-'}</td>
                                 </tr>`;
                             }).join('')}
                         </tbody>
