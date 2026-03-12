@@ -1,4 +1,5 @@
 import StudentReport from '../models/StudentReport.js';
+import SchoolInfo from '../models/SchoolInfo.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -148,13 +149,13 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
                 <div style="width:1px; height:10mm; background:#CBD5E1"></div>
                 <div><div class="big-val">${totalParticipated}</div><div class="label">Participated</div></div>
             </div>
-            <div class="card" style="padding: 2mm 4mm;">
-                <div style="display: flex; align-items: flex-end; justify-content: space-between; height: 18mm; gap: 2mm;">
+            <div class="card" style="padding: 3mm 4mm; height: 30mm;">
+                <div style="display: flex; align-items: flex-end; justify-content: space-between; height: 24mm; width: 100%;">
                     ${distData.map(d => `
-                        <div style="flex: 1; display: flex; flexDirection: column; align-items: center; gap: 1mm;">
-                            <div style="font-size: 0.6rem; font-weight: 800;">${d.c}</div>
-                            <div style="width: 100%; height: ${(d.c / maxCount) * 12}mm; background: ${d.color}; border-radius: 1mm 1mm 0 0;"></div>
-                            <div style="font-size: 0.6rem; font-weight: 700;">${d.g}</div>
+                        <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%;">
+                            <div style="font-size: 0.65rem; font-weight: 800; color: #1e293b; margin-bottom: 1mm; opacity: 0.9;">${d.c}</div>
+                            <div style="width: 80%; max-width: 10mm; height: ${(d.c / maxCount) * 15}mm; min-height: ${d.c > 0 ? '0.5mm' : '0'}; background: ${d.color}; border-radius: 1mm 1mm 0 0;"></div>
+                            <div style="font-size: 0.7rem; font-weight: 800; color: ${primaryColor}; margin-top: 1.5mm;">${d.g}</div>
                         </div>
                     `).join('')}
                 </div>
@@ -343,12 +344,31 @@ export const renderReportHtml = async (req, res) => {
         const report = await StudentReport.findByPk(id);
         if (!report) throw new Error('Report not found');
         
-        // For individual report preview, we can still use a simplified layout or the full one with 1 report
         const schoolInfo = await SchoolInfo.findOne({ where: { schoolId: report.schoolId } });
         const html = await getPrincipalReportHtmlString([report], schoolInfo, report.assessmentName, report.qp);
         res.send(html);
     } catch (error) {
         console.error('Error rendering HTML report:', error);
         res.status(500).send('Error rendering report');
+    }
+};
+
+export const renderPrincipalReportHtml = async (req, res) => {
+    try {
+        const { schoolId } = req.params;
+        const { assessmentName } = req.query;
+        
+        const reports = await StudentReport.findAll({
+            where: { schoolId, assessmentName }
+        });
+        
+        if (!reports || reports.length === 0) throw new Error('No reports found for this school/assessment');
+        
+        const schoolInfo = await SchoolInfo.findOne({ where: { schoolId } });
+        const html = await getPrincipalReportHtmlString(reports, schoolInfo, assessmentName, reports[0].qp);
+        res.send(html);
+    } catch (error) {
+        console.error('Error rendering Principal HTML report:', error);
+        res.status(500).send('Error rendering principal report');
     }
 };

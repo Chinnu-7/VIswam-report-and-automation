@@ -50,6 +50,7 @@ router.get('/reports/school/:schoolId/pdf', adminController.generatePrincipalPdf
 router.post('/reports/school/:schoolId/mark-notified', adminController.markSchoolNotified);
 
 // Render Route (Public for n8n/Api2Pdf, or could be protected if needed)
+router.get('/reports/school/:schoolId/render', renderController.renderPrincipalReportHtml);
 router.get('/reports/:id/render', renderController.renderReportHtml);
 
 // Keep-alive / Health Check Route

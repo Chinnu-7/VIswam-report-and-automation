@@ -477,7 +477,8 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                         </header>
 
                         {/* Overview Section */}
-                        <div className="page                            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(250px, 1fr) 2fr', gap: '1.2rem', marginBottom: '1.5rem' }}>
+                        <div className="page-content">
+                            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(250px, 1fr) 2fr', gap: '1.2rem', marginBottom: '1.5rem' }}>
                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                                     <h3 style={{ fontSize: '1.1rem', margin: '0 0 0.8rem 0', color: primaryColor, borderLeft: `8px solid ${primaryColor}`, paddingLeft: '0.8rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Participation</h3>
                                     <div style={{
@@ -578,6 +579,8 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                                                 {renderTopicList('Areas for Development (AOD)', sub.items.a, sub.color, false)}
                                             </div>
                                         </div>
+                                    ))}
+                                </div>
                             </div>
                             <div style={{ marginTop: 'auto' }}>
                                 <RelativeGradingTable compact={true} />

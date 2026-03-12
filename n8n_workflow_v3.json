@@ -97,13 +97,28 @@
     {
       "parameters": {
         "method": "POST",
+        "url": "https://crmapi.automatebusiness.com/campaign/t1/api/v2/recipient/send-message",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"apiKey\": \"YOUR_AISENSY_API_KEY\",\n  \"campaignName\": \"PDF1\",\n  \"destination\": \"{{ $('Consolidate Data').first().json.whatsappNo }}\",\n  \"userName\": \"{{ $('Consolidate Data').first().json.schoolName }}\",\n  \"template\": {\n    \"name\": \"PDF1\",\n    \"languageCode\": \"en\",\n    \"parameters\": [\n      \"{{ $('Consolidate Data').first().json.schoolName }}\",\n      \"{{ $('Consolidate Data').first().json.pdfUrl }}\"\n    ]\n  }\n}",
+        "options": {}
+      },
+      "name": "Send WhatsApp PDF1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1150, 450],
+      "id": "send-whatsapp-id"
+    },
+    {
+      "parameters": {
+        "method": "POST",
         "url": "=https://viswam-report-card.vercel.app/api/reports/school/{{ $('Consolidate Data').first().json.schoolId }}/mark-notified?assessmentName={{ $('Consolidate Data').first().json.encodedAssessment }}",
         "options": {}
       },
       "name": "Mark Notified",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1250, 300],
+      "position": [1300, 300],
       "id": "mark-notified-id",
       "continueOnFail": true
     }
@@ -154,6 +169,17 @@
       ]
     },
     "Send Email": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp PDF1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send WhatsApp PDF1": {
       "main": [
         [
           {
