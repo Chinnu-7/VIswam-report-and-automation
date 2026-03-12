@@ -18,35 +18,39 @@ const getBase64Image = (fileName) => {
     return '';
 };
 
-// --- RE-INTRODUCING INDIVIDUAL REPORT HELPERS ---
+// --- GRADING HELPERS (Matching PDF Samples) ---
 
 const getGradeColor = (grade) => {
     if (!grade) return '#64748B';
     const g = String(grade).toUpperCase();
-    if (['S+', 'O'].includes(g)) return '#15803d';
-    if (['S', 'A+'].includes(g)) return '#15803d';
-    if (['A', 'B+'].includes(g)) return '#0369a1';
-    if (['B', 'C+'].includes(g)) return '#b45309';
-    if (['C', 'D'].includes(g)) return '#dc2626';
+    if (g === 'O') return '#ffffff';
+    if (['A+', 'A', 'B+'].includes(g)) return '#15803d';
+    if (['B', 'C+', 'C'].includes(g)) return '#ea580c';
+    if (g === 'D') return '#dc2626';
     return '#64748B';
 };
 
 const getGradeBg = (grade) => {
     if (!grade) return '#F1F5F9';
     const g = String(grade).toUpperCase();
-    if (['S+', 'O'].includes(g)) return '#dcfce7'; // Green
-    if (['S', 'A+'].includes(g)) return '#dcfce7';
-    if (['A', 'B+'].includes(g)) return '#e0f2fe'; // Blue
-    if (['B', 'C+'].includes(g)) return '#fef3c7'; // Amber
-    if (['C', 'D'].includes(g)) return '#fee2e2'; // Red
+    if (g === 'O') return '#064e3b';
+    if (g === 'A+') return '#dcfce7';
+    if (g === 'A') return '#f0fdf4';
+    if (g === 'B+') return '#f0f9ff';
+    if (g === 'B') return '#fff7ed';
+    if (g === 'C+') return '#ffedd5';
+    if (g === 'C') return '#fed7aa';
+    if (g === 'D') return '#fef2f2';
     return '#F1F5F9';
 };
+
+// --- INDIVIDUAL STUDENT REPORT (Student Achievement Report) ---
 
 export const getReportHtmlString = async (reportId) => {
     const report = await StudentReport.findByPk(reportId);
     if (!report) throw new Error('Report not found');
 
-    const data = report; // Backward compatibility with old templates
+    const data = report;
     const reportData = report.reportData || {};
     const relativeGrading = reportData.relative_grading || {};
 
@@ -66,7 +70,6 @@ export const getReportHtmlString = async (reportId) => {
     const renderLOs = (subjectKey) => {
         const scores = reportData[subjectKey] || {};
         const mapping = reportData.lo_mapping?.[subjectKey] || {};
-        
         const LOs = Object.entries(scores)
             .filter(([code]) => code !== 'total' && code !== 'grade')
             .map(([code, score]) => ({ code, score, text: mapping[code] || code }))
@@ -201,7 +204,7 @@ export const getReportHtmlString = async (reportId) => {
 </html>`;
 };
 
-// --- PRINCIPAL REPORT (COHORT SUMMARY) ---
+// --- PRINCIPAL REPORT (MULTI-PAGE COHORT SUMMARY) ---
 
 export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessmentName, qp) => {
     if (!reports || reports.length === 0) throw new Error('No reports provided');
@@ -218,7 +221,6 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
     const primaryColor = '#1e3a8a';
     const accentColor = '#dc2626';
 
-    // Reuse grading helpers
     const gradeDistribution = reports.reduce((acc, curr) => {
         const g = curr.reportData?.relative_grading?.overall?.grade || 'D';
         acc[g] = (acc[g] || 0) + 1;
@@ -252,14 +254,21 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
         return Object.entries(aggregated)
             .map(([code, d]) => ({ text: mapping[code] || code, avg: d.total / d.count }))
             .filter(i => isStrength ? i.avg >= 0.75 : (i.avg < 0.5 && i.avg >= 0))
-            .sort((a, b) => isStrength ? b.avg - a.avg : a.avg - b.avg).slice(0, 3);
+            .sort((a, b) => isStrength ? b.avg - a.avg : a.avg - b.avg).slice(0, 5);
     };
 
-    const sections = ['english', 'maths', 'science'].map(s => ({
-        label: s.charAt(0).toUpperCase() + s.slice(1),
-        strengths: getAggregatedLOs(s, true),
-        improvements: getAggregatedLOs(s, false)
-    }));
+    const sections = [
+        { key: 'english', label: 'ENGLISH', color: '#6366F1', strengths: getAggregatedLOs('english', true), improvements: getAggregatedLOs('english', false) },
+        { key: 'maths', label: 'MATHEMATICS', color: '#6366F1', strengths: getAggregatedLOs('maths', true), improvements: getAggregatedLOs('maths', false) },
+        { key: 'science', label: 'SCIENCE', color: '#EC4899', strengths: getAggregatedLOs('science', true), improvements: getAggregatedLOs('science', false) }
+    ];
+
+    const getAttention = (subjectKey) => {
+        return reports.filter(r => {
+            const g = subjectKey === 'overall' ? r.reportData?.relative_grading?.overall?.grade : r.reportData?.relative_grading?.[subjectKey]?.grade;
+            return ['C', 'D'].includes(g);
+        }).sort((a, b) => Number(a.rollNo) - Number(b.rollNo)).slice(0, 20);
+    };
 
     const studentsPerPage = 25;
     const sortedReports = [...reports].sort((a, b) => Number(a.rollNo) - Number(b.rollNo));
@@ -279,16 +288,17 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
             </div>
         </header>
 
-        <section-title>Performance Summary</section-title>
+        <section-title>Participation</section-title>
         <div style="display: grid; grid-template-columns: 1fr 2.5fr; gap: 4mm; margin-bottom: 5mm;">
             <div class="card" style="text-align: center; display: flex; align-items: center; justify-content: center; gap: 4mm; padding: 4mm;">
-                <div><div class="big-val" style="font-size: 1.8rem;">${totalRegistered}</div><div class="label">Registered</div></div>
+                <div><div class="big-val" style="font-size: 1.8rem; font-weight: 900; color: ${primaryColor};">${totalRegistered}</div><div style="font-size: 0.55rem; text-transform: uppercase; color: #64748B; font-weight: 700; margin-top: 1mm;">Registered</div></div>
                 <div style="width:1px; height:8mm; background:#CBD5E1"></div>
-                <div><div class="big-val" style="font-size: 1.8rem;">${totalParticipated}</div><div class="label">Participated</div></div>
+                <div><div class="big-val" style="font-size: 1.8rem; font-weight: 900; color: ${primaryColor};">${totalParticipated}</div><div style="font-size: 0.55rem; text-transform: uppercase; color: #64748B; font-weight: 700; margin-top: 1mm;">Participated</div></div>
             </div>
             <div class="card" style="padding: 3mm 4mm; height: 32mm;">
-                <div style="display: flex; align-items: flex-end; justify-content: space-between; height: 24mm; width: 100%;">
-                    ${distData.map(d => `<div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%;"><div style="font-size: 0.6rem; font-weight: 800; color: #1e293b; margin-bottom: 1mm;">${d.c}</div><div style="width: 70%; max-width: 8mm; height: ${(d.c / maxCount) * 16}mm; min-height: ${d.c > 0 ? '0.5mm' : '0'}; background: ${d.color}; border-radius: 1mm 1mm 0 0;"></div><div style="font-size: 0.7rem; font-weight: 800; color: ${primaryColor}; margin-top: 1.5mm;">${d.g}</div></div>`).join('')}
+                <div style="font-size: 0.75rem; font-weight: 800; color: ${primaryColor}; margin-bottom: 1mm; border-bottom: 1px solid #F1F5F9; padding-bottom: 1mm;">Overall Grade Distribution</div>
+                <div style="display: flex; align-items: flex-end; justify-content: space-between; height: 20mm; width: 100%;">
+                    ${distData.map(d => `<div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%;"><div style="font-size: 0.6rem; font-weight: 800; color: #1e293b; margin-bottom: 1mm;">${d.c}</div><div style="width: 70%; max-width: 8mm; height: ${(d.c / maxCount) * 14}mm; min-height: ${d.c > 0 ? '0.5mm' : '0'}; background: ${d.color}; border-radius: 1mm 1mm 0 0;"></div><div style="font-size: 0.7rem; font-weight: 800; color: ${primaryColor}; margin-top: 1.5mm;">${d.g}</div></div>`).join('')}
                 </div>
             </div>
         </div>
@@ -296,25 +306,28 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
         <section-title>Focus Areas & Remarks</section-title>
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; margin-bottom: 5mm;">
             ${sections.map(s => `
-                <div class="card" style="padding: 2.5mm;">
-                    <div style="text-align: center; font-weight: 800; font-size: 0.75rem; color: ${primaryColor}; border-bottom: 1px solid #E2E8F0; padding-bottom: 1mm; margin-bottom: 2mm;">${s.label}</div>
-                    ${s.strengths.length > 0 ? `<div style="font-size: 0.6rem; font-weight: 800; color:#15803d; margin-bottom: 1mm;">✅ Strengths</div><ul style="margin:0; padding-left:4mm; font-size: 0.55rem; color:#334155;">${s.strengths.map(i => `<li>${i.text}</li>`).join('')}</ul>` : ''}
-                    ${s.improvements.length > 0 ? `<div style="font-size: 0.6rem; font-weight: 800; color:#b45309; margin-top: 2mm; margin-bottom: 1mm;">⚠️ Improvements</div><ul style="margin:0; padding-left:4mm; font-size: 0.55rem; color:#334155;">${s.improvements.map(i => `<li>${i.text}</li>`).join('')}</ul>` : ''}
+                <div class="card" style="padding: 0; min-height: 50mm;">
+                    <div style="height: 1.5mm; background: ${s.color}; border-radius: 2mm 2mm 0 0;"></div>
+                    <div style="text-align: center; font-weight: 800; font-size: 0.7rem; color: ${s.color}; padding: 2mm 1mm; border-bottom: 1px solid #F1F5F9;">${s.label}</div>
+                    <div style="padding: 2mm;">
+                        ${s.strengths.length > 0 ? `<div style="font-size: 0.6rem; font-weight: 800; color:#15803d; margin-bottom: 1mm;">✅ Strengths</div><ul style="margin:0 0 3mm 0; padding-left:4mm; font-size: 0.53rem; color:#334155;">${s.strengths.map(i => `<li>${i.text}</li>`).join('')}</ul>` : ''}
+                        ${s.improvements.length > 0 ? `<div style="font-size: 0.6rem; font-weight: 800; color:#b45309; margin-bottom: 1mm; text-transform: uppercase;">⚠️ Areas for Development (AOD)</div><ul style="margin:0; padding-left:4mm; font-size: 0.53rem; color:#334155;">${s.improvements.map(i => `<li>${i.text}</li>`).join('')}</ul>` : ''}
+                    </div>
                 </div>`).join('')}
         </div>
 
         <div class="grading-scale">
-            <h4>GRADING SCALE</h4>
-            <div class="ranges-grid">
-                ${[{ g: 'O', p: '91-100%', d: 'Outstanding' }, { g: 'A+', p: '80-90%', d: 'Excellent' }, { g: 'A', p: '70-79%', d: 'Very Good' }, { g: 'B+', p: '60-69%', d: 'Good' }, { g: 'B', p: '50-59%', d: 'Above Avg' }, { g: 'C+', p: '40-49%', d: 'Average' }, { g: 'C', p: '30-39%', d: 'Below Avg' }, { g: 'D', p: '< 30%', d: 'Needs Imp.' }].map(r => `<div class="range-item" style="background: ${getGradeBg(r.g)}; color: ${getGradeColor(r.g)}"><div class="g">${r.g}</div><div class="p">${r.p}</div><div class="d">${r.d}</div></div>`).join('')}
+            <h4 style="font-size: 0.65rem; color: ${primaryColor}; margin: 0 0 2mm 0;">GRADING SCALE</h4>
+            <div class="ranges-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5mm;">
+                ${[{ g: 'O', p: '91-100%', d: 'Outstanding' }, { g: 'A+', p: '80-90%', d: 'Excellent' }, { g: 'A', p: '70-79%', d: 'Very Good' }, { g: 'B+', p: '60-69%', d: 'Good' }, { g: 'B', p: '50-59%', d: 'Above Avg' }, { g: 'C+', p: '40-49%', d: 'Average' }, { g: 'C', p: '30-39%', d: 'Below Avg' }, { g: 'D', p: '< 30%', d: 'Needs Imp.' }].map(r => `<div style="padding: 1.5mm; border-radius: 1mm; text-align: center; border: 1px solid #0001; background: ${getGradeBg(r.g)}; color: ${getGradeColor(r.g)}"><div style="font-weight: 900; font-size: 0.75rem;">${r.g}</div><div style="font-size: 0.55rem; font-weight: 700;">${r.p}</div><div style="font-size: 0.45rem; opacity: 0.8;">${r.d}</div></div>`).join('')}
             </div>
         </div>
 
-        <footer-logos>
-            <div class="partner"><label>Assessment Partner</label><img src="${nsfLogo}"></div>
-            <div class="page-num">Page 1</div>
-            <div class="partner" style="text-align: right;"><label>Implementation Partner</label><img src="${viswamLogo}"></div>
-        </footer-logos>
+        <footer style="margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; padding-top: 3mm; border-top: 1px solid #E2E8F0;">
+            <div style="font-size: 0.5rem;"><img src="${nsfLogo}" style="height: 8mm;"></div>
+            <div style="font-size: 0.7rem; color: #94A3B8; font-weight: 700;">Page 1</div>
+            <div style="text-align: right;"><img src="${viswamLogo}" style="height: 8mm;"></div>
+        </footer>
     </div>`;
 
     const detailPages = studentPages.map((page, idx) => `
@@ -322,40 +335,85 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
         <header>
             <div class="logos"><img src="${fdrLogo}" class="logo-fdr"></div>
             <h1>Foundation for Democratic Reforms</h1>
-            <h2 style="color:${primaryColor}">Detailed Student Scores (Page ${idx + 1}/${studentPages.length})</h2>
+            <h2 style="color:${primaryColor}">Student Performance Report</h2>
+            <div class="meta"><span>Detailed Student Scores (Page ${idx + 1}/${studentPages.length})</span></div>
         </header>
 
-        <section-title>Score Table</section-title>
-        <table style="width: 100%; border-collapse: collapse; font-size: 0.75rem;">
+        <section-title>Detailed Student Scores</section-title>
+        <table style="width: 100%; border-collapse: separate; border-spacing: 0 1.5mm; font-size: 0.75rem;">
             <thead>
-                <tr style="background: #F8FAFC; border-bottom: 2px solid #E2E8F0;">
+                <tr style="color: ${primaryColor};">
                     <th style="padding: 2mm; text-align: left;">SNo</th>
                     <th style="padding: 2mm; text-align: left;">Student Id</th>
-                    <th style="background: #FEF9C3; padding: 2mm; text-align: left;">Overall</th>
+                    <th style="background: #FEF9C3; padding: 2mm; text-align: left; border-radius: 1mm 0 0 1mm;">Overall</th>
                     <th style="padding: 2mm; text-align: left;">Eng Grade</th>
                     <th style="padding: 2mm; text-align: left;">Math Grade</th>
-                    <th style="padding: 2mm; text-align: left;">Sci Grade</th>
+                    <th style="padding: 2mm; text-align: left; border-radius: 0 1mm 1mm 0;">Sci Grade</th>
                 </tr>
             </thead>
             <tbody>
                 ${page.map((r, i) => `
-                    <tr style="border-bottom: 1px solid #F1F5F9;">
-                        <td style="padding: 1.5mm 2mm;">${idx * studentsPerPage + i + 1}</td>
-                        <td style="padding: 1.5mm 2mm; font-weight: 700;">${r.rollNo}</td>
-                        <td style="padding: 1.5mm 2mm; background: #FEF9C3;"><span style="display: inline-block; padding: 0.5mm 2mm; border-radius: 1mm; font-weight: 800; font-size: 0.65rem; background:${getGradeBg(r.reportData?.relative_grading?.overall?.grade)}; color:${getGradeColor(r.reportData?.relative_grading?.overall?.grade)}">${r.reportData?.relative_grading?.overall?.grade || '-'}</span></td>
-                        <td style="padding: 1.5mm 2mm;"><span style="display: inline-block; padding: 0.5mm 2mm; border-radius: 1mm; font-weight: 800; font-size: 0.65rem; background:${getGradeBg(r.reportData?.relative_grading?.english?.grade)}; color:${getGradeColor(r.reportData?.relative_grading?.english?.grade)}">${r.reportData?.relative_grading?.english?.grade || '-'}</span></td>
-                        <td style="padding: 1.5mm 2mm;"><span style="display: inline-block; padding: 0.5mm 2mm; border-radius: 1mm; font-weight: 800; font-size: 0.65rem; background:${getGradeBg(r.reportData?.relative_grading?.maths?.grade)}; color:${getGradeColor(r.reportData?.relative_grading?.maths?.grade)}">${r.reportData?.relative_grading?.maths?.grade || '-'}</span></td>
-                        <td style="padding: 1.5mm 2mm;"><span style="display: inline-block; padding: 0.5mm 2mm; border-radius: 1mm; font-weight: 800; font-size: 0.65rem; background:${getGradeBg(r.reportData?.relative_grading?.science?.grade)}; color:${getGradeColor(r.reportData?.relative_grading?.science?.grade)}">${r.reportData?.relative_grading?.science?.grade || '-'}</span></td>
+                    <tr>
+                        <td style="padding: 2mm; border-bottom: 1px solid #F1F5F9;">${idx * studentsPerPage + i + 1}</td>
+                        <td style="padding: 2mm; border-bottom: 1px solid #F1F5F9; font-weight: 700;">${r.rollNo}</td>
+                        <td style="padding: 2mm; border-bottom: 1px solid #F1F5F9; background: rgba(254, 249, 195, 0.4);"><span style="display: inline-block; padding: 0.8mm 3mm; border-radius: 2mm; font-weight: 800; font-size: 0.7rem; background:${getGradeBg(r.reportData?.relative_grading?.overall?.grade)}; color:${getGradeColor(r.reportData?.relative_grading?.overall?.grade)}">${r.reportData?.relative_grading?.overall?.grade || '-'}</span></td>
+                        <td style="padding: 2mm; border-bottom: 1px solid #F1F5F9;"><span style="display: inline-block; padding: 0.8mm 3mm; border-radius: 2mm; font-weight: 800; font-size: 0.7rem; background:${getGradeBg(r.reportData?.relative_grading?.english?.grade)}; color:${getGradeColor(r.reportData?.relative_grading?.english?.grade)}">${r.reportData?.relative_grading?.english?.grade || '-'}</span></td>
+                        <td style="padding: 2mm; border-bottom: 1px solid #F1F5F9;"><span style="display: inline-block; padding: 0.8mm 3mm; border-radius: 2mm; font-weight: 800; font-size: 0.7rem; background:${getGradeBg(r.reportData?.relative_grading?.maths?.grade)}; color:${getGradeColor(r.reportData?.relative_grading?.maths?.grade)}">${r.reportData?.relative_grading?.maths?.grade || '-'}</span></td>
+                        <td style="padding: 2mm; border-bottom: 1px solid #F1F5F9;"><span style="display: inline-block; padding: 0.8mm 3mm; border-radius: 2mm; font-weight: 800; font-size: 0.7rem; background:${getGradeBg(r.reportData?.relative_grading?.science?.grade)}; color:${getGradeColor(r.reportData?.relative_grading?.science?.grade)}">${r.reportData?.relative_grading?.science?.grade || '-'}</span></td>
                     </tr>`).join('')}
             </tbody>
         </table>
 
-        <footer-logos>
-            <div class="partner"><label>Assessment Partner</label><img src="${nsfLogo}"></div>
-            <div class="page-num">Page ${idx + 2}</div>
-            <div class="partner" style="text-align: right;"><label>Implementation Partner</label><img src="${viswamLogo}"></div>
-        </footer-logos>
+        <footer style="margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; padding-top: 3mm; border-top: 1px solid #E2E8F0;">
+            <div style="font-size: 0.5rem;"><img src="${nsfLogo}" style="height: 8mm;"></div>
+            <div style="font-size: 0.7rem; color: #94A3B8; font-weight: 700;">Page ${idx + 2}</div>
+            <div style="text-align: right;"><img src="${viswamLogo}" style="height: 8mm;"></div>
+        </footer>
     </div>`).join('');
+
+    const attentionPage = `
+    <div class="page">
+        <header>
+            <div class="logos"><img src="${fdrLogo}" class="logo-fdr"></div>
+            <h1>Foundation for Democratic Reforms</h1>
+            <h2 style="color:${primaryColor}">Student Performance Report</h2>
+        </header>
+
+        <section-title>Students Needing Attention (Grade C & D)</section-title>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5mm;">
+            ${['overall', 'english', 'maths', 'science'].map(key => `
+                <div class="card" style="padding: 3mm; min-height: 40mm;">
+                    <div style="font-weight: 800; font-size: 0.8rem; color:${primaryColor}; border-bottom: 1px solid #E2E8F0; margin-bottom: 3mm;">${key === 'overall' ? 'Overall Performance' : (key.charAt(0).toUpperCase() + key.slice(1))}</div>
+                    <table style="width:100%; border-collapse: collapse; font-size: 0.65rem;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid #E2E8F0; color: #64748B;">
+                                <th style="text-align: left; padding: 1mm;">SNo</th>
+                                <th style="text-align: left; padding: 1mm;">Student Id</th>
+                                <th style="text-align: left; padding: 1mm;">Grade</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${getAttention(key).map((r, i) => {
+                                const g = key === 'overall' ? r.reportData?.relative_grading?.overall?.grade : r.reportData?.relative_grading?.[key]?.grade;
+                                return `
+                                <tr style="border-bottom: 1px solid #F1F5F9;">
+                                    <td style="padding: 1.2mm 1mm;">${i + 1}</td>
+                                    <td style="padding: 1.2mm 1mm;">${r.rollNo}</td>
+                                    <td style="padding: 1.2mm 1mm; font-weight: 800; color: ${getGradeColor(g)}">${g || '-'}</td>
+                                </tr>`;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `).join('')}
+        </div>
+
+        <footer style="margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; padding-top: 3mm; border-top: 1px solid #E2E8F0;">
+            <div style="font-size: 0.5rem;"><img src="${nsfLogo}" style="height: 8mm;"></div>
+            <div style="font-size: 0.7rem; color: #94A3B8; font-weight: 700;">Page ${studentPages.length + 2}</div>
+            <div style="text-align: right;"><img src="${viswamLogo}" style="height: 8mm;"></div>
+        </footer>
+    </div>`;
 
     return `
 <!DOCTYPE html>
@@ -364,34 +422,22 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
     <meta charset="UTF-8">
     <style>
         @page { size: A4; margin: 0; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; color: #1e293b; }
-        .page { width: 210mm; height: 297mm; padding: 10mm; box-sizing: border-box; background: white; display: flex; flex-direction: column; page-break-after: always; position: relative; }
-        header { text-align: center; border-bottom: 1px solid #E2E8F0; padding-bottom: 3mm; margin-bottom: 5mm; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; color: #1e293b; background: #fff; }
+        .page { width: 210mm; min-height: 297mm; padding: 10mm; box-sizing: border-box; background: white; display: flex; flex-direction: column; page-break-after: always; position: relative; }
+        header { text-align: center; border-bottom: 1px solid #E2E8F0; padding-bottom: 3mm; margin-bottom: 4mm; }
         .logos { display: flex; justify-content: center; margin-bottom: 2mm; }
         .logo-fdr { height: 12mm; }
         h1 { margin: 0; font-size: 1.1rem; text-transform: uppercase; font-weight: 800; color: ${primaryColor}; }
-        h2 { margin: 1mm 0; font-size: 0.9rem; font-weight: 700; color: ${accentColor}; }
-        .meta { display: flex; justify-content: center; gap: 4mm; font-size: 0.7rem; color: #64748B; }
-        section-title { font-size: 0.8rem; font-weight: 800; color: ${primaryColor}; border-left: 4mm solid ${primaryColor}; padding-left: 2mm; margin: 3mm 0; text-transform: uppercase; display: block; }
-        .card { background: #fff; border: 1px solid #E2E8F0; border-radius: 2mm; }
-        .big-val { font-weight: 900; color: ${primaryColor}; }
-        .label { font-size: 0.55rem; text-transform: uppercase; color: #64748B; font-weight: 700; margin-top: 1mm; }
-        .grading-scale { margin-top: auto; border-top: 1px solid #E2E8F0; padding-top: 3mm; }
-        .grading-scale h4 { font-size: 0.65rem; color: ${primaryColor}; margin: 0 0 2mm 0; }
-        .ranges-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5mm; }
-        .range-item { padding: 1.5mm; border-radius: 1mm; text-align: center; border: 1px solid #0002; }
-        .range-item .g { font-weight: 900; font-size: 0.75rem; }
-        .range-item .p { font-size: 0.55rem; font-weight: 700; }
-        .range-item .d { font-size: 0.45rem; opacity: 0.8; }
-        footer-logos { margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; padding-top: 3mm; border-top: 1px solid #E2E8F0; }
-        .partner img { height: 8mm; display: block; }
-        .partner label { font-size: 0.5rem; text-transform: uppercase; font-weight: 800; color: #94A3B8; margin-bottom: 1mm; display: block; }
-        .page-num { font-size: 0.7rem; color: #94A3B8; font-weight: 700; }
+        h2 { margin: 1mm 0; font-size: 0.9rem; font-weight: 700; color: ${primaryColor}; }
+        .meta { display: flex; justify-content: center; gap: 4mm; font-size: 0.7rem; color: #64748B; margin-top: 2mm; }
+        section-title { font-size: 0.85rem; font-weight: 800; color: ${primaryColor}; border-left: 4.5mm solid ${primaryColor}; padding-left: 3mm; margin: 4mm 0; text-transform: uppercase; display: block; }
+        .card { background: #fff; border: 1px solid #E2E8F0; border-radius: 2mm; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
     </style>
 </head>
 <body>
     ${page1}
     ${detailPages}
+    ${attentionPage}
 </body>
 </html>`;
 };
