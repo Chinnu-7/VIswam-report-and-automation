@@ -278,24 +278,24 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
 
     const page1 = `
     <div class="page">
-        <header style="border-bottom: none; text-align: left; padding-bottom: 0; margin-bottom: 2mm;">
-            <div style="display: flex; align-items: center; gap: 5mm; margin-bottom: 2mm;">
-                <img src="${fdrLogo}" style="height: 18mm;">
-                <div style="flex: 1;">
-                    <h1 style="font-size: 2.2rem; color: #1e3a8a; letter-spacing: -0.5px; margin: 0;">FOUNDATION FOR DEMOCRATIC REFORMS</h1>
-                    <h2 style="font-size: 1.6rem; color: #1e3a8a; text-align: center; margin: 2mm 0 0 0;">Student Performance Report</h2>
+        <header style="border-bottom: none; text-align: center; padding-bottom: 0; margin-bottom: 2mm;">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 8mm; margin-bottom: 2mm; position: relative;">
+                <img src="${fdrLogo}" style="height: 22mm; position: absolute; left: 0;">
+                <div style="flex: 1; text-align: center;">
+                    <h1 style="font-size: 2.8rem; font-weight: 950; color: #1e3a8a; letter-spacing: -1px; margin: 0; line-height: 1.1;">FOUNDATION FOR DEMOCRATIC REFORMS</h1>
+                    <h2 style="font-size: 2rem; font-weight: 800; color: #1e3a8a; margin: 3mm 0 0 0;">Student Performance Report</h2>
                 </div>
             </div>
             
-            <div style="border-top: 1.5mm solid #1e3a8a; border-bottom: 1.5mm solid #1e3a8a; padding: 2.5mm 0; margin-top: 4mm;">
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 1rem; color: #1e3a8a; font-weight: 800; padding: 0 2mm;">
-                    <div style="flex: 1.8;"><b>School:</b> <span style="font-weight: 500; color: #334155;">${schoolName}</span></div>
-                    <div style="width: 1px; height: 5mm; background: #CBD5E1; margin: 0 4mm;"></div>
-                    <div style="flex: 1.4;"><b>Assessment:</b> <span style="font-weight: 500; color: #334155;">${assessmentName}</span></div>
-                    <div style="width: 1px; height: 5mm; background: #CBD5E1; margin: 0 4mm;"></div>
-                    <div style="flex: 1.2;"><b>Date:</b> <span style="font-weight: 500; color: #334155;">${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}</span></div>
-                    <div style="width: 1px; height: 5mm; background: #CBD5E1; margin: 0 4mm;"></div>
-                    <div style="flex: 0.6; text-align: right;"><b>Grade:</b> <span style="font-weight: 500; color: #334155;">${grade}</span></div>
+            <div style="border-top: 1.8mm solid #1e3a8a; border-bottom: 1.8mm solid #1e3a8a; padding: 3mm 0; margin-top: 6mm;">
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 1.1rem; color: #1e3a8a; font-weight: 900; padding: 0 4mm;">
+                    <div style="flex: 1.5;">SCHOOL: <span style="font-weight: 700; color: #1e293b;">${schoolName.toUpperCase()}</span></div>
+                    <div style="width: 1px; height: 6mm; background: #CBD5E1; margin: 0 4mm;"></div>
+                    <div style="flex: 1.8;">ASSESSMENT: <span style="font-weight: 700; color: #1e293b;">${assessmentName.toUpperCase()}</span></div>
+                    <div style="width: 1px; height: 6mm; background: #CBD5E1; margin: 0 4mm;"></div>
+                    <div style="flex: 1.2;">DATE: <span style="font-weight: 700; color: #1e293b;">${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}</span></div>
+                    <div style="width: 1px; height: 6mm; background: #CBD5E1; margin: 0 4mm;"></div>
+                    <div style="flex: 0.5; text-align: right;">GRADE: <span style="font-weight: 700; color: #1e293b;">${grade}</span></div>
                 </div>
             </div>
         </header>
@@ -305,38 +305,37 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
         <div style="display: grid; grid-template-columns: 1fr 1.6fr; gap: 4mm; margin-bottom: 8mm;">
             <!-- Participation Card -->
             <div>
-                <div style="display: flex; align-items: center; gap: 4mm; margin: 4mm 0;">
+                <div style="display: flex; align-items: center; gap: 4mm; margin: 6mm 0 4mm 0;">
                     <div style="width: 6mm; height: 6mm; background: #1e3a8a;"></div>
-                    <h3 style="font-size: 1.3rem; font-weight: 950; color: #1e3a8a; letter-spacing: 0.5px; margin: 0;">PARTICIPATION</h3>
+                    <h3 style="font-size: 1.4rem; font-weight: 950; color: #1e3a8a; letter-spacing: 0.3px; margin: 0;">PARTICIPATION</h3>
                 </div>
-                <div style="background: white; border: 1px solid #E2E8F0; border-radius: 8mm; padding: 10mm 4mm; display: flex; align-items: center; justify-content: center; height: 45mm; box-sizing: border-box;">
+                <div style="background: white; border: 1.5px solid #F1F5F9; border-radius: 8mm; padding: 6mm 2mm; display: flex; align-items: center; justify-content: center; height: 48mm; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); box-sizing: border-box;">
                     <div style="flex: 1; text-align: center;">
-                        <div style="font-size: 3.8rem; font-weight: 900; color: #1e293b; line-height: 1;">${totalRegistered}</div>
-                        <div style="font-size: 0.85rem; font-weight: 800; color: #64748B; margin-top: 2mm;">REGISTERED</div>
+                        <div style="font-size: 5.5rem; font-weight: 950; color: #1e293b; line-height: 1;">${totalRegistered}</div>
+                        <div style="font-size: 1rem; font-weight: 950; color: #64748b; margin-top: 1mm;">REGISTERED</div>
                     </div>
-                    <div style="width: 1px; height: 16mm; background: #CBD5E1; margin: 0 4mm;"></div>
                     <div style="flex: 1; text-align: center;">
-                        <div style="font-size: 3.8rem; font-weight: 900; color: #1e293b; line-height: 1;">${totalParticipated}</div>
-                        <div style="font-size: 0.85rem; font-weight: 800; color: #64748B; margin-top: 2mm;">PARTICIPATED</div>
+                        <div style="font-size: 5.5rem; font-weight: 950; color: #1e293b; line-height: 1;">${totalParticipated}</div>
+                        <div style="font-size: 1rem; font-weight: 950; color: #64748b; margin-top: 1mm;">PARTICIPATED</div>
                     </div>
                 </div>
             </div>
 
             <!-- Grade Distribution Chart -->
             <div>
-                <div style="display: flex; align-items: center; gap: 4mm; margin: 4mm 0;">
+                <div style="display: flex; align-items: center; gap: 4mm; margin: 6mm 0 4mm 0;">
                     <div style="width: 6mm; height: 6mm; background: #1e3a8a;"></div>
-                    <h3 style="font-size: 1.3rem; font-weight: 950; color: #1e3a8a; letter-spacing: 0.5px; margin: 0;">OVERALL GRADE DISTRIBUTION</h3>
+                    <h3 style="font-size: 1.4rem; font-weight: 950; color: #1e3a8a; letter-spacing: 0.3px; margin: 0;">OVERALL GRADE DISTRIBUTION</h3>
                 </div>
-                <div style="background: white; border: 1px solid #E2E8F0; border-radius: 6mm; padding: 6mm 8mm; height: 45mm; box-sizing: border-box;">
-                    <div style="display: flex; align-items: flex-end; justify-content: space-between; height: 100%; width: 100%; padding-bottom: 2mm;">
+                <div style="background: white; border: 1.5px solid #F1F5F9; border-radius: 8mm; padding: 6mm 4mm; height: 48mm; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); box-sizing: border-box;">
+                    <div style="display: flex; align-items: flex-end; justify-content: space-between; height: 100%; width: 100%; padding: 0 2mm 2mm 2mm; box-sizing: border-box;">
                         ${distData.map(d => {
-                            const height = (d.c / maxCount) * 20;
+                            const height = (d.c / maxCount) * 26;
                             return `
                             <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%;">
-                                <div style="font-size: 0.9rem; font-weight: 900; color: #1e293b; margin-bottom: 2mm;">${d.c}</div>
-                                <div style="width: 80%; max-width: 11mm; height: ${height}mm; min-height: ${d.c > 0 ? '1mm' : '0'}; background: ${d.color}; border-radius: 2mm 2mm 0 0;"></div>
-                                <div style="font-size: 0.85rem; font-weight: 800; color: #475569; margin-top: 3mm;">${d.g}</div>
+                                <div style="font-size: 1.1rem; font-weight: 950; color: #1e293b; margin-bottom: 2mm;">${d.c}</div>
+                                <div style="width: 85%; max-width: 14mm; height: ${height}mm; min-height: ${d.c > 0 ? '1mm' : '0'}; background: ${d.color}; border-radius: 2mm 2mm 0 0;"></div>
+                                <div style="font-size: 0.95rem; font-weight: 950; color: #475569; margin-top: 3mm;">${d.g}</div>
                             </div>`;
                         }).join('')}
                     </div>
@@ -355,15 +354,15 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
                 const color = colors[idx];
                 return `
                 <div style="display: flex; flex-direction: column;">
-                    <div style="text-align: center; font-weight: 900; font-size: 1.15rem; color: ${color}; padding: 3mm 1mm; border-bottom: 2mm solid ${color}; margin-bottom: 5mm;">${s.label}</div>
-                    <div style="background: white; border: 1px solid rgba(226, 232, 240, 0.5); border-radius: 4mm; padding: 6mm; min-height: 100mm; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.02);">
-                        <div style="display: flex; align-items: center; gap: 2.5mm; margin-bottom: 5mm;">
-                             <span style="color: #ea580c; font-size: 1.2rem;">⚠️</span>
-                             <div style="font-size: 0.95rem; font-weight: 900; color: #ea580c; line-height: 1.2;">Areas for Development (AOD)</div>
+                    <div style="text-align: center; font-weight: 950; font-size: 1.4rem; color: ${color}; padding: 3mm 1mm; border-bottom: 4mm solid ${color}; margin-bottom: 6mm;">${s.label}</div>
+                    <div style="background: white; border: 1.5px solid #F1F5F9; border-radius: 6mm; padding: 8mm 6mm; min-height: 110mm; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+                        <div style="display: flex; align-items: center; gap: 3mm; margin-bottom: 6mm;">
+                             <div style="width: 6mm; height: 6mm; background: #ea580c; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: white; font-weight: 950; padding-top: 1mm; box-sizing: border-box;">!</div>
+                             <div style="font-size: 1.1rem; font-weight: 950; color: #ea580c; line-height: 1.2;">Areas for Development (AOD)</div>
                         </div>
-                        <ul style="margin: 0; padding-left: 5mm; font-size: 0.85rem; color: #334155; line-height: 1.6;">
+                        <ul style="margin: 0; padding-left: 6mm; font-size: 1rem; color: #334155; line-height: 1.7; font-weight: 600;">
                             ${s.improvements.length > 0 
-                                ? s.improvements.map(i => `<li style="margin-bottom: 2.5mm;">${i.text}</li>`).join('') 
+                                ? s.improvements.map(i => `<li style="margin-bottom: 3.5mm; padding-left: 2mm;">${i.text}</li>`).join('') 
                                 : '<li style="color: #94A3B8; list-style: none; margin-left: -5mm;">General improvement requested.</li>'}
                         </ul>
                     </div>
