@@ -362,14 +362,14 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
                 return `
                 <div style="display: flex; flex-direction: column;">
                     <div style="text-align: center; font-weight: 800; font-size: 1.4rem; color: ${color}; padding: 3mm 1mm; border-bottom: 3.5mm solid ${color}; margin-bottom: 6mm;">${s.label}</div>
-                    <div style="background: white; border: 1.5px solid #F1F5F9; border-radius: 6mm; padding: 8mm 6mm; min-height: 110mm; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
-                        <div style="display: flex; align-items: center; gap: 3mm; margin-bottom: 6mm;">
+                    <div style="background: white; border: 1.5px solid #F1F5F9; border-radius: 6mm; padding: 6mm 4mm; min-height: 85mm; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+                        <div style="display: flex; align-items: center; gap: 3mm; margin-bottom: 4mm;">
                              <div style="width: 5mm; height: 5mm; background: #ea580c; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: white; font-weight: 900; padding-top: 0.8mm; box-sizing: border-box;">!</div>
                              <div style="font-size: 1rem; font-weight: 800; color: #ea580c; line-height: 1.2;">Areas for Development (AOD)</div>
                         </div>
-                        <ul style="margin: 0; padding-left: 6mm; font-size: 0.95rem; color: #334155; line-height: 1.7; font-weight: 500;">
+                        <ul style="margin: 0; padding-left: 6mm; font-size: 0.9rem; color: #334155; line-height: 1.6; font-weight: 500;">
                             ${s.improvements.length > 0 
-                                ? s.improvements.map(i => `<li style="margin-bottom: 3.5mm; padding-left: 2mm;">${i.text}</li>`).join('') 
+                                ? s.improvements.map(i => `<li style="margin-bottom: 2.5mm; padding-left: 2mm;">${i.text}</li>`).join('') 
                                 : '<li style="color: #94A3B8; list-style: none; margin-left: -5mm;">General improvement requested.</li>'}
                         </ul>
                     </div>
@@ -377,22 +377,23 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
             }).join('')}
         </div>
 
-        <div style="margin-top: 4mm; border-top: 1.2mm solid #1e3a8a; padding-top: 3mm; margin-bottom: 4mm;">
-            <div style="font-size: 0.8rem; color: #1e3a8a; margin-bottom: 3mm; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Grading Scale</div>
-            <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 2mm;">
+        <!-- Grading Scale Legend -->
+        <div style="margin-top: 2mm; border-top: 1.2mm solid #1e3a8a; padding-top: 2mm; margin-bottom: 2mm;">
+            <div style="font-size: 0.75rem; color: #1e3a8a; margin-bottom: 2mm; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Grading Scale</div>
+            <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1.5mm;">
                 ${[
-                    { g: 'O', p: '91-100%', d: 'Outstanding' },
-                    { g: 'A+', p: '80-90%', d: 'Excellent' },
-                    { g: 'A', p: '70-79%', d: 'Very Good' },
-                    { g: 'B+', p: '60-69%', d: 'Good' },
-                    { g: 'B', p: '50-59%', d: 'Above Avg' },
-                    { g: 'C+', p: '40-49%', d: 'Average' },
-                    { g: 'C', p: '30-39%', d: 'Below Avg' },
-                    { g: 'D', p: '< 30%', d: 'Needs Imp.' }
+                    { g: 'O', p: '91-100%' },
+                    { g: 'A+', p: '80-90%' },
+                    { g: 'A', p: '70-79%' },
+                    { g: 'B+', p: '60-69%' },
+                    { g: 'B', p: '50-59%' },
+                    { g: 'C+', p: '40-49%' },
+                    { g: 'C', p: '30-39%' },
+                    { g: 'D', p: '< 30%' }
                 ].map(r => `
-                    <div style="background: ${getGradeBg(r.g)}; color: ${getGradeColor(r.g)}; padding: 2mm 1mm; border-radius: 1.5mm; text-align: center; border: 1px solid #0001;">
-                        <div style="font-weight: 900; font-size: 0.9rem; line-height: 1;">${r.g}</div>
-                        <div style="font-size: 0.6rem; font-weight: 700; margin-top: 1mm;">${r.p}</div>
+                    <div style="background: ${getGradeBg(r.g)}; color: ${getGradeColor(r.g)}; padding: 1.5mm 0.5mm; border-radius: 1mm; text-align: center; border: 1px solid #0001;">
+                        <div style="font-weight: 900; font-size: 0.8rem; line-height: 1;">${r.g}</div>
+                        <div style="font-size: 0.55rem; font-weight: 700; margin-top: 0.5mm;">${r.p}</div>
                     </div>`).join('')}
             </div>
         </div>
