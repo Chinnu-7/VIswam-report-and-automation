@@ -649,6 +649,7 @@ export const deleteReportsBySchool = async (req, res) => {
         return res.status(400).json({ message: 'No school IDs provided' });
     }
 
+    try {
         const conditions = schoolIds.map(id => {
             if (id.includes('_')) {
                 const [sId, aName, qpVal] = id.split('_');
