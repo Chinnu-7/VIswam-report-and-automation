@@ -33,6 +33,7 @@ router.post('/reports/school/reject', protect, adminOnly, adminController.reject
 router.post('/reports/school/delete', protect, adminOnly, adminController.deleteReportsBySchool); // Delete list of school IDs
 router.post('/reports/recalculate', protect, adminOnly, adminController.recalculateGrades); // Recalculate cohort grades
 router.post('/reports/sync-external', protect, adminOnly, adminController.syncExternal); // Sync dashboard to N8N
+router.post('/reports/bulk-zip', protect, adminOnly, adminController.downloadBulkZip); // Download bulk PDFs as ZIP
 router.delete('/reports', protect, adminOnly, adminController.deleteReports); // Delete list of IDs
 
 // Automation Queue (Polling for n8n)

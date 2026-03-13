@@ -140,6 +140,42 @@ const AdminDashboard = () => {
         }
     };
 
+    const handleBulkZipDownload = async () => {
+        if (selectedIds.length === 0) return;
+
+        setLoading(true);
+        setMessage(`Generating ZIP for ${selectedIds.length} schools... This may take a minute.`);
+        setIsError(false);
+
+        try {
+            const res = await api.post('/reports/bulk-zip', {
+                schoolIds: selectedIds,
+                assessmentName: searchAssessment || 'Sodhana 1'
+            }, {
+                ...config,
+                responseType: 'blob' // CRITICAL: Receive as binary
+            });
+
+            // Create a download link for the blob
+            const url = window.URL.createObjectURL(new Blob([res.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `Viswam_Bulk_Reports_${new Date().getTime()}.zip`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            
+            setMessage('ZIP Downloaded successfully!');
+            setTimeout(() => setMessage(''), 3000);
+        } catch (err) {
+            console.error('Bulk ZIP download failed:', err);
+            setMessage('Failed to generate ZIP. Please try a smaller batch.');
+            setIsError(true);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleSyncSchools = async () => {
         setLoading(true);
         try {
@@ -701,6 +737,13 @@ const AdminDashboard = () => {
                                     className="bg-red-500 text-white px-5 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-red-600 transition shadow-lg shadow-red-100"
                                 >
                                     <Trash2 size={16} /> Delete
+                                </button>
+                                <button
+                                    onClick={handleBulkZipDownload}
+                                    disabled={loading}
+                                    className="bg-slate-800 text-white px-5 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-slate-900 transition shadow-lg shadow-slate-100 disabled:opacity-50"
+                                >
+                                    <Download size={16} /> Download ZIP
                                 </button>
                             </>
                         )}

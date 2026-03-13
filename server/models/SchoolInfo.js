@@ -19,6 +19,14 @@ const SchoolInfo = db.define('school_info', {
         type: Sequelize.STRING,
         allowNull: true
     },
+    state: {
+        type: Sequelize.STRING,
+        allowNull: true
+    },
+    district: {
+        type: Sequelize.STRING,
+        allowNull: true
+    },
     registered: {
         type: Sequelize.INTEGER,
         defaultValue: 0

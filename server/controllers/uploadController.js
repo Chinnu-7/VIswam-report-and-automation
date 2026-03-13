@@ -334,13 +334,24 @@ export const uploadSchoolData = async (req, res) => {
             const email = row['Principal Email'] || row['Email'] || row['EMAIL'];
             const name = row['School Name'] || row['SCHOOL NAME'] || row['NAME'];
             const whatsapp = row['WhatsApp'] || row['WhatsApp No'] || row['WHATSAPP'];
+            const state = row['State'] || row['STATE'] || '';
+            const district = row['District'] || row['DISTRICT'] || '';
 
             if (schoolId && email) {
-                schoolsToUpsert.push({ schoolId, principalEmail: email, schoolName: name, whatsappNo: whatsapp });
+                schoolsToUpsert.push({ 
+                    schoolId, 
+                    principalEmail: email, 
+                    schoolName: name, 
+                    whatsappNo: whatsapp, 
+                    state, 
+                    district 
+                });
             }
         }
 
-        await SchoolInfo.bulkCreate(schoolsToUpsert, { updateOnDuplicate: ['principalEmail', 'schoolName', 'whatsappNo'] });
+        await SchoolInfo.bulkCreate(schoolsToUpsert, { 
+            updateOnDuplicate: ['principalEmail', 'schoolName', 'whatsappNo', 'state', 'district'] 
+        });
 
         for (const school of schoolsToUpsert) {
             const existingUser = await User.findOne({ where: { email: school.principalEmail } });

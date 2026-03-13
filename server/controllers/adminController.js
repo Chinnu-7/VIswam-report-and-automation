@@ -9,6 +9,9 @@ import FormData from 'form-data';
 import { Op } from 'sequelize';
 import bcrypt from 'bcryptjs';
 import * as gradingService from '../services/gradingService.js';
+import archiver from 'archiver';
+import path from 'path';
+import fs from 'fs';
 
 // Helper for internal use (upload/approval)
 export const performRecalculate = async (schoolId, assessmentName, qp = null) => {
@@ -507,6 +510,103 @@ export const rejectReportsBySchool = async (req, res) => {
     }
 };
 
+export const downloadBulkZip = async (req, res) => {
+    const { schoolIds, assessmentName } = req.body;
+
+    if (!schoolIds || !Array.isArray(schoolIds) || schoolIds.length === 0) {
+        return res.status(400).json({ message: 'schoolIds array is required' });
+    }
+
+    const cleanAssessment = String(assessmentName || 'Sodhana 1').trim();
+
+    try {
+        console.log(`Starting bulk ZIP for ${schoolIds.length} schools...`);
+
+        // Set headers for ZIP download
+        res.setHeader('Content-Type', 'application/zip');
+        res.setHeader('Content-Disposition', `attachment; filename=Viswam_Reports_${new Date().getTime()}.zip`);
+
+        const archive = archiver('zip', { zlib: { level: 9 } });
+
+        archive.on('error', (err) => {
+            console.error('Archiver error:', err);
+            // We can't send a status code here as headers are already sent
+        });
+
+        archive.pipe(res);
+
+        const { getPrincipalReportHtmlString } = await import('./renderController.js');
+
+        for (const schoolId of schoolIds) {
+            try {
+                const cleanId = String(schoolId).trim();
+                console.log(`Processing school: ${cleanId}`);
+
+                // 1. Fetch data
+                const reports = await StudentReport.findAll({
+                    where: { schoolId: cleanId, assessmentName: cleanAssessment }
+                });
+
+                if (reports.length === 0) {
+                    console.log(`No reports for ${cleanId}, skipping.`);
+                    continue;
+                }
+
+                const schoolInfo = await SchoolInfo.findByPk(cleanId);
+                const qp = reports[0]?.qp || '';
+
+                // 2. Generate HTML
+                const htmlString = await getPrincipalReportHtmlString(reports, schoolInfo, cleanAssessment, qp);
+
+                // 3. Generate PDF link
+                const pdfApiUrl = `https://v2.api2pdf.com/chrome/pdf/html`;
+                const pdfRes = await axios.post(pdfApiUrl, {
+                    html: htmlString,
+                    options: {
+                        landscape: false,
+                        printBackground: true,
+                        format: 'A4',
+                        marginTop: 0, marginBottom: 0, marginLeft: 0, marginRight: 0
+                    }
+                }, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': process.env.API2PDF_KEY || '7361f879-1c09-42b0-aee9-56ec533ee754'
+                    }
+                });
+
+                if (pdfRes.data?.FileUrl) {
+                    // 4. Download PDF
+                    const fileResponse = await axios.get(pdfRes.data.FileUrl, { responseType: 'arraybuffer' });
+                    
+                    // 5. Build path: State / District / SchoolId.pdf
+                    const state = String(schoolInfo?.state || 'Unknown State').trim();
+                    const district = String(schoolInfo?.district || 'Unknown District').trim();
+                    const fileName = `${cleanId}.pdf`;
+                    const zipPath = `${state}/${district}/${fileName}`;
+
+                    archive.append(Buffer.from(fileResponse.data), { name: zipPath });
+                    console.log(`Added to ZIP: ${zipPath}`);
+                } else {
+                    console.warn(`Failed to generate PDF for school ${cleanId}`);
+                }
+            } catch (schoolErr) {
+                console.error(`Error processing school ${schoolId}:`, schoolErr.message);
+                // Continue to next school
+            }
+        }
+
+        await archive.finalize();
+        console.log('ZIP generation complete.');
+
+    } catch (error) {
+        console.error('Bulk ZIP failed:', error);
+        if (!res.headersSent) {
+            res.status(500).json({ message: 'Failed to generate ZIP', error: error.message });
+        }
+    }
+};
+
 export const deleteReports = async (req, res) => {
     const { ids } = req.body;
     if (!ids || ids.length === 0) {
@@ -613,7 +713,9 @@ export const updateSchoolsBatch = async (req, res) => {
                 whatsappNo: String(s.whatsappNo || '').trim(),
                 registered: parseInt(s.registered) || 0,
                 participated: parseInt(s.participated) || 0,
-                omrUploadDate: validDate
+                omrUploadDate: validDate,
+                state: String(s.state || '').trim(),
+                district: String(s.district || '').trim()
             };
         }).filter(s => s.schoolId && s.principalEmail && s.principalEmail.includes('@'));
 
@@ -642,7 +744,7 @@ export const updateSchoolsBatch = async (req, res) => {
         console.log(`Syncing ${uniqueSchools.length} schools in ${chunks.length} chunks...`);
         for (const chunk of chunks) {
             await SchoolInfo.bulkCreate(chunk, {
-                updateOnDuplicate: ['schoolName', 'principalEmail', 'whatsappNo', 'registered', 'participated', 'omrUploadDate'],
+                updateOnDuplicate: ['schoolName', 'principalEmail', 'whatsappNo', 'registered', 'participated', 'omrUploadDate', 'state', 'district'],
                 conflictAttributes: ['schoolId']
             });
         }
@@ -819,7 +921,9 @@ export const performSchoolSync = async () => {
             whatsappNo: row[keyContact] || row['contactnumber'] || row['whatsapp'] || row['phone'] || '',
             registered: parseInt(row['totalstudentsregistered'] || row['registered'] || 0, 10) || 0,
             participated: parseInt(row['noofomrsreceived'] || row['participated'] || 0, 10) || 0,
-            omrUploadDate: row[keyOMRDate] || null
+            omrUploadDate: row[keyOMRDate] || null,
+            state: row['state'] || '',
+            district: row['district'] || row['viswammaruthi'] || ''
         };
     }).filter(s => s && s.schoolId && s.principalEmail);
 
@@ -834,6 +938,7 @@ export const syncSchoolsFromGoogleSheet = async (req, res) => {
     try {
         const rawSchools = await performSchoolSync();
         // Inject into updateSchoolsBatch to reuse logic
+        if (!req.body) req.body = {};
         req.body.schools = rawSchools;
         return updateSchoolsBatch(req, res);
     } catch (err) {

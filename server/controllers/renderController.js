@@ -205,7 +205,6 @@ export const getReportHtmlString = async (reportId) => {
 };
 
 // --- PRINCIPAL REPORT (MULTI-PAGE COHORT SUMMARY) ---
-
 export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessmentName, qp) => {
     if (!reports || reports.length === 0) throw new Error('No reports provided');
 
@@ -219,7 +218,6 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
     const viswamLogo = getBase64Image('Viswam.png');
 
     const primaryColor = '#1e3a8a';
-    const accentColor = '#dc2626';
 
     const gradeDistribution = reports.reduce((acc, curr) => {
         const g = curr.reportData?.relative_grading?.overall?.grade || 'D';
@@ -228,14 +226,14 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
     }, {});
 
     const distData = [
-        { g: 'O', c: gradeDistribution['O'] || 0, color: '#15803d' },
-        { g: 'A+', c: gradeDistribution['A+'] || 0, color: '#15803d' },
-        { g: 'A', c: gradeDistribution['A'] || 0, color: '#15803d' },
-        { g: 'B+', c: gradeDistribution['B+'] || 0, color: '#15803d' },
-        { g: 'B', c: gradeDistribution['B'] || 0, color: '#ea580c' },
-        { g: 'C+', c: gradeDistribution['C+'] || 0, color: '#ea580c' },
-        { g: 'C', c: gradeDistribution['C'] || 0, color: '#ea580c' },
-        { g: 'D', c: gradeDistribution['D'] || 0, color: '#dc2626' }
+        { g: 'O', c: gradeDistribution['O'] || 0, color: '#0fb9b1' },
+        { g: 'A+', c: gradeDistribution['A+'] || 0, color: '#26de81' },
+        { g: 'A', c: gradeDistribution['A'] || 0, color: '#20bf6b' },
+        { g: 'B+', c: gradeDistribution['B+'] || 0, color: '#2bcbba' },
+        { g: 'B', c: gradeDistribution['B'] || 0, color: '#f7b731' },
+        { g: 'C+', c: gradeDistribution['C+'] || 0, color: '#fa8231' },
+        { g: 'C', c: gradeDistribution['C'] || 0, color: '#fa8231' },
+        { g: 'D', c: gradeDistribution['D'] || 0, color: '#eb3b5a' }
     ];
     const maxCount = Math.max(...distData.map(d => d.c), 1);
 
@@ -259,7 +257,7 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
 
     const sections = [
         { key: 'english', label: 'ENGLISH', color: '#6366F1', strengths: getAggregatedLOs('english', true), improvements: getAggregatedLOs('english', false) },
-        { key: 'maths', label: 'MATHEMATICS', color: '#6366F1', strengths: getAggregatedLOs('maths', true), improvements: getAggregatedLOs('maths', false) },
+        { key: 'maths', label: 'MATHEMATICS', color: '#0EA5E9', strengths: getAggregatedLOs('maths', true), improvements: getAggregatedLOs('maths', false) },
         { key: 'science', label: 'SCIENCE', color: '#EC4899', strengths: getAggregatedLOs('science', true), improvements: getAggregatedLOs('science', false) }
     ];
 
@@ -274,60 +272,109 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
     const studentsPerPage = 25;
     const sortedReports = [...reports].sort((a, b) => Number(a.rollNo) - Number(b.rollNo));
     const studentPages = [];
-    for (let i = 0; i < sortedReports.length; i += studentsPerPage) studentPages.push(sortedReports.slice(i, i + studentsPerPage));
+    for (let i = 0; i < sortedReports.length; i += studentsPerPage) {
+        studentPages.push(sortedReports.slice(i, i + studentsPerPage));
+    }
 
     const page1 = `
     <div class="page">
-        <header>
-            <div class="logos"><img src="${fdrLogo}" class="logo-fdr"></div>
-            <h1>Foundation for Democratic Reforms</h1>
-            <h2 style="color:${primaryColor}">Student Performance Report</h2>
-            <div class="meta">
-                <span><b>School:</b> ${schoolName}</span> • 
-                <span><b>Assessment:</b> ${assessmentName}</span> • 
-                <span><b>Grade:</b> ${grade}</span>
+        <header style="border-bottom: none; text-align: left; padding-bottom: 0; margin-bottom: 2mm;">
+            <div style="display: flex; align-items: center; gap: 5mm; margin-bottom: 2mm;">
+                <img src="${fdrLogo}" style="height: 18mm;">
+                <div style="flex: 1;">
+                    <h1 style="font-size: 2.2rem; color: #1e3a8a; letter-spacing: -0.5px; margin: 0;">FOUNDATION FOR DEMOCRATIC REFORMS</h1>
+                    <h2 style="font-size: 1.6rem; color: #1e3a8a; text-align: center; margin: 2mm 0 0 0;">Student Performance Report</h2>
+                </div>
+            </div>
+            
+            <div style="border-top: 1.5mm solid #1e3a8a; border-bottom: 1.5mm solid #1e3a8a; padding: 2.5mm 0; margin-top: 4mm;">
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 1rem; color: #1e3a8a; font-weight: 800; padding: 0 2mm;">
+                    <div style="flex: 1.8;"><b>School:</b> <span style="font-weight: 500; color: #334155;">${schoolName}</span></div>
+                    <div style="width: 1px; height: 5mm; background: #CBD5E1; margin: 0 4mm;"></div>
+                    <div style="flex: 1.4;"><b>Assessment:</b> <span style="font-weight: 500; color: #334155;">${assessmentName}</span></div>
+                    <div style="width: 1px; height: 5mm; background: #CBD5E1; margin: 0 4mm;"></div>
+                    <div style="flex: 1.2;"><b>Date:</b> <span style="font-weight: 500; color: #334155;">${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}</span></div>
+                    <div style="width: 1px; height: 5mm; background: #CBD5E1; margin: 0 4mm;"></div>
+                    <div style="flex: 0.6; text-align: right;"><b>Grade:</b> <span style="font-weight: 500; color: #334155;">${grade}</span></div>
+                </div>
             </div>
         </header>
 
-        <section-title>Participation</section-title>
-        <div style="display: grid; grid-template-columns: 1fr 2.5fr; gap: 4mm; margin-bottom: 5mm;">
-            <div class="card" style="text-align: center; display: flex; align-items: center; justify-content: center; gap: 4mm; padding: 4mm;">
-                <div><div class="big-val" style="font-size: 1.8rem; font-weight: 900; color: ${primaryColor};">${totalRegistered}</div><div style="font-size: 0.55rem; text-transform: uppercase; color: #64748B; font-weight: 700; margin-top: 1mm;">Registered</div></div>
-                <div style="width:1px; height:8mm; background:#CBD5E1"></div>
-                <div><div class="big-val" style="font-size: 1.8rem; font-weight: 900; color: ${primaryColor};">${totalParticipated}</div><div style="font-size: 0.55rem; text-transform: uppercase; color: #64748B; font-weight: 700; margin-top: 1mm;">Participated</div></div>
+        <div style="height: 8mm;"></div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1.6fr; gap: 4mm; margin-bottom: 8mm;">
+            <!-- Participation Card -->
+            <div>
+                <div style="display: flex; align-items: center; gap: 4mm; margin: 4mm 0;">
+                    <div style="width: 6mm; height: 6mm; background: #1e3a8a;"></div>
+                    <h3 style="font-size: 1.3rem; font-weight: 950; color: #1e3a8a; letter-spacing: 0.5px; margin: 0;">PARTICIPATION</h3>
+                </div>
+                <div style="background: white; border: 1px solid #E2E8F0; border-radius: 8mm; padding: 10mm 4mm; display: flex; align-items: center; justify-content: center; height: 45mm; box-sizing: border-box;">
+                    <div style="flex: 1; text-align: center;">
+                        <div style="font-size: 3.8rem; font-weight: 900; color: #1e293b; line-height: 1;">${totalRegistered}</div>
+                        <div style="font-size: 0.85rem; font-weight: 800; color: #64748B; margin-top: 2mm;">REGISTERED</div>
+                    </div>
+                    <div style="width: 1px; height: 16mm; background: #CBD5E1; margin: 0 4mm;"></div>
+                    <div style="flex: 1; text-align: center;">
+                        <div style="font-size: 3.8rem; font-weight: 900; color: #1e293b; line-height: 1;">${totalParticipated}</div>
+                        <div style="font-size: 0.85rem; font-weight: 800; color: #64748B; margin-top: 2mm;">PARTICIPATED</div>
+                    </div>
+                </div>
             </div>
-            <div class="card" style="padding: 3mm 4mm; height: 32mm;">
-                <div style="font-size: 0.75rem; font-weight: 800; color: ${primaryColor}; margin-bottom: 1mm; border-bottom: 1px solid #F1F5F9; padding-bottom: 1mm;">Overall Grade Distribution</div>
-                <div style="display: flex; align-items: flex-end; justify-content: space-between; height: 20mm; width: 100%;">
-                    ${distData.map(d => `<div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%;"><div style="font-size: 0.6rem; font-weight: 800; color: #1e293b; margin-bottom: 1mm;">${d.c}</div><div style="width: 70%; max-width: 8mm; height: ${(d.c / maxCount) * 14}mm; min-height: ${d.c > 0 ? '0.5mm' : '0'}; background: ${d.color}; border-radius: 1mm 1mm 0 0;"></div><div style="font-size: 0.7rem; font-weight: 800; color: ${primaryColor}; margin-top: 1.5mm;">${d.g}</div></div>`).join('')}
+
+            <!-- Grade Distribution Chart -->
+            <div>
+                <div style="display: flex; align-items: center; gap: 4mm; margin: 4mm 0;">
+                    <div style="width: 6mm; height: 6mm; background: #1e3a8a;"></div>
+                    <h3 style="font-size: 1.3rem; font-weight: 950; color: #1e3a8a; letter-spacing: 0.5px; margin: 0;">OVERALL GRADE DISTRIBUTION</h3>
+                </div>
+                <div style="background: white; border: 1px solid #E2E8F0; border-radius: 6mm; padding: 6mm 8mm; height: 45mm; box-sizing: border-box;">
+                    <div style="display: flex; align-items: flex-end; justify-content: space-between; height: 100%; width: 100%; padding-bottom: 2mm;">
+                        ${distData.map(d => {
+                            const height = (d.c / maxCount) * 20;
+                            return `
+                            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%;">
+                                <div style="font-size: 0.9rem; font-weight: 900; color: #1e293b; margin-bottom: 2mm;">${d.c}</div>
+                                <div style="width: 80%; max-width: 11mm; height: ${height}mm; min-height: ${d.c > 0 ? '1mm' : '0'}; background: ${d.color}; border-radius: 2mm 2mm 0 0;"></div>
+                                <div style="font-size: 0.85rem; font-weight: 800; color: #475569; margin-top: 3mm;">${d.g}</div>
+                            </div>`;
+                        }).join('')}
+                    </div>
                 </div>
             </div>
         </div>
 
-        <section-title>Focus Areas & Remarks</section-title>
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; margin-bottom: 5mm;">
-            ${sections.map(s => `
-                <div class="card" style="padding: 0; min-height: 50mm;">
-                    <div style="height: 1.5mm; background: ${s.color}; border-radius: 2mm 2mm 0 0;"></div>
-                    <div style="text-align: center; font-weight: 800; font-size: 0.7rem; color: ${s.color}; padding: 2mm 1mm; border-bottom: 1px solid #F1F5F9;">${s.label}</div>
-                    <div style="padding: 2mm;">
-                        ${s.strengths.length > 0 ? `<div style="font-size: 0.6rem; font-weight: 800; color:#15803d; margin-bottom: 1mm;">✅ Strengths</div><ul style="margin:0 0 3mm 0; padding-left:4mm; font-size: 0.53rem; color:#334155;">${s.strengths.map(i => `<li>${i.text}</li>`).join('')}</ul>` : ''}
-                        ${s.improvements.length > 0 ? `<div style="font-size: 0.6rem; font-weight: 800; color:#b45309; margin-bottom: 1mm; text-transform: uppercase;">⚠️ Areas for Development (AOD)</div><ul style="margin:0; padding-left:4mm; font-size: 0.53rem; color:#334155;">${s.improvements.map(i => `<li>${i.text}</li>`).join('')}</ul>` : ''}
+        <div style="display: flex; align-items: center; gap: 4mm; margin: 8mm 0 4mm 0;">
+             <div style="width: 6mm; height: 6mm; background: #1e3a8a;"></div>
+             <h3 style="font-size: 1.3rem; font-weight: 950; color: #1e3a8a; letter-spacing: 0.5px; margin: 0;">FOCUS AREAS & REMARKS</h3>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6mm; margin-bottom: 8mm;">
+            ${sections.map((s, idx) => {
+                const colors = ['#6366F1', '#0EA5E9', '#EC4899']; // Indigo, Cyan, Pink
+                const color = colors[idx];
+                return `
+                <div style="display: flex; flex-direction: column;">
+                    <div style="text-align: center; font-weight: 900; font-size: 1.15rem; color: ${color}; padding: 3mm 1mm; border-bottom: 2mm solid ${color}; margin-bottom: 5mm;">${s.label}</div>
+                    <div style="background: white; border: 1px solid rgba(226, 232, 240, 0.5); border-radius: 4mm; padding: 6mm; min-height: 100mm; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.02);">
+                        <div style="display: flex; align-items: center; gap: 2.5mm; margin-bottom: 5mm;">
+                             <span style="color: #ea580c; font-size: 1.2rem;">⚠️</span>
+                             <div style="font-size: 0.95rem; font-weight: 900; color: #ea580c; line-height: 1.2;">Areas for Development (AOD)</div>
+                        </div>
+                        <ul style="margin: 0; padding-left: 5mm; font-size: 0.85rem; color: #334155; line-height: 1.6;">
+                            ${s.improvements.length > 0 
+                                ? s.improvements.map(i => `<li style="margin-bottom: 2.5mm;">${i.text}</li>`).join('') 
+                                : '<li style="color: #94A3B8; list-style: none; margin-left: -5mm;">General improvement requested.</li>'}
+                        </ul>
                     </div>
-                </div>`).join('')}
+                </div>`;
+            }).join('')}
         </div>
 
-        <div class="grading-scale">
-            <h4 style="font-size: 0.65rem; color: ${primaryColor}; margin: 0 0 2mm 0;">GRADING SCALE</h4>
-            <div class="ranges-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5mm;">
-                ${[{ g: 'O', p: '91-100%', d: 'Outstanding' }, { g: 'A+', p: '80-90%', d: 'Excellent' }, { g: 'A', p: '70-79%', d: 'Very Good' }, { g: 'B+', p: '60-69%', d: 'Good' }, { g: 'B', p: '50-59%', d: 'Above Avg' }, { g: 'C+', p: '40-49%', d: 'Average' }, { g: 'C', p: '30-39%', d: 'Below Avg' }, { g: 'D', p: '< 30%', d: 'Needs Imp.' }].map(r => `<div style="padding: 1.5mm; border-radius: 1mm; text-align: center; border: 1px solid #0001; background: ${getGradeBg(r.g)}; color: ${getGradeColor(r.g)}"><div style="font-weight: 900; font-size: 0.75rem;">${r.g}</div><div style="font-size: 0.55rem; font-weight: 700;">${r.p}</div><div style="font-size: 0.45rem; opacity: 0.8;">${r.d}</div></div>`).join('')}
-            </div>
-        </div>
-
-        <footer style="margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; padding-top: 3mm; border-top: 1px solid #E2E8F0;">
-            <div style="font-size: 0.5rem;"><img src="${nsfLogo}" style="height: 8mm;"></div>
-            <div style="font-size: 0.7rem; color: #94A3B8; font-weight: 700;">Page 1</div>
-            <div style="text-align: right;"><img src="${viswamLogo}" style="height: 8mm;"></div>
+        <footer style="margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; padding-top: 4mm; border-top: 1px solid #E2E8F0;">
+            <div style="font-size: 0.5rem;"><img src="${nsfLogo}" style="height: 10mm;"></div>
+            <div style="font-size: 0.9rem; color: #94A3B8; font-weight: 700;">Page 1</div>
+            <div style="text-align: right;"><img src="${viswamLogo}" style="height: 10mm;"></div>
         </footer>
     </div>`;
 
