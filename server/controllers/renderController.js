@@ -405,17 +405,25 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
     const detailPages = studentPages.map((page, idx) => `
     <div class="page">
         <header style="border-bottom: none; text-align: center; padding-bottom: 0; margin-bottom: 2mm;">
-            <div style="display: flex; align-items: center; justify-content: center; gap: 4mm; margin-bottom: 2mm; position: relative; width: 100%;">
-                <img src="${fdrLogo}" style="height: 12mm; position: absolute; left: 0;">
-                <div style="flex: 1; text-align: center;">
-                    <h1 style="font-size: 1.4rem; font-weight: 800; color: #1e3a8a; margin: 0;">FOUNDATION FOR DEMOCRATIC REFORMS</h1>
-                    <h2 style="font-size: 1rem; font-weight: 700; color: #1e3a8a; margin: 1mm 0 0 0;">Student Performance Report</h2>
-                    <div style="font-size: 0.8rem; font-weight: 600; color: #64748b; margin-top: 1.5mm;">Detailed Student Scores (Page ${idx + 1}/${studentPages.length})</div>
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; gap: 2mm;">
+                 <img src="${fdrLogo}" style="height: 12mm; margin-bottom: 1mm;">
+                 <div style="text-align: center;">
+                    <h1 style="font-size: 1.2rem; font-weight: 800; color: #1e3a8a; letter-spacing: -0.5px; margin: 0; line-height: 1.1; text-transform: uppercase;">FOUNDATION FOR DEMOCRATIC REFORMS</h1>
+                    <h2 style="font-size: 1rem; font-weight: 700; color: #1e3a8a; margin: 1.5mm 0 0 0;">Student Performance Report</h2>
+                 </div>
+            </div>
+            
+            <div style="border-top: 1mm solid #1e3a8a; border-bottom: 1mm solid #1e3a8a; padding: 1.5mm 0; margin-top: 3mm; text-align: center; width: 100%;">
+                <div style="font-size: 0.85rem; color: #64748b; font-weight: 500; display: inline-block; white-space: nowrap; margin: 0 auto;">
+                    School: <span style="color: #475569;">${toTitleCase(schoolName)}</span> &nbsp;•&nbsp; 
+                    Assessment: <span style="color: #475569;">${toTitleCase(assessmentName)}</span> &nbsp;•&nbsp; 
+                    Date: <span style="color: #475569;">${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}</span> &nbsp;•&nbsp; 
+                    Grade: <span style="color: #475569;">${grade}</span>
                 </div>
             </div>
         </header>
 
-        <section-title>Detailed Student Scores</section-title>
+        <section-title style="margin-top: 4mm;">Detailed Student Scores (Page ${idx + 1}/${studentPages.length})</section-title>
         <table style="width: 100%; border-collapse: separate; border-spacing: 0 1mm; font-size: 0.8rem;">
             <thead>
                 <tr style="color: ${primaryColor}; font-weight: 700;">
@@ -429,13 +437,17 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
             </thead>
             <tbody style="font-weight: 500;">
                 ${page.map((r, i) => `
-                    <tr>
-                        <td style="padding: 2.5mm 2mm; border-bottom: 1px solid #F1F5F9;">${idx * studentsPerPage + i + 1}</td>
-                        <td style="padding: 2.5mm 2mm; border-bottom: 1px solid #F1F5F9; font-weight: 700; color: #1e293b;">${r.rollNo}</td>
-                        <td style="padding: 2.5mm 2mm; border-bottom: 1px solid #F1F5F9; background: rgba(254, 249, 195, 0.4);"><span style="display: inline-block; padding: 1mm 3.5mm; border-radius: 1.5mm; font-weight: 700; font-size: 0.75rem; background:${getGradeBg(r.reportData?.relative_grading?.overall?.grade)}; color:${getGradeColor(r.reportData?.relative_grading?.overall?.grade)}">${r.reportData?.relative_grading?.overall?.grade || '-'}</span></td>
-                        <td style="padding: 2.5mm 2mm; border-bottom: 1px solid #F1F5F9;"><span style="display: inline-block; padding: 1mm 3.5mm; border-radius: 1.5mm; font-weight: 700; font-size: 0.75rem; background:${getGradeBg(r.reportData?.relative_grading?.english?.grade)}; color:${getGradeColor(r.reportData?.relative_grading?.english?.grade)}">${r.reportData?.relative_grading?.english?.grade || '-'}</span></td>
-                        <td style="padding: 2.5mm 2mm; border-bottom: 1px solid #F1F5F9;"><span style="display: inline-block; padding: 1mm 3.5mm; border-radius: 1.5mm; font-weight: 700; font-size: 0.75rem; background:${getGradeBg(r.reportData?.relative_grading?.maths?.grade)}; color:${getGradeColor(r.reportData?.relative_grading?.maths?.grade)}">${r.reportData?.relative_grading?.maths?.grade || '-'}</span></td>
-                        <td style="padding: 2.5mm 2mm; border-bottom: 1px solid #F1F5F9;"><span style="display: inline-block; padding: 1mm 3.5mm; border-radius: 1.5mm; font-weight: 700; font-size: 0.75rem; background:${getGradeBg(r.reportData?.relative_grading?.science?.grade)}; color:${getGradeColor(r.reportData?.relative_grading?.science?.grade)}">${r.reportData?.relative_grading?.science?.grade || '-'}</span></td>
+                    <tr style="${(i % 2 === 1) ? 'background-color: #f8fafc;' : ''}">
+                        <td style="padding: 2mm 2mm; border-bottom: 1px solid #F1F5F9;">${idx * studentsPerPage + i + 1}</td>
+                        <td style="padding: 2mm 2mm; border-bottom: 1px solid #F1F5F9; font-weight: 700; color: #1e293b;">${r.rollNo}</td>
+                        <td style="padding: 2mm 2mm; border-bottom: 1px solid #F1F5F9; background: ${(i % 2 === 1) ? '#fef9c388' : '#fef9c355'}; border-left: 1px solid #F1F5F9; border-right: 1px solid #F1F5F9;">
+                            <span style="display: inline-block; padding: 0.8mm 3mm; border-radius: 1mm; font-weight: 700; font-size: 0.7rem; background:${getGradeBg(r.reportData?.relative_grading?.overall?.grade)}; color:${getGradeColor(r.reportData?.relative_grading?.overall?.grade)}">
+                                ${r.reportData?.relative_grading?.overall?.grade || '-'}
+                            </span>
+                        </td>
+                        <td style="padding: 2mm 2mm; border-bottom: 1px solid #F1F5F9;"><span style="display: inline-block; padding: 0.8mm 3mm; border-radius: 1mm; font-weight: 700; font-size: 0.7rem; background:${getGradeBg(r.reportData?.relative_grading?.english?.grade)}; color:${getGradeColor(r.reportData?.relative_grading?.english?.grade)}">${r.reportData?.relative_grading?.english?.grade || '-'}</span></td>
+                        <td style="padding: 2mm 2mm; border-bottom: 1px solid #F1F5F9;"><span style="display: inline-block; padding: 0.8mm 3mm; border-radius: 1mm; font-weight: 700; font-size: 0.7rem; background:${getGradeBg(r.reportData?.relative_grading?.maths?.grade)}; color:${getGradeColor(r.reportData?.relative_grading?.maths?.grade)}">${r.reportData?.relative_grading?.maths?.grade || '-'}</span></td>
+                        <td style="padding: 2mm 2mm; border-bottom: 1px solid #F1F5F9;"><span style="display: inline-block; padding: 0.8mm 3mm; border-radius: 1mm; font-weight: 700; font-size: 0.7rem; background:${getGradeBg(r.reportData?.relative_grading?.science?.grade)}; color:${getGradeColor(r.reportData?.relative_grading?.science?.grade)}">${r.reportData?.relative_grading?.science?.grade || '-'}</span></td>
                     </tr>`).join('')}
             </tbody>
         </table>
@@ -450,17 +462,25 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
     const attentionPage = `
     <div class="page">
         <header style="border-bottom: none; text-align: center; padding-bottom: 0; margin-bottom: 2mm;">
-            <div style="display: flex; align-items: center; justify-content: center; gap: 4mm; margin-bottom: 2mm; position: relative; width: 100%;">
-                <img src="${fdrLogo}" style="height: 12mm; position: absolute; left: 0;">
-                <div style="flex: 1; text-align: center;">
-                    <h1 style="font-size: 1.4rem; font-weight: 800; color: #1e3a8a; margin: 0;">FOUNDATION FOR DEMOCRATIC REFORMS</h1>
-                    <h2 style="font-size: 1rem; font-weight: 700; color: #1e3a8a; margin: 1mm 0 0 0;">Student Performance Report</h2>
-                    <div style="font-size: 0.8rem; font-weight: 600; color: #64748b; margin-top: 1.5mm;">Students Needing Attention (Grade C & D)</div>
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; gap: 2mm;">
+                 <img src="${fdrLogo}" style="height: 12mm; margin-bottom: 1mm;">
+                 <div style="text-align: center;">
+                    <h1 style="font-size: 1.2rem; font-weight: 800; color: #1e3a8a; letter-spacing: -0.5px; margin: 0; line-height: 1.1; text-transform: uppercase;">FOUNDATION FOR DEMOCRATIC REFORMS</h1>
+                    <h2 style="font-size: 1rem; font-weight: 700; color: #1e3a8a; margin: 1.5mm 0 0 0;">Student Performance Report</h2>
+                 </div>
+            </div>
+            
+            <div style="border-top: 1mm solid #1e3a8a; border-bottom: 1mm solid #1e3a8a; padding: 1.5mm 0; margin-top: 3mm; text-align: center; width: 100%;">
+                <div style="font-size: 0.85rem; color: #64748b; font-weight: 500; display: inline-block; white-space: nowrap; margin: 0 auto;">
+                    School: <span style="color: #475569;">${toTitleCase(schoolName)}</span> &nbsp;•&nbsp; 
+                    Assessment: <span style="color: #475569;">${toTitleCase(assessmentName)}</span> &nbsp;•&nbsp; 
+                    Date: <span style="color: #475569;">${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}</span> &nbsp;•&nbsp; 
+                    Grade: <span style="color: #475569;">${grade}</span>
                 </div>
             </div>
         </header>
 
-        <section-title>Students Needing Attention (Grade C & D)</section-title>
+        <section-title style="margin-top: 4mm;">Students Needing Attention (Grade C & D)</section-title>
         <div style="display: flex; flex-wrap: wrap; gap: 4mm;">
             ${['overall', 'english', 'maths', 'science'].map(key => `
                 <div class="card" style="flex: 0 0 48%; padding: 3mm; min-height: 40mm; box-sizing: border-box;">
