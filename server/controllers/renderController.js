@@ -226,14 +226,14 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
     }, {});
 
     const distData = [
-        { g: 'O', c: gradeDistribution['O'] || 0, color: '#0fb9b1' },
-        { g: 'A+', c: gradeDistribution['A+'] || 0, color: '#26de81' },
-        { g: 'A', c: gradeDistribution['A'] || 0, color: '#20bf6b' },
-        { g: 'B+', c: gradeDistribution['B+'] || 0, color: '#2bcbba' },
-        { g: 'B', c: gradeDistribution['B'] || 0, color: '#f7b731' },
-        { g: 'C+', c: gradeDistribution['C+'] || 0, color: '#fa8231' },
-        { g: 'C', c: gradeDistribution['C'] || 0, color: '#fa8231' },
-        { g: 'D', c: gradeDistribution['D'] || 0, color: '#eb3b5a' }
+        { g: 'O', c: gradeDistribution['O'] || 0, color: '#059669' },
+        { g: 'A+', c: gradeDistribution['A+'] || 0, color: '#10b981' },
+        { g: 'A', c: gradeDistribution['A'] || 0, color: '#22c55e' },
+        { g: 'B+', c: gradeDistribution['B+'] || 0, color: '#84cc16' },
+        { g: 'B', c: gradeDistribution['B'] || 0, color: '#eab308' },
+        { g: 'C+', c: gradeDistribution['C+'] || 0, color: '#f97316' },
+        { g: 'C', c: gradeDistribution['C'] || 0, color: '#f59e0b' },
+        { g: 'D', c: gradeDistribution['D'] || 0, color: '#ef4444' }
     ];
     const maxCount = Math.max(...distData.map(d => d.c), 1);
 
@@ -284,23 +284,23 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
     const page1 = `
     <div class="page">
         <header style="border-bottom: none; text-align: center; padding-bottom: 0; margin-bottom: 2mm;">
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; gap: 6mm;">
-                 <img src="${fdrLogo}" style="height: 18mm;">
-                 <div style="text-align: center;">
-                    <h1 style="font-size: 3.2rem; font-weight: 800; color: #1e3a8a; letter-spacing: -2px; margin: 0; line-height: 1.1;">FOUNDATION FOR DEMOCRATIC REFORMS</h1>
-                    <h2 style="font-size: 2rem; font-weight: 700; color: #1e3a8a; margin: 3mm 0 0 0;">Student Performance Report</h2>
+            <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 6mm;">
+                 <img src="${fdrLogo}" style="height: 14mm;">
+                 <div style="flex: 1; text-align: right;">
+                    <h1 style="font-size: 2.4rem; font-weight: 800; color: #1e3a8a; letter-spacing: -1.5px; margin: 0; line-height: 1.1;">FOUNDATION FOR DEMOCRATIC REFORMS</h1>
+                    <h2 style="font-size: 1.6rem; font-weight: 700; color: #1e3a8a; margin: 2mm 0 0 0;">Student Performance Report</h2>
                  </div>
             </div>
             
             <div style="border-top: 1.2mm solid #1e3a8a; border-bottom: 1.2mm solid #1e3a8a; padding: 3.5mm 0; margin-top: 6mm;">
                 <div style="display: flex; justify-content: space-between; align-items: center; font-size: 1.2rem; color: #1e3a8a; padding: 0 4mm;">
-                    <div style="flex: 1.5;"><b>School:</b> <span style="font-weight: 500; color: #334155;">${toTitleCase(schoolName)}</span></div>
+                    <div style="flex: 1.5;"><span style="color: #64748b; font-weight: 500;">School:</span> <span style="font-weight: 500; color: #334155;">${toTitleCase(schoolName)}</span></div>
                     <div style="width: 1px; height: 6mm; background: #CBD5E1; margin: 0 4mm;"></div>
-                    <div style="flex: 1.8;"><b>Assessment:</b> <span style="font-weight: 500; color: #334155;">${toTitleCase(assessmentName)}</span></div>
+                    <div style="flex: 1.8;"><span style="color: #64748b; font-weight: 500;">Assessment:</span> <span style="font-weight: 500; color: #334155;">${toTitleCase(assessmentName)}</span></div>
                     <div style="width: 1px; height: 6mm; background: #CBD5E1; margin: 0 4mm;"></div>
-                    <div style="flex: 1.4;"><b>Date:</b> <span style="font-weight: 500; color: #334155;">${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span></div>
+                    <div style="flex: 1.4;"><span style="color: #64748b; font-weight: 500;">Date:</span> <span style="font-weight: 500; color: #334155;">${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span></div>
                     <div style="width: 1px; height: 6mm; background: #CBD5E1; margin: 0 4mm;"></div>
-                    <div style="flex: 0.5; text-align: right;"><b>Grade:</b> <span style="font-weight: 500; color: #334155;">${grade}</span></div>
+                    <div style="flex: 0.5; text-align: right;"><span style="color: #64748b; font-weight: 500;">Grade:</span> <span style="font-weight: 500; color: #334155;">${grade}</span></div>
                 </div>
             </div>
         </header>
@@ -316,12 +316,12 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
                 </div>
                 <div style="background: white; border: 1.5px solid #F1F5F9; border-radius: 8mm; padding: 6mm 2mm; display: flex; align-items: center; justify-content: center; height: 48mm; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); box-sizing: border-box;">
                     <div style="flex: 1; text-align: center;">
-                        <div style="font-size: 5.5rem; font-weight: 800; color: #1e293b; line-height: 1; letter-spacing: -2px;">${totalRegistered}</div>
+                        <div style="font-size: 4rem; font-weight: 800; color: #1e293b; line-height: 1; letter-spacing: -2px;">${totalRegistered}</div>
                         <div style="font-size: 0.9rem; font-weight: 700; color: #64748b; margin-top: 2mm; letter-spacing: 0.5px;">REGISTERED</div>
                     </div>
                     <div style="width: 1.5px; height: 28mm; background: #CBD5E1;"></div>
                     <div style="flex: 1; text-align: center;">
-                        <div style="font-size: 5.5rem; font-weight: 800; color: #1e293b; line-height: 1; letter-spacing: -2px;">${totalParticipated}</div>
+                        <div style="font-size: 4rem; font-weight: 800; color: #1e293b; line-height: 1; letter-spacing: -2px;">${totalParticipated}</div>
                         <div style="font-size: 0.9rem; font-weight: 700; color: #64748b; margin-top: 2mm; letter-spacing: 0.5px;">PARTICIPATED</div>
                     </div>
                 </div>
