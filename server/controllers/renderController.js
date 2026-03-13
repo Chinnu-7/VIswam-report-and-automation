@@ -293,11 +293,11 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
             </div>
             
             <div style="border-top: 1.2mm solid #1e3a8a; border-bottom: 1.2mm solid #1e3a8a; padding: 2.5mm 0; margin-top: 4mm;">
-                <div style="text-align: center; font-size: 1.1rem; color: #64748b; font-weight: 500;">
-                    School: <span style="color: #475569;">${toTitleCase(schoolName)}</span> &nbsp;•&nbsp; 
-                    Assessment: <span style="color: #475569;">${toTitleCase(assessmentName)}</span> &nbsp;•&nbsp; 
-                    Date: <span style="color: #475569;">${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}</span> &nbsp;•&nbsp; 
-                    Grade: <span style="color: #475569;">${grade}</span>
+                <div style="display: flex; align-items: center; justify-content: center; font-size: 1.05rem; color: #64748b; font-weight: 500; white-space: nowrap; gap: 3.5mm;">
+                    <span>School: <span style="color: #475569;">${toTitleCase(schoolName)}</span></span> • 
+                    <span>Assessment: <span style="color: #475569;">${toTitleCase(assessmentName)}</span></span> • 
+                    <span>Date: <span style="color: #475569;">${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}</span></span> • 
+                    <span>Grade: <span style="color: #475569;">${grade}</span></span>
                 </div>
             </div>
         </header>
