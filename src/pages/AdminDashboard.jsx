@@ -62,7 +62,7 @@ const AdminDashboard = () => {
                 const key = `${report.schoolId}_${report.assessmentName}_${report.qp || 'noqp'}`;
                 if (!grouped[key]) {
                     grouped[key] = {
-                        id: report.schoolId, // Using schoolId as primary key for selection
+                        id: key, // Use composite key for unique selection
                         schoolId: report.schoolId,
                         schoolName: report.schoolName,
                         assessmentName: report.assessmentName,
@@ -148,9 +148,15 @@ const AdminDashboard = () => {
         setIsError(false);
 
         try {
+            // Find selected reports to get their schoolId and assessmentName
+            const selectedReports = reports.filter(r => selectedIds.includes(r.id));
+            const selections = selectedReports.map(r => ({
+                schoolId: r.schoolId,
+                assessmentName: r.assessmentName
+            }));
+
             const res = await api.post('/reports/bulk-zip', {
-                schoolIds: selectedIds,
-                assessmentName: searchAssessment || 'Sodhana 1'
+                selections
             }, {
                 ...config,
                 responseType: 'blob' // CRITICAL: Receive as binary

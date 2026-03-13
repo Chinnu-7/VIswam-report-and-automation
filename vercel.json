@@ -4,7 +4,7 @@
         "api/index.js": {
             "includeFiles": "*.xlsx",
             "memory": 1024,
-            "maxDuration": 30
+            "maxDuration": 300
         }
     },
     "rewrites": [

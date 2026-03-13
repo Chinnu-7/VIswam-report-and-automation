@@ -94,12 +94,14 @@ export const getReportHtmlString = async (reportId) => {
         @page { size: A4; margin: 0; }
         body { font-family: 'Inter', system-ui, -apple-system, sans-serif; margin: 0; padding: 0; color: #1e293b; line-height: 1.5; }
         .page { width: 210mm; min-height: 297mm; padding: 10mm; box-sizing: border-box; background: white; display: flex; flex-direction: column; overflow: hidden; page-break-after: always; }
-        header { border-bottom: 2px solid ${primaryColor}; padding-bottom: 4mm; margin-bottom: 5mm; text-align: center; }
-        .logos { display: flex; align-items: center; justify-content: center; gap: 10mm; margin-bottom: 3mm; }
-        .logo-fdr { height: 16mm; }
-        h1 { margin: 0; color: ${primaryColor}; font-size: 1.25rem; text-transform: uppercase; font-weight: 800; }
-        h2 { margin: 1mm 0; color: ${accentColor}; font-size: 1rem; font-weight: 700; }
-        .meta { display: flex; justify-content: center; gap: 5mm; font-size: 0.75rem; color: #64748B; margin-top: 2mm; }
+        header { text-align: center; border-bottom: none; padding-bottom: 0; margin-bottom: 2mm; }
+        .header-content { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; gap: 2mm; }
+        .logo-fdr { height: 12mm; margin-bottom: 1mm; }
+        h1 { margin: 0; font-size: 1.25rem; font-weight: 800; color: ${primaryColor}; letter-spacing: -0.5px; line-height: 1.1; text-transform: uppercase; }
+        h2 { margin: 1.5mm 0 0 0; color: ${primaryColor}; font-size: 1rem; font-weight: 700; }
+        .metadata-bar { border-top: 1mm solid ${primaryColor}; border-bottom: 1mm solid ${primaryColor}; padding: 1.5mm 0; margin-top: 3mm; text-align: center; width: 100%; }
+        .metadata-content { font-size: 0.85rem; color: #64748b; font-weight: 500; display: inline-block; white-space: nowrap; margin: 0 auto; }
+        .metadata-content b { color: #475569; font-weight: 700; }
         
         .student-info { display: grid; grid-template-columns: 1fr 2.5fr; gap: 4mm; margin-bottom: 4mm; background: #F8FAFC; padding: 4mm; border-radius: 3mm; border: 1px solid #E2E8F0; }
         .info-group label { display: block; font-size: 0.65rem; text-transform: uppercase; color: #64748B; font-weight: 700; margin-bottom: 0.5mm; }
@@ -139,13 +141,18 @@ export const getReportHtmlString = async (reportId) => {
 <body>
     <div class="page">
         <header>
-            <div class="logos"><img src="${fdrLogo}" class="logo-fdr"></div>
-            <h1>Foundation for Democratic Reforms</h1>
-            <h2>Student Achievement Report</h2>
-            <div class="meta">
-                <span><b>Grade:</b> ${data.class || ''}</span> • 
-                <span><b>Assessment:</b> ${data.assessmentName || 'PSA PILOT'}</span> • 
-                <span><b>Date:</b> ${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}</span>
+            <div class="header-content">
+                <img src="${fdrLogo}" class="logo-fdr">
+                <div>
+                    <h1>FOUNDATION FOR DEMOCRATIC REFORMS</h1>
+                    <h2>Student Achievement Report</h2>
+                </div>
+            </div>
+            <div class="metadata-bar">
+                <div class="metadata-content">
+                    Grade: <b>${data.class || ''}</b> &nbsp;•&nbsp; 
+                    Assessment: <b>${data.assessmentName || 'PSA PILOT'}</b>
+                </div>
             </div>
         </header>
 
@@ -194,10 +201,10 @@ export const getReportHtmlString = async (reportId) => {
             </div>
         </div>
 
-        <footer>
-            <div class="partner"><label>Assessment Partner</label><img src="${nsfLogo}" class="partner-logo"></div>
-            <div style="font-weight: 700;">Page 1 of 1</div>
-            <div class="partner" style="text-align: right;"><label>Implementation Partner</label><img src="${viswamLogo}" class="partner-logo"></div>
+        <footer style="margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; padding-top: 3mm; border-top: 1px solid #E2E8F0;">
+            <div style="font-size: 0.5rem;"><img src="${nsfLogo}" style="height: 8mm;"></div>
+            <div style="font-size: 0.7rem; color: #94A3B8; font-weight: 700;">Page 1 of 1</div>
+            <div style="text-align: right;"><img src="${viswamLogo}" style="height: 8mm;"></div>
         </footer>
     </div>
 </body>
@@ -295,10 +302,7 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
             <div style="border-top: 1.2mm solid #1e3a8a; border-bottom: 1.2mm solid #1e3a8a; padding: 2mm 0; margin-top: 3mm; text-align: center; width: 100%;">
                 <div style="font-size: 1rem; color: #64748b; font-weight: 500; display: inline-block; white-space: nowrap; margin: 0 auto;">
                     School: <span style="color: #475569;">${toTitleCase(schoolName)}</span> &nbsp;•&nbsp; 
-                    District: <span style="color: #475569;">${(schoolInfo?.district || 'Unknown').toUpperCase()}</span> &nbsp;•&nbsp; 
-                    State: <span style="color: #475569;">${(schoolInfo?.state || 'Unknown').toUpperCase()}</span> &nbsp;•&nbsp; 
                     Assessment: <span style="color: #475569;">${toTitleCase(assessmentName)}</span> &nbsp;•&nbsp; 
-                    Date: <span style="color: #475569;">${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}</span> &nbsp;•&nbsp; 
                     Grade: <span style="color: #475569;">${grade}</span>
                 </div>
             </div>
@@ -418,10 +422,7 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
             <div style="border-top: 1mm solid #1e3a8a; border-bottom: 1mm solid #1e3a8a; padding: 1.5mm 0; margin-top: 3mm; text-align: center; width: 100%;">
                 <div style="font-size: 0.85rem; color: #64748b; font-weight: 500; display: inline-block; white-space: nowrap; margin: 0 auto;">
                     School: <span style="color: #475569;">${toTitleCase(schoolName)}</span> &nbsp;•&nbsp; 
-                    District: <span style="color: #475569;">${(schoolInfo?.district || 'Unknown').toUpperCase()}</span> &nbsp;•&nbsp; 
-                    State: <span style="color: #475569;">${(schoolInfo?.state || 'Unknown').toUpperCase()}</span> &nbsp;•&nbsp; 
                     Assessment: <span style="color: #475569;">${assessmentName}</span> &nbsp;•&nbsp; 
-                    Date: <span style="color: #475569;">${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}</span> &nbsp;•&nbsp; 
                     Grade: <span style="color: #475569;">${grade}</span>
                 </div>
             </div>
@@ -477,10 +478,7 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
             <div style="border-top: 1mm solid #1e3a8a; border-bottom: 1mm solid #1e3a8a; padding: 1.5mm 0; margin-top: 3mm; text-align: center; width: 100%;">
                 <div style="font-size: 0.85rem; color: #64748b; font-weight: 500; display: inline-block; white-space: nowrap; margin: 0 auto;">
                     School: <span style="color: #475569;">${toTitleCase(schoolName)}</span> &nbsp;•&nbsp; 
-                    District: <span style="color: #475569;">${(schoolInfo?.district || 'Unknown').toUpperCase()}</span> &nbsp;•&nbsp; 
-                    State: <span style="color: #475569;">${(schoolInfo?.state || 'Unknown').toUpperCase()}</span> &nbsp;•&nbsp; 
                     Assessment: <span style="color: #475569;">${assessmentName}</span> &nbsp;•&nbsp; 
-                    Date: <span style="color: #475569;">${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}</span> &nbsp;•&nbsp; 
                     Grade: <span style="color: #475569;">${grade}</span>
                 </div>
             </div>

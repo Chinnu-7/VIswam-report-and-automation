@@ -210,12 +210,22 @@ export const approveReportsBySchool = async (req, res) => {
     }
 
     try {
-        // Update all PENDING reports for these schools to APPROVED
+        // Update selected reports to APPROVED
+        const conditions = schoolIds.map(id => {
+            if (id.includes('_')) {
+                const [sId, aName, qpVal] = id.split('_');
+                const cond = { schoolId: sId, assessmentName: aName };
+                if (qpVal && qpVal !== 'noqp') cond.qp = qpVal;
+                return cond;
+            }
+            return { schoolId: id };
+        });
+
         await StudentReport.update(
             { status: 'APPROVED' },
             {
                 where: {
-                    schoolId: { [Op.in]: schoolIds },
+                    [Op.or]: conditions,
                     status: 'PENDING'
                 }
             }
@@ -224,7 +234,7 @@ export const approveReportsBySchool = async (req, res) => {
         // ONLY trigger for reports that haven't been sent yet
         const approvedReports = await StudentReport.findAll({
             where: {
-                schoolId: { [Op.in]: schoolIds },
+                [Op.or]: conditions,
                 status: 'APPROVED',
                 isEmailSent: false
             }
@@ -494,12 +504,21 @@ export const rejectReportsBySchool = async (req, res) => {
     }
 
     try {
-        // Apply only to reports that are PENDING to avoid modifying ALREADY APPROVED if any
+        const conditions = schoolIds.map(id => {
+            if (id.includes('_')) {
+                const [sId, aName, qpVal] = id.split('_');
+                const cond = { schoolId: sId, assessmentName: aName };
+                if (qpVal && qpVal !== 'noqp') cond.qp = qpVal;
+                return cond;
+            }
+            return { schoolId: id };
+        });
+
         await StudentReport.update(
             { status: 'REJECTED' },
             {
                 where: {
-                    schoolId: { [Op.in]: schoolIds },
+                    [Op.or]: conditions,
                     status: 'PENDING'
                 }
             }
@@ -511,13 +530,18 @@ export const rejectReportsBySchool = async (req, res) => {
 };
 
 export const downloadBulkZip = async (req, res) => {
-    const { schoolIds, assessmentName } = req.body;
+    // New: selection can be an array of {schoolId, assessmentName} objects for precision
+    // Old: schoolIds array + single assessmentName (fallback)
+    const { schoolIds, assessmentName, selections } = req.body;
 
-    if (!schoolIds || !Array.isArray(schoolIds) || schoolIds.length === 0) {
-        return res.status(400).json({ message: 'schoolIds array is required' });
+    const itemsToProcess = selections || (schoolIds || []).map(id => ({
+        schoolId: id,
+        assessmentName: assessmentName || 'Sodhana 1'
+    }));
+
+    if (itemsToProcess.length === 0) {
+        return res.status(400).json({ message: 'No schools selected' });
     }
-
-    const cleanAssessment = String(assessmentName || 'Sodhana 1').trim();
 
     try {
         console.log(`Starting bulk ZIP for ${schoolIds.length} schools...`);
@@ -537,64 +561,60 @@ export const downloadBulkZip = async (req, res) => {
 
         const { getPrincipalReportHtmlString } = await import('./renderController.js');
 
-        for (const schoolId of schoolIds) {
+        // Helper to process a single school report
+        const processReport = async (item) => {
+            const cleanId = String(item.schoolId).trim();
+            const cleanAssessment = String(item.assessmentName || 'Sodhana 1').trim();
+            
             try {
-                const cleanId = String(schoolId).trim();
-                console.log(`Processing school: ${cleanId}`);
-
-                // 1. Fetch data
                 const reports = await StudentReport.findAll({
                     where: { schoolId: cleanId, assessmentName: cleanAssessment }
                 });
 
-                if (reports.length === 0) {
-                    console.log(`No reports for ${cleanId}, skipping.`);
-                    continue;
-                }
+                if (reports.length === 0) return { status: 'MISSING', id: cleanId, assessment: cleanAssessment };
 
                 const schoolInfo = await SchoolInfo.findByPk(cleanId);
                 const qp = reports[0]?.qp || '';
-
-                // 2. Generate HTML
                 const htmlString = await getPrincipalReportHtmlString(reports, schoolInfo, cleanAssessment, qp);
 
-                // 3. Generate PDF link
                 const pdfApiUrl = `https://v2.api2pdf.com/chrome/pdf/html`;
                 const pdfRes = await axios.post(pdfApiUrl, {
                     html: htmlString,
-                    options: {
-                        landscape: false,
-                        printBackground: true,
-                        format: 'A4',
-                        marginTop: 0, marginBottom: 0, marginLeft: 0, marginRight: 0
-                    }
+                    options: { landscape: false, printBackground: true, format: 'A4', marginTop: 0, marginBottom: 0, marginLeft: 0, marginRight: 0 }
                 }, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': process.env.API2PDF_KEY || '7361f879-1c09-42b0-aee9-56ec533ee754'
-                    }
+                    headers: { 'Content-Type': 'application/json', 'Authorization': process.env.API2PDF_KEY || '7361f879-1c09-42b0-aee9-56ec533ee754' }
                 });
 
                 if (pdfRes.data?.FileUrl) {
-                    // 4. Download PDF
                     const fileResponse = await axios.get(pdfRes.data.FileUrl, { responseType: 'arraybuffer' });
-                    
-                    // 5. Build path: State / District / SchoolId.pdf
                     const state = String(schoolInfo?.state || 'Unknown State').trim();
                     const district = String(schoolInfo?.district || 'Unknown District').trim();
-                    const fileName = `${cleanId}.pdf`;
-                    const zipPath = `${state}/${district}/${fileName}`;
-
+                    
+                    // User Request: Format is schoolid.pdf
+                    const zipPath = `${state}/${district}/${cleanId}.pdf`;
+                    
                     archive.append(Buffer.from(fileResponse.data), { name: zipPath });
-                    console.log(`Added to ZIP: ${zipPath}`);
-                } else {
-                    console.warn(`Failed to generate PDF for school ${cleanId}`);
+                    return { status: 'SUCCESS', path: zipPath };
                 }
-            } catch (schoolErr) {
-                console.error(`Error processing school ${schoolId}:`, schoolErr.message);
-                // Continue to next school
+                return { status: 'FAILED_PDF', id: cleanId };
+            } catch (err) {
+                return { status: 'ERROR', id: cleanId, error: err.message };
             }
+        };
+
+        // Process in chunks of 5 for performance and stability
+        const chunkSize = 5;
+        const results = [];
+        for (let i = 0; i < itemsToProcess.length; i += chunkSize) {
+            const chunk = itemsToProcess.slice(i, i + chunkSize);
+            console.log(`Processing chunk ${Math.floor(i/chunkSize) + 1}...`);
+            const chunkResults = await Promise.all(chunk.map(item => processReport(item)));
+            results.push(...chunkResults);
         }
+
+        // Add a summary file to the ZIP
+        const summaryText = results.map(r => `${r.status}: ${r.id || r.path} ${r.error ? `(${r.error})` : ''}`).join('\n');
+        archive.append(summaryText, { name: 'summary.txt' });
 
         await archive.finalize();
         console.log('ZIP generation complete.');
@@ -629,9 +649,18 @@ export const deleteReportsBySchool = async (req, res) => {
         return res.status(400).json({ message: 'No school IDs provided' });
     }
 
-    try {
+        const conditions = schoolIds.map(id => {
+            if (id.includes('_')) {
+                const [sId, aName, qpVal] = id.split('_');
+                const cond = { schoolId: sId, assessmentName: aName };
+                if (qpVal && qpVal !== 'noqp') cond.qp = qpVal;
+                return cond;
+            }
+            return { schoolId: id };
+        });
+
         await StudentReport.destroy({
-            where: { schoolId: { [Op.in]: schoolIds } }
+            where: { [Op.or]: conditions }
         });
         res.json({ message: 'Reports deleted for selected schools' });
     } catch (error) {

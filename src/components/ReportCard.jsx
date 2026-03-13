@@ -205,14 +205,14 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
     const getGradeBg = (grade) => {
         if (!grade) return '#F1F5F9';
         const g = String(grade).toUpperCase();
-        if (g === 'O') return '#064e3b'; // DARK GREEN
-        if (g === 'A+') return '#dcfce7'; // Light green
-        if (g === 'A') return '#f0fdf4'; // Very light green
-        if (g === 'B+') return '#f0f9ff'; // Light blue-ish green for variety
-        if (g === 'B') return '#fff7ed'; // Very light orange
-        if (g === 'C+') return '#ffedd5'; // Light orange
-        if (g === 'C') return '#fed7aa'; // Orange
-        if (g === 'D') return '#fef2f2'; // Light red
+        if (g === 'O') return '#064e3b';
+        if (g === 'A+') return '#dcfce7';
+        if (g === 'A') return '#f0fdf4';
+        if (g === 'B+') return '#f0f9ff';
+        if (g === 'B') return '#fff7ed';
+        if (g === 'C+') return '#ffedd5';
+        if (g === 'C') return '#fed7aa';
+        if (g === 'D') return '#fef2f2';
         return '#F1F5F9';
     };
 
@@ -417,62 +417,68 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                     <div className="page">
                         {/* Header */}
                         <header style={{
-                            borderBottom: `2px solid ${primaryColor} `,
-                            paddingBottom: '0.4rem',
-                            marginBottom: '1rem',
+                            borderBottom: 'none',
+                            paddingBottom: 0,
+                            marginBottom: '2mm',
                             textAlign: 'center'
                         }}>
-
-
                             <div style={{
                                 display: 'flex',
+                                flexDirection: 'column',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                gap: '2rem',
-                                marginBottom: '0.8rem',
-                                position: 'relative',
-                                width: '100%'
+                                width: '100%',
+                                gap: '3mm'
                             }}>
                                 <img
                                     src={fdrLogo}
                                     alt="FDR Logo"
-                                    style={{ height: '65px', objectFit: 'contain', position: 'absolute', left: '0' }}
+                                    style={{ height: '16mm', marginBottom: '1mm', objectFit: 'contain' }}
                                 />
-                                <h1 style={{
-                                    margin: 0,
-                                    color: primaryColor,
-                                    fontSize: '1.9rem',
-                                    fontWeight: '900',
-                                    textTransform: 'uppercase',
-                                    textAlign: 'center',
-                                    letterSpacing: '0.03em',
-                                    lineHeight: '1.1'
-                                }}>
-                                    Foundation for Democratic Reforms
-                                </h1>
+                                <div style={{ textAlign: 'center' }}>
+                                    <h1 style={{
+                                        margin: 0,
+                                        color: primaryColor,
+                                        fontSize: '1.4rem',
+                                        fontWeight: '800',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '-0.5px',
+                                        lineHeight: '1.1'
+                                    }}>
+                                        Foundation for Democratic Reforms
+                                    </h1>
+                                    <h2 style={{ 
+                                        fontSize: '1.15rem', 
+                                        margin: '2mm 0 0 0', 
+                                        fontWeight: '700', 
+                                        color: primaryColor,
+                                        textAlign: 'center' 
+                                    }}>
+                                        Student Performance Report
+                                    </h2>
+                                </div>
                             </div>
-                            
-                            <h2 style={{ fontSize: '1.5rem', margin: '0.3rem 0', fontWeight: '800', color: '#1e40af', textAlign: 'center' }}>
-                                Student Performance Report
-                            </h2>
 
                             <div style={{
-                                display: 'flex',
-                                justifyContent: 'center',
-                                gap: '1.2rem',
-                                fontSize: '0.95rem',
-                                color: '#475569',
-                                fontWeight: '700',
-                                marginTop: '0.4rem',
-                                marginBottom: '0.6rem'
+                                borderTop: '1.2mm solid #1e3a8a',
+                                borderBottom: '1.2mm solid #1e3a8a',
+                                padding: '2mm 0',
+                                marginTop: '3mm',
+                                textAlign: 'center',
+                                width: '100%'
                             }}>
-                                <span><strong style={{ color: primaryColor }}>School:</strong> {schoolName}</span>
-                                <span style={{ color: '#cbd5e1' }}>|</span>
-                                <span><strong style={{ color: primaryColor }}>Assessment:</strong> {assessmentName}{qp ? ` - ${qp}` : ''}</span>
-                                <span style={{ color: '#cbd5e1' }}>|</span>
-                                <span><strong style={{ color: primaryColor }}>Date:</strong> 06 JAN 2026</span>
-                                <span style={{ color: '#cbd5e1' }}>|</span>
-                                <span><strong style={{ color: primaryColor }}>Grade:</strong> {studentData[0]?.grade || 7}</span>
+                                <div style={{
+                                    fontSize: '1rem',
+                                    color: '#64748b',
+                                    fontWeight: '500',
+                                    display: 'inline-block',
+                                    whiteSpace: 'nowrap',
+                                    margin: '0 auto'
+                                }}>
+                                    School: <span style={{ color: '#475569' }}>{schoolName}</span> &nbsp;•&nbsp; 
+                                    Assessment: <span style={{ color: '#475569' }}>{assessmentName}</span> &nbsp;•&nbsp; 
+                                    Grade: <span style={{ color: '#475569' }}>{studentData[0]?.grade || 7}</span>
+                                </div>
                             </div>
                         </header>
 
@@ -495,13 +501,13 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                                     }}>
                                         <div style={{ display: 'flex', gap: '2rem', alignItems: 'center', width: '100%' }}>
                                             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                                <div style={{ fontSize: '2.8rem', fontWeight: '900', color: '#0f172a', lineHeight: '1' }}>{totalRegistered}</div>
-                                                <div style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: '800', marginTop: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>REGISTERED</div>
+                                                <div style={{ fontSize: '2.4rem', fontWeight: '800', color: '#1e293b', lineHeight: '1' }}>{totalRegistered}</div>
+                                                <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '700', marginTop: '1.5rem', textTransform: 'uppercase' }}>Registered</div>
                                             </div>
-                                            <div style={{ width: '2px', height: '60px', backgroundColor: '#f1f5f9' }}></div>
+                                            <div style={{ width: '1px', height: '18mm', backgroundColor: '#E2E8F0' }}></div>
                                             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                                <div style={{ fontSize: '2.8rem', fontWeight: '900', color: '#0f172a', lineHeight: '1' }}>{totalParticipated}</div>
-                                                <div style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: '800', marginTop: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>PARTICIPATED</div>
+                                                <div style={{ fontSize: '2.4rem', fontWeight: '800', color: '#1e293b', lineHeight: '1' }}>{totalParticipated}</div>
+                                                <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '700', marginTop: '1.5rem', textTransform: 'uppercase' }}>Participated</div>
                                             </div>
                                         </div>
                                     </div>
@@ -524,14 +530,14 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                                             }, {});
 
                                             const distributionData = [
-                                                { grade: 'O', count: gradeDistribution['O'] || 0, color: '#10b981' },
-                                                { grade: 'A+', count: gradeDistribution['A+'] || 0, color: '#10b981' },
-                                                { grade: 'A', count: gradeDistribution['A'] || 0, color: '#059669' },
-                                                { grade: 'B+', count: gradeDistribution['B+'] || 0, color: '#34d399' },
-                                                { grade: 'B', count: gradeDistribution['B'] || 0, color: '#f59e0b' },
-                                                { grade: 'C+', count: gradeDistribution['C+'] || 0, color: '#f97316' },
-                                                { grade: 'C', count: gradeDistribution['C'] || 0, color: '#fb923c' },
-                                                { grade: 'D', count: gradeDistribution['D'] || 0, color: '#ef4444' }
+                                                { grade: 'O', count: gradeDistribution['O'] || 0, color: '#064E3B' },
+                                                { grade: 'A+', count: gradeDistribution['A+'] || 0, color: '#DCFCE7' },
+                                                { grade: 'A', count: gradeDistribution['A'] || 0, color: '#F0FDF4' },
+                                                { grade: 'B+', count: gradeDistribution['B+'] || 0, color: '#F0F9FF' },
+                                                { grade: 'B', count: gradeDistribution['B'] || 0, color: '#FFF7ED' },
+                                                { grade: 'C+', count: gradeDistribution['C+'] || 0, color: '#FFEDD5' },
+                                                { grade: 'C', count: gradeDistribution['C'] || 0, color: '#FED7AA' },
+                                                { grade: 'D', count: gradeDistribution['D'] || 0, color: '#FEF2F2' }
                                             ];
 
                                             return (
@@ -605,32 +611,33 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                             <PageBreaker />
                             <div className="page">
                                 <header style={{
-                                    borderBottom: `2px solid ${primaryColor} `,
-                                    paddingBottom: '0.4rem',
-                                    marginBottom: '1rem',
+                                    borderBottom: 'none',
+                                    paddingBottom: 0,
+                                    marginBottom: '2mm',
                                     textAlign: 'center'
                                 }}>
                                     <div style={{
                                         display: 'flex',
+                                        flexDirection: 'column',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        gap: '1rem',
-                                        marginBottom: '0.2rem'
+                                        width: '100%',
+                                        gap: '2mm'
                                     }}>
-                                        <img src={fdrLogo} alt="FDR Logo" style={{ height: '50px', objectFit: 'contain' }} />
-                                        <h1 style={{
-                                            margin: 0,
-                                            color: primaryColor,
-                                            fontSize: '1.2rem',
-                                            fontWeight: 'bold',
-                                            textTransform: 'uppercase'
-                                        }}>
-                                            Foundation for Democratic Reforms
-                                        </h1>
+                                         <img src={fdrLogo} alt="FDR Logo" style={{ height: '12mm', marginBottom: '1mm', objectFit: 'contain' }} />
+                                         <div style={{ textAlign: 'center' }}>
+                                            <h1 style={{ fontSize: '1.15rem', fontWeight: '800', color: primaryColor, letterSpacing: '-0.5px', margin: 0, lineHeight: '1.1', textTransform: 'uppercase' }}>Foundation for Democratic Reforms</h1>
+                                            <h2 style={{ fontSize: '1rem', fontWeight: '700', color: primaryColor, margin: '1.5mm 0 0 0' }}>Student Performance Report</h2>
+                                         </div>
                                     </div>
-                                    <h2 style={{ fontSize: '1.1rem', margin: '0.2rem 0', fontWeight: 'bold', color: primaryColor }}>
-                                        Student Performance Report
-                                    </h2>
+                                    
+                                    <div style={{ borderTop: '1mm solid #1e3a8a', borderBottom: '1mm solid #1e3a8a', padding: '1.5mm 0', marginTop: '3mm', textAlign: 'center', width: '100%' }}>
+                                        <div style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '500', display: 'inline-block', whiteSpace: 'nowrap', margin: '0 auto' }}>
+                                            School: <span style={{ color: '#475569' }}>{schoolName}</span> &nbsp;•&nbsp; 
+                                            Assessment: <span style={{ color: '#475569' }}>{assessmentName}</span> &nbsp;•&nbsp; 
+                                            Grade: <span style={{ color: '#475569' }}>{studentData[0]?.grade || 7}</span>
+                                        </div>
+                                    </div>
                                 </header>
 
                                 <div className="page-content">
@@ -723,16 +730,34 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                     <PageBreaker />
                     <div className="page">
                         <div className="page-content">
-                            <header style={{ borderBottom: `2px solid ${primaryColor}`, paddingBottom: '0.4rem', marginBottom: '1rem', textAlign: 'center' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '0.2rem' }}>
-                                    <img src={fdrLogo} alt="FDR Logo" style={{ height: '50px', objectFit: 'contain' }} />
-                                    <h1 style={{ margin: 0, color: primaryColor, fontSize: '1.2rem', fontWeight: 'bold', textTransform: 'uppercase' }}>
-                                        Foundation for Democratic Reforms
-                                    </h1>
+                            <header style={{
+                                borderBottom: 'none',
+                                paddingBottom: 0,
+                                marginBottom: '2mm',
+                                textAlign: 'center'
+                            }}>
+                                <div style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '100%',
+                                    gap: '2mm'
+                                }}>
+                                     <img src={fdrLogo} alt="FDR Logo" style={{ height: '12mm', marginBottom: '1mm', objectFit: 'contain' }} />
+                                     <div style={{ textAlign: 'center' }}>
+                                        <h1 style={{ fontSize: '1.15rem', fontWeight: '800', color: primaryColor, letterSpacing: '-0.5px', margin: 0, lineHeight: '1.1', textTransform: 'uppercase' }}>Foundation for Democratic Reforms</h1>
+                                        <h2 style={{ fontSize: '1rem', fontWeight: '700', color: primaryColor, margin: '1.5mm 0 0 0' }}>Student Performance Report</h2>
+                                     </div>
                                 </div>
-                                <h2 style={{ fontSize: '1rem', margin: '0.2rem 0', fontWeight: 'bold', color: accentColor }}>
-                                    Students Needing Attention (Grade C & D)
-                                </h2>
+                                
+                                <div style={{ borderTop: '1mm solid #1e3a8a', borderBottom: '1mm solid #1e3a8a', padding: '1.5mm 0', marginTop: '3mm', textAlign: 'center', width: '100%' }}>
+                                    <div style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '500', display: 'inline-block', whiteSpace: 'nowrap', margin: '0 auto' }}>
+                                        School: <span style={{ color: '#475569' }}>{schoolName}</span> &nbsp;•&nbsp; 
+                                        Assessment: <span style={{ color: '#475569' }}>{assessmentName}</span> &nbsp;•&nbsp; 
+                                        Grade: <span style={{ color: '#475569' }}>{studentData[0]?.grade || 7}</span>
+                                    </div>
+                                </div>
                             </header>
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
