@@ -292,8 +292,8 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
                  </div>
             </div>
             
-            <div style="border-top: 1.2mm solid #1e3a8a; border-bottom: 1.2mm solid #1e3a8a; padding: 2mm 0; margin-top: 3mm; text-align: center;">
-                <div style="font-size: 1rem; color: #64748b; font-weight: 500; display: inline-block; white-space: nowrap;">
+            <div style="border-top: 1.2mm solid #1e3a8a; border-bottom: 1.2mm solid #1e3a8a; padding: 2mm 0; margin-top: 3mm; text-align: center; width: 100%;">
+                <div style="font-size: 1rem; color: #64748b; font-weight: 500; display: inline-block; white-space: nowrap; margin: 0 auto;">
                     School: <span style="color: #475569;">${toTitleCase(schoolName)}</span> &nbsp;•&nbsp; 
                     Assessment: <span style="color: #475569;">${toTitleCase(assessmentName)}</span> &nbsp;•&nbsp; 
                     Date: <span style="color: #475569;">${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}</span> &nbsp;•&nbsp; 
