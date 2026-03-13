@@ -544,7 +544,7 @@ export const downloadBulkZip = async (req, res) => {
     }
 
     try {
-        console.log(`Starting bulk ZIP for ${schoolIds.length} schools...`);
+        console.log(`Starting bulk ZIP for ${itemsToProcess.length} schools...`);
 
         // Set headers for ZIP download
         res.setHeader('Content-Type', 'application/zip');
