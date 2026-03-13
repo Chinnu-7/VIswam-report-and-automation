@@ -226,14 +226,14 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
     }, {});
 
     const distData = [
-        { g: 'O', c: gradeDistribution['O'] || 0, color: '#059669' },
-        { g: 'A+', c: gradeDistribution['A+'] || 0, color: '#10b981' },
-        { g: 'A', c: gradeDistribution['A'] || 0, color: '#22c55e' },
-        { g: 'B+', c: gradeDistribution['B+'] || 0, color: '#84cc16' },
-        { g: 'B', c: gradeDistribution['B'] || 0, color: '#eab308' },
-        { g: 'C+', c: gradeDistribution['C+'] || 0, color: '#f97316' },
-        { g: 'C', c: gradeDistribution['C'] || 0, color: '#f59e0b' },
-        { g: 'D', c: gradeDistribution['D'] || 0, color: '#ef4444' }
+        { g: 'O', c: gradeDistribution['O'] || 0, color: '#064E3B' },
+        { g: 'A+', c: gradeDistribution['A+'] || 0, color: '#DCFCE7' },
+        { g: 'A', c: gradeDistribution['A'] || 0, color: '#F0FDF4' },
+        { g: 'B+', c: gradeDistribution['B+'] || 0, color: '#F0F9FF' },
+        { g: 'B', c: gradeDistribution['B'] || 0, color: '#FFF7ED' },
+        { g: 'C+', c: gradeDistribution['C+'] || 0, color: '#FFEDD5' },
+        { g: 'C', c: gradeDistribution['C'] || 0, color: '#FED7AA' },
+        { g: 'D', c: gradeDistribution['D'] || 0, color: '#FEF2F2' }
     ];
     const maxCount = Math.max(...distData.map(d => d.c), 1);
 
@@ -284,24 +284,20 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
     const page1 = `
     <div class="page">
         <header style="border-bottom: none; text-align: center; padding-bottom: 0; margin-bottom: 2mm;">
-            <div style="display: grid; grid-template-columns: 1fr 2fr 1fr; align-items: center; width: 100%; gap: 6mm;">
-                 <div style="text-align: left;"><img src="${fdrLogo}" style="height: 12mm;"></div>
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; gap: 3mm;">
+                 <img src="${fdrLogo}" style="height: 16mm; margin-bottom: 1mm;">
                  <div style="text-align: center;">
-                    <h1 style="font-size: 1.8rem; font-weight: 800; color: #1e3a8a; letter-spacing: -1px; margin: 0; line-height: 1.1;">FOUNDATION FOR DEMOCRATIC REFORMS</h1>
-                    <h2 style="font-size: 1.2rem; font-weight: 700; color: #1e3a8a; margin: 1.5mm 0 0 0;">Student Performance Report</h2>
+                    <h1 style="font-size: 1.4rem; font-weight: 800; color: #1e3a8a; letter-spacing: -0.5px; margin: 0; line-height: 1.1; text-transform: uppercase;">FOUNDATION FOR DEMOCRATIC REFORMS</h1>
+                    <h2 style="font-size: 1.15rem; font-weight: 700; color: #1e3a8a; margin: 2mm 0 0 0;">Student Performance Report</h2>
                  </div>
-                 <div></div> <!-- Spacer for centering -->
             </div>
             
-            <div style="border-top: 1.2mm solid #1e3a8a; border-bottom: 1.2mm solid #1e3a8a; padding: 3.5mm 0; margin-top: 6mm;">
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 1.2rem; color: #1e3a8a; padding: 0 4mm;">
-                    <div style="flex: 1.5;"><span style="color: #64748b; font-weight: 500;">School:</span> <span style="font-weight: 500; color: #334155;">${toTitleCase(schoolName)}</span></div>
-                    <div style="width: 1px; height: 6mm; background: #CBD5E1; margin: 0 4mm;"></div>
-                    <div style="flex: 1.8;"><span style="color: #64748b; font-weight: 500;">Assessment:</span> <span style="font-weight: 500; color: #334155;">${toTitleCase(assessmentName)}</span></div>
-                    <div style="width: 1px; height: 6mm; background: #CBD5E1; margin: 0 4mm;"></div>
-                    <div style="flex: 1.4;"><span style="color: #64748b; font-weight: 500;">Date:</span> <span style="font-weight: 500; color: #334155;">${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span></div>
-                    <div style="width: 1px; height: 6mm; background: #CBD5E1; margin: 0 4mm;"></div>
-                    <div style="flex: 0.5; text-align: right;"><span style="color: #64748b; font-weight: 500;">Grade:</span> <span style="font-weight: 500; color: #334155;">${grade}</span></div>
+            <div style="border-top: 1.2mm solid #1e3a8a; border-bottom: 1.2mm solid #1e3a8a; padding: 2.5mm 0; margin-top: 4mm;">
+                <div style="text-align: center; font-size: 1.1rem; color: #64748b; font-weight: 500;">
+                    School: <span style="color: #475569;">${toTitleCase(schoolName)}</span> &nbsp;•&nbsp; 
+                    Assessment: <span style="color: #475569;">${toTitleCase(assessmentName)}</span> &nbsp;•&nbsp; 
+                    Date: <span style="color: #475569;">${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}</span> &nbsp;•&nbsp; 
+                    Grade: <span style="color: #475569;">${grade}</span>
                 </div>
             </div>
         </header>
@@ -315,15 +311,15 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
                     <div style="width: 6mm; height: 6mm; background: #1e3a8a;"></div>
                     <h3 style="font-size: 1.4rem; font-weight: 900; color: #1e3a8a; letter-spacing: 0.3px; margin: 0;">PARTICIPATION</h3>
                 </div>
-                <div style="background: white; border: 1.5px solid #F1F5F9; border-radius: 8mm; padding: 6mm 2mm; display: flex; align-items: center; justify-content: center; height: 48mm; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); box-sizing: border-box;">
+                <div style="background: white; border: 1px solid #E2E8F0; border-radius: 4mm; padding: 5mm 2mm; display: flex; align-items: center; justify-content: center; height: 35mm; box-sizing: border-box;">
                     <div style="flex: 1; text-align: center;">
-                        <div style="font-size: 4rem; font-weight: 800; color: #1e293b; line-height: 1; letter-spacing: -2px;">${totalRegistered}</div>
-                        <div style="font-size: 0.9rem; font-weight: 700; color: #64748b; margin-top: 2mm; letter-spacing: 0.5px;">REGISTERED</div>
+                        <div style="font-size: 2.4rem; font-weight: 800; color: #1e293b; line-height: 1;">${totalRegistered}</div>
+                        <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; margin-top: 1.5mm; text-transform: uppercase;">Registered</div>
                     </div>
-                    <div style="width: 1.5px; height: 28mm; background: #CBD5E1;"></div>
+                    <div style="width: 1px; height: 18mm; background: #E2E8F0;"></div>
                     <div style="flex: 1; text-align: center;">
-                        <div style="font-size: 4rem; font-weight: 800; color: #1e293b; line-height: 1; letter-spacing: -2px;">${totalParticipated}</div>
-                        <div style="font-size: 0.9rem; font-weight: 700; color: #64748b; margin-top: 2mm; letter-spacing: 0.5px;">PARTICIPATED</div>
+                        <div style="font-size: 2.4rem; font-weight: 800; color: #1e293b; line-height: 1;">${totalParticipated}</div>
+                        <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; margin-top: 1.5mm; text-transform: uppercase;">Participated</div>
                     </div>
                 </div>
             </div>
@@ -334,15 +330,15 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
                     <div style="width: 6mm; height: 6mm; background: #1e3a8a;"></div>
                     <h3 style="font-size: 1.4rem; font-weight: 900; color: #1e3a8a; letter-spacing: 0.3px; margin: 0;">OVERALL GRADE DISTRIBUTION</h3>
                 </div>
-                <div style="background: white; border: 1.5px solid #F1F5F9; border-radius: 8mm; padding: 6mm 4mm; height: 48mm; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); box-sizing: border-box;">
-                    <div style="display: flex; align-items: flex-end; justify-content: space-between; height: 100%; width: 100%; padding: 0 2mm 2mm 2mm; box-sizing: border-box;">
+                <div style="background: white; border: 1px solid #E2E8F0; border-radius: 4mm; padding: 4mm; height: 35mm; box-sizing: border-box;">
+                    <div style="display: flex; align-items: flex-end; justify-content: space-between; height: 100%; width: 100%; padding-bottom: 2mm; box-sizing: border-box;">
                         ${distData.map(d => {
-                            const height = (d.c / maxCount) * 26;
+                            const height = (d.c / maxCount) * 18;
                             return `
                             <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%;">
-                                <div style="font-size: 1.4rem; font-weight: 800; color: #1e293b; margin-bottom: 2mm;">${d.c}</div>
-                                <div style="width: 85%; max-width: 15mm; height: ${height}mm; min-height: ${d.c > 0 ? '1mm' : '0'}; background: ${d.color}; border-radius: 2.5mm;"></div>
-                                <div style="font-size: 1.1rem; font-weight: 800; color: #475569; margin-top: 3mm;">${d.g}</div>
+                                <div style="font-size: 1rem; font-weight: 800; color: #1e293b; margin-bottom: 1mm;">${d.c}</div>
+                                <div style="width: 80%; max-width: 12mm; height: ${height}mm; min-height: ${d.c > 0 ? '1mm' : '0'}; background: ${d.color}; border: 1px solid #0001;"></div>
+                                <div style="font-size: 0.8rem; font-weight: 700; color: #64748b; margin-top: 2mm;">${d.g}</div>
                             </div>`;
                         }).join('')}
                     </div>
@@ -382,18 +378,19 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
             <div style="font-size: 0.75rem; color: #1e3a8a; margin-bottom: 2mm; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Grading Scale</div>
             <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 1.5mm;">
                 ${[
-                    { g: 'O', p: '91-100%' },
-                    { g: 'A+', p: '80-90%' },
-                    { g: 'A', p: '70-79%' },
-                    { g: 'B+', p: '60-69%' },
-                    { g: 'B', p: '50-59%' },
-                    { g: 'C+', p: '40-49%' },
-                    { g: 'C', p: '30-39%' },
-                    { g: 'D', p: '< 30%' }
+                    { g: 'O', p: '91-100%', d: 'Outstanding' },
+                    { g: 'A+', p: '80-90%', d: 'Excellent' },
+                    { g: 'A', p: '70-79%', d: 'Very Good' },
+                    { g: 'B+', p: '60-69%', d: 'Good' },
+                    { g: 'B', p: '50-59%', d: 'Above Avg' },
+                    { g: 'C+', p: '40-49%', d: 'Average' },
+                    { g: 'C', p: '30-39%', d: 'Below Avg' },
+                    { g: 'D', p: '< 30%', d: 'Needs Imp.' }
                 ].map(r => `
                     <div style="background: ${getGradeBg(r.g)}; color: ${getGradeColor(r.g)}; padding: 1.5mm 0.5mm; border-radius: 1mm; text-align: center; border: 1px solid #0001;">
                         <div style="font-weight: 900; font-size: 0.8rem; line-height: 1;">${r.g}</div>
                         <div style="font-size: 0.55rem; font-weight: 700; margin-top: 0.5mm;">${r.p}</div>
+                        <div style="font-size: 0.45rem; color: #64748b; margin-top: 0.5mm;">${r.d}</div>
                     </div>`).join('')}
             </div>
         </div>
