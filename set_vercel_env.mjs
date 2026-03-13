@@ -28,6 +28,7 @@ const envVarsToSet = [
     { key: 'API2PDF_KEY', value: '7361f879-1c09-42b0-aee9-56ec533ee754', target: ['production', 'preview', 'development'] },
     { key: 'N8N_WEBHOOK_URL', value: 'https://pradeep1234.app.n8n.cloud/webhook/approve-school-report', target: ['production', 'preview', 'development'] },
     { key: 'N8N_WEBHOOK_SYNC_URL', value: 'https://pradeep1234.app.n8n.cloud/webhook/sync-schools', target: ['production', 'preview', 'development'] },
+    { key: 'FORCE_DB_SYNC', value: 'true', target: ['production'] },
 ];
 
 const headers = { Authorization: `Bearer ${vercelToken}`, 'Content-Type': 'application/json' };
