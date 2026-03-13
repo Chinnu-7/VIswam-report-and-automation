@@ -284,12 +284,13 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
     const page1 = `
     <div class="page">
         <header style="border-bottom: none; text-align: center; padding-bottom: 0; margin-bottom: 2mm;">
-            <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 6mm;">
-                 <img src="${fdrLogo}" style="height: 14mm;">
-                 <div style="flex: 1; text-align: right;">
-                    <h1 style="font-size: 2.4rem; font-weight: 800; color: #1e3a8a; letter-spacing: -1.5px; margin: 0; line-height: 1.1;">FOUNDATION FOR DEMOCRATIC REFORMS</h1>
-                    <h2 style="font-size: 1.6rem; font-weight: 700; color: #1e3a8a; margin: 2mm 0 0 0;">Student Performance Report</h2>
+            <div style="display: grid; grid-template-columns: 1fr 2fr 1fr; align-items: center; width: 100%; gap: 6mm;">
+                 <div style="text-align: left;"><img src="${fdrLogo}" style="height: 12mm;"></div>
+                 <div style="text-align: center;">
+                    <h1 style="font-size: 1.8rem; font-weight: 800; color: #1e3a8a; letter-spacing: -1px; margin: 0; line-height: 1.1;">FOUNDATION FOR DEMOCRATIC REFORMS</h1>
+                    <h2 style="font-size: 1.2rem; font-weight: 700; color: #1e3a8a; margin: 1.5mm 0 0 0;">Student Performance Report</h2>
                  </div>
+                 <div></div> <!-- Spacer for centering -->
             </div>
             
             <div style="border-top: 1.2mm solid #1e3a8a; border-bottom: 1.2mm solid #1e3a8a; padding: 3.5mm 0; margin-top: 6mm;">
@@ -374,6 +375,26 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
                     </div>
                 </div>`;
             }).join('')}
+        </div>
+
+        <div style="margin-top: 4mm; border-top: 1.2mm solid #1e3a8a; padding-top: 3mm; margin-bottom: 4mm;">
+            <div style="font-size: 0.8rem; color: #1e3a8a; margin-bottom: 3mm; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Grading Scale</div>
+            <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 2mm;">
+                ${[
+                    { g: 'O', p: '91-100%', d: 'Outstanding' },
+                    { g: 'A+', p: '80-90%', d: 'Excellent' },
+                    { g: 'A', p: '70-79%', d: 'Very Good' },
+                    { g: 'B+', p: '60-69%', d: 'Good' },
+                    { g: 'B', p: '50-59%', d: 'Above Avg' },
+                    { g: 'C+', p: '40-49%', d: 'Average' },
+                    { g: 'C', p: '30-39%', d: 'Below Avg' },
+                    { g: 'D', p: '< 30%', d: 'Needs Imp.' }
+                ].map(r => `
+                    <div style="background: ${getGradeBg(r.g)}; color: ${getGradeColor(r.g)}; padding: 2mm 1mm; border-radius: 1.5mm; text-align: center; border: 1px solid #0001;">
+                        <div style="font-weight: 900; font-size: 0.9rem; line-height: 1;">${r.g}</div>
+                        <div style="font-size: 0.6rem; font-weight: 700; margin-top: 1mm;">${r.p}</div>
+                    </div>`).join('')}
+            </div>
         </div>
 
         <footer style="margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; padding-top: 4mm; border-top: 1px solid #E2E8F0;">
