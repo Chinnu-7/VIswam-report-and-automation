@@ -16,22 +16,22 @@ if (!dbUrl) {
     console.error('CRITICAL: DATABASE_URL environment variable is missing!');
 }
 
-const isLocal = dbUrl && (dbUrl.includes('localhost') || dbUrl.includes('127.0.0.1'));
-const isPostgres = !dbUrl || dbUrl.startsWith('postgres');
-console.log('DB Config: Dialect is', isPostgres ? 'Postgres' : 'MySQL');
+const isMySQL = !dbUrl || dbUrl.startsWith('mysql');
+console.log('DB Config: Dialect is', isMySQL ? 'MySQL' : 'Postgres');
 
 const sequelize = new Sequelize(dbUrl || '', {
-    dialect: isPostgres ? 'postgres' : 'mysql',
-    dialectModule: isPostgres ? pg : mysql2,
+    dialect: isMySQL ? 'mysql' : 'postgres',
+    dialectModule: isMySQL ? mysql2 : pg,
     logging: false,
     dialectOptions: {
-        ssl: (isLocal || (dbUrl && !dbUrl.includes('rds.amazonaws.com') && !dbUrl.includes('supabase'))) ? false : {
+        // SSL for RDS: Usually required for MySQL 8+, but we'll make it configurable 
+        ssl: (isLocal || (dbUrl && !dbUrl.includes('rds.amazonaws.com'))) ? false : {
             require: true,
             rejectUnauthorized: false
         }
     },
     pool: {
-        max: 5,
+        max: 3, // Lower max connections for serverless + small RDS (t4g.micro)
         min: 0,
         acquire: 60000,
         idle: 10000,

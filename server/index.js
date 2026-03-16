@@ -35,16 +35,18 @@ const initializeDb = async () => {
         await sequelize.authenticate();
         console.log('Database connection authenticated successfully');
 
-        // Only sync in development or if explicitly requested via env
-        if (process.env.NODE_ENV !== 'production' || process.env.FORCE_DB_SYNC === 'true') {
+        // SECURITY/STABILITY: Disable sync in production by default.
+        // MySQL has a 64-key limit that is easily hit when Sequelize tries to 'alter' tables on every cold start.
+        if (process.env.NODE_ENV !== 'production' && process.env.FORCE_DB_SYNC === 'true') {
+            console.log('Syncing database models (FORCE_DB_SYNC is true)...');
             await SchoolInfo.sync({ alter: true });
             await User.sync({ alter: true });
-            await StudentReport.sync({ alter: false });
+            await StudentReport.sync({ alter: true });
             console.log('Database models synced');
         } else {
             // In production, just verify the connection is alive
             await sequelize.authenticate();
-            console.log('Database connection verified (Production mode - Sync skipped)');
+            console.log('Database connection verified (Sync skipped for stability)');
         }
 
         await seedAdmin();
