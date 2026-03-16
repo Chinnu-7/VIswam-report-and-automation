@@ -17,14 +17,15 @@ if (!dbUrl) {
 }
 
 const isLocal = dbUrl && (dbUrl.includes('localhost') || dbUrl.includes('127.0.0.1'));
-const isPostgres = dbUrl && dbUrl.startsWith('postgres');
-console.log('DB Config: isLocal =', isLocal, 'isPostgres =', isPostgres);
+const isPostgres = !dbUrl || dbUrl.startsWith('postgres');
+console.log('DB Config: Dialect is', isPostgres ? 'Postgres' : 'MySQL');
 
 const sequelize = new Sequelize(dbUrl || '', {
+    dialect: isPostgres ? 'postgres' : 'mysql',
     dialectModule: isPostgres ? pg : mysql2,
     logging: false,
     dialectOptions: {
-        ssl: (isLocal || !isPostgres) ? false : {
+        ssl: (isLocal || (dbUrl && !dbUrl.includes('rds.amazonaws.com') && !dbUrl.includes('supabase'))) ? false : {
             require: true,
             rejectUnauthorized: false
         }
@@ -32,7 +33,7 @@ const sequelize = new Sequelize(dbUrl || '', {
     pool: {
         max: 5,
         min: 0,
-        acquire: 30000,
+        acquire: 60000,
         idle: 10000,
         evict: 1000
     }
