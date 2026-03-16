@@ -35,18 +35,27 @@ const initializeDb = async () => {
         await sequelize.authenticate();
         console.log('Database connection authenticated successfully');
 
-        // SECURITY/STABILITY: Disable sync in production by default.
-        // MySQL has a 64-key limit that is easily hit when Sequelize tries to 'alter' tables on every cold start.
+        // SECURITY/STABILITY: Disable 'alter' sync in production by default.
+        // But if this is a fresh database (no Users table), we MUST run sync once to create the schema.
+        try {
+            await User.findOne();
+            console.log('Database tables verified');
+        } catch (e) {
+            console.log('Database tables missing or empty. Running initial sync...');
+            await SchoolInfo.sync({ alter: true });
+            await User.sync({ alter: true });
+            await StudentReport.sync({ alter: true });
+            console.log('Initial sync complete');
+        }
+
         if (process.env.NODE_ENV !== 'production' && process.env.FORCE_DB_SYNC === 'true') {
-            console.log('Syncing database models (FORCE_DB_SYNC is true)...');
+            console.log('Forced sync triggered (FORCE_DB_SYNC is true)...');
             await SchoolInfo.sync({ alter: true });
             await User.sync({ alter: true });
             await StudentReport.sync({ alter: true });
             console.log('Database models synced');
         } else {
-            // In production, just verify the connection is alive
-            await sequelize.authenticate();
-            console.log('Database connection verified (Sync skipped for stability)');
+            console.log('Database connection verified (Sync skipped - Stable Mode)');
         }
 
         await seedAdmin();

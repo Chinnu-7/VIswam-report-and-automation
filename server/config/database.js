@@ -16,8 +16,10 @@ if (!dbUrl) {
     console.error('CRITICAL: DATABASE_URL environment variable is missing!');
 }
 
+const isLocal = dbUrl && (dbUrl.includes('localhost') || dbUrl.includes('127.0.0.1'));
 const isMySQL = !dbUrl || dbUrl.startsWith('mysql');
 console.log('DB Config: Dialect is', isMySQL ? 'MySQL' : 'Postgres');
+console.log('DB Config: isLocal =', isLocal);
 
 const sequelize = new Sequelize(dbUrl || '', {
     dialect: isMySQL ? 'mysql' : 'postgres',
