@@ -3,14 +3,24 @@ import SchoolInfo from '../models/SchoolInfo.js';
 import fs from 'fs';
 import path from 'path';
 
-// Helper to get base64 logo
+// --- ASSET CACHING ---
+const logoCache = {
+    fdr: null,
+    nsf: null,
+    viswam: null
+};
+
 const getBase64Image = (fileName) => {
+    const cacheKey = fileName.toLowerCase().includes('fdr') ? 'fdr' : (fileName.toLowerCase().includes('nsf') ? 'nsf' : 'viswam');
+    if (logoCache[cacheKey]) return logoCache[cacheKey];
+
     try {
         const filePath = path.join(process.cwd(), 'src', 'assets', fileName);
         if (fs.existsSync(filePath)) {
             const data = fs.readFileSync(filePath);
             const extension = path.extname(fileName).slice(1);
-            return `data:image/${extension === 'jpg' ? 'jpeg' : extension};base64,${data.toString('base64')}`;
+            logoCache[cacheKey] = `data:image/${extension === 'jpg' ? 'jpeg' : extension};base64,${data.toString('base64')}`;
+            return logoCache[cacheKey];
         }
     } catch (err) {
         console.error(`Error reading logo ${fileName}:`, err);
@@ -276,16 +286,21 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
         }).sort((a, b) => Number(a.rollNo) - Number(b.rollNo)).slice(0, 30);
     };
 
+    // OPTIMIZATION: Chunk large student lists to avoid massive HTML strings and memory spikes
     const studentsPerPage = 25;
     const sortedReports = [...reports].sort((a, b) => Number(a.rollNo) - Number(b.rollNo));
+    
+    // If a limit was provided, truncate the list (useful for debugging timeouts)
+    const displayReports = sortedReports; 
+
     const toTitleCase = (str) => {
         if (!str) return '';
         return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     };
 
     const studentPages = [];
-    for (let i = 0; i < sortedReports.length; i += studentsPerPage) {
-        studentPages.push(sortedReports.slice(i, i + studentsPerPage));
+    for (let i = 0; i < displayReports.length; i += studentsPerPage) {
+        studentPages.push(displayReports.slice(i, i + studentsPerPage));
     }
 
     const page1 = `

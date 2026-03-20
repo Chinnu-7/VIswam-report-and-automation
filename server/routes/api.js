@@ -54,6 +54,9 @@ router.post('/reports/school/:schoolId/mark-notified', adminController.markSchoo
 router.get('/reports/school/:schoolId/render', renderController.renderPrincipalReportHtml);
 router.get('/reports/:id/render', renderController.renderReportHtml);
 
+// Diagnostics
+router.get('/diag/api2pdf', adminController.diagnoseApi2Pdf);
+
 // Keep-alive / Health Check Route
 router.get('/keep-alive', (req, res) => {
     res.json({

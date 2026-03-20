@@ -386,7 +386,9 @@ async function processN8nTriggersMulti(req, reportsArray, isAutomated = false) {
 
 export const generatePrincipalPdf = async (req, res) => {
     const { schoolId } = req.params;
-    const { assessmentName, json, stream } = req.query;
+    const { assessmentName, json, stream, limit: limitRaw } = req.query;
+
+    const limit = parseInt(limitRaw, 10) || null;
 
     if (!schoolId || !assessmentName) {
         return res.status(400).json({ message: 'schoolId and assessmentName are required' });
@@ -398,13 +400,16 @@ export const generatePrincipalPdf = async (req, res) => {
 
         console.log(`Generating Principal PDF for school: [${cleanSchoolId}], assessment: [${cleanAssessment}]...`);
 
-        // 1. Fetch ALL reports for this school/assessment
-        const reports = await StudentReport.findAll({
+        // 1. Fetch reports with optional limit (to avoid timeouts)
+        const fetchOptions = {
             where: {
                 schoolId: cleanSchoolId,
                 assessmentName: cleanAssessment
             }
-        });
+        };
+        if (limit) fetchOptions.limit = limit;
+
+        const reports = await StudentReport.findAll(fetchOptions);
 
         if (reports.length === 0) {
             return res.status(404).json({ message: 'No reports found for this school/assessment' });
