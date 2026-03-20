@@ -644,7 +644,10 @@ export const downloadBulkZip = async (req, res) => {
                     html: htmlString,
                     options: { landscape: false, printBackground: true, format: 'A4', marginTop: 0, marginBottom: 0, marginLeft: 0, marginRight: 0 }
                 }, {
-                    headers: { 'Content-Type': 'application/json', 'Authorization': 'eac68149-5332-4534-83a2-d55fb9a62674' // Forced new key to bypass stale Vercel env var }
+                    headers: { 
+                        'Content-Type': 'application/json', 
+                        'Authorization': 'eac68149-5332-4534-83a2-d55fb9a62674' 
+                    } // Forced new key to bypass stale Vercel env var
                 });
 
                 if (pdfRes.data?.FileUrl) {
