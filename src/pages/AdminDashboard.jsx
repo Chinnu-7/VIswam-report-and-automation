@@ -196,7 +196,10 @@ const AdminDashboard = () => {
             setTimeout(() => setMessage(''), 7000);
         } catch (err) {
             console.error('Sync Error:', err);
-            const serverError = err.response?.data?.error || err.response?.data?.message || err.message;
+            let serverError = err.response?.data?.error || err.response?.data?.message || err.message;
+            if (err.message === 'Network Error') {
+                serverError = 'Network Error: Request timed out or server unavailable. Try again in a moment.';
+            }
             setMessage('Sync Error: ' + serverError);
             setIsError(true);
         } finally {
@@ -219,8 +222,11 @@ const AdminDashboard = () => {
             setMessage('Sync to PSA Tracker initiated successfully!');
             setTimeout(() => setMessage(''), 5000);
         } catch (err) {
-            console.error('Sync failed', err);
-            setMessage('Sync failed: ' + (err.response?.data?.message || err.message));
+            let serverError = err.response?.data?.message || err.message;
+            if (err.message === 'Network Error') {
+                serverError = 'Network Error: Request timed out or server unavailable. Tray again in a moment.';
+            }
+            setMessage('Sync failed: ' + serverError);
             setIsError(true);
         } finally {
             setLoading(false);
@@ -421,7 +427,8 @@ const AdminDashboard = () => {
 
                     <button
                         onClick={handleSyncSchools}
-                        className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-2.5 font-bold text-primary shadow-sm hover:bg-slate-50 transition-colors"
+                        disabled={loading}
+                        className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-2.5 font-bold text-primary shadow-sm hover:bg-slate-50 transition-colors disabled:opacity-50"
                         title="Sync School Emails & WhatsApp from Google Sheet"
                     >
                         <RefreshCw size={18} className={loading && message.includes('Syncing') ? 'animate-spin' : ''} />
@@ -787,7 +794,7 @@ const AdminDashboard = () => {
                                     </td>
                                 </tr>
                             ) : reports.map((report) => (
-                                <tr key={`${report.schoolId}_${report.assessmentName}`} className={`hover:bg-slate-50/80 transition-colors ${selectedIds.includes(report.id) ? 'bg-primary/5' : ''}`}>
+                                <tr key={report.id} className={`hover:bg-slate-50/80 transition-colors ${selectedIds.includes(report.id) ? 'bg-primary/5' : ''}`}>
                                     <td className="px-6 py-4">
                                         <input
                                             type="checkbox"

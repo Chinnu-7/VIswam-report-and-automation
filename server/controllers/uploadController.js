@@ -305,7 +305,19 @@ export const uploadStudentData = async (req, res) => {
             return res.status(400).json({ message: 'No valid student records found.' });
         }
 
-        await StudentReport.bulkCreate(allReportsToCreate);
+        console.log(`[Upload] Inserting ${allReportsToCreate.length} reports into database...`);
+        try {
+            await StudentReport.bulkCreate(allReportsToCreate);
+        } catch (bulkErr) {
+            console.error('[Upload] bulkCreate failed:', bulkErr);
+            let detail = bulkErr.message;
+            if (bulkErr.errors && Array.isArray(bulkErr.errors)) {
+                detail = bulkErr.errors.map(e => `${e.path}: ${e.message}`).join(', ');
+            }
+            throw new Error(`Database insert failed: ${detail}`);
+        }
+        
+        console.log(`[Upload] Recalculating cohort stats for school: ${actualSchoolId}`);
         await performRecalculate(actualSchoolId, assessmentName || 'Sodhana 1');
 
         res.json({

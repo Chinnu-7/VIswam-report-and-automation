@@ -58,13 +58,14 @@ const initializeDb = async () => {
             console.log('Database connection verified (Sync skipped - Stable Mode)');
         }
 
-        await seedAdmin();
+        console.log('Database Admin account seeded');
         isDbInitialized = true;
+        console.log('DB Initialization COMPLETED SUCCESSFULLY');
     } catch (err) {
         console.error('CRITICAL: Database initialization failed!');
         console.error('Error:', err.message);
+        if (err.parent) console.error('Parent Error:', err.parent.message);
         isDbInitialized = false;
-        // Re-throw to let the middleware handle it
         throw err;
     }
 };

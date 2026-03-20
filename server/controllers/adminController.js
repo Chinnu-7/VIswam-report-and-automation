@@ -22,17 +22,16 @@ export const performRecalculate = async (schoolId, assessmentName, qp = null) =>
 
     const schoolIdUpper = schoolId.toUpperCase();
 
+    // Use a simpler, more robust query to avoid potential duplicates from complex ORs
     const where = {
         [Op.or]: [
             { schoolId: schoolId },
-            { schoolName: schoolId },
-            { schoolId: schoolIdUpper },
-            { schoolName: schoolIdUpper }
+            { schoolId: schoolIdUpper }
         ],
         assessmentName: assessmentName
     };
 
-    if (qp) {
+    if (qp && qp !== 'noqp') {
         where.qp = qp;
     }
 
@@ -40,7 +39,14 @@ export const performRecalculate = async (schoolId, assessmentName, qp = null) =>
 
     if (reports.length === 0) return 0;
 
-    const plainReports = reports.map(r => r.get({ plain: true }));
+    // Remove any duplicate records (by ID) just in case the query or DB state is inconsistent
+    const uniqueReportsMap = new Map();
+    reports.forEach(r => {
+        const plain = r.get({ plain: true });
+        uniqueReportsMap.set(plain.id, plain);
+    });
+    const plainReports = Array.from(uniqueReportsMap.values());
+
     const stats = gradingService.computeCohortStats(plainReports);
     const updatedReports = gradingService.assignRelativeGrades(plainReports, stats);
 
@@ -380,7 +386,7 @@ async function processN8nTriggersMulti(req, reportsArray, isAutomated = false) {
 
 export const generatePrincipalPdf = async (req, res) => {
     const { schoolId } = req.params;
-    const { assessmentName, json } = req.query;
+    const { assessmentName, json, stream } = req.query;
 
     if (!schoolId || !assessmentName) {
         return res.status(400).json({ message: 'schoolId and assessmentName are required' });
@@ -416,6 +422,8 @@ export const generatePrincipalPdf = async (req, res) => {
 
         // 4. PDF generation using Api2Pdf
         const pdfApiUrl = `https://v2.api2pdf.com/chrome/pdf/html`;
+        const apiKey = process.env.API2PDF_KEY || '7361f879-1c09-42b0-aee9-56ec533ee754';
+        
         const response = await axios.post(pdfApiUrl, {
             html: htmlString,
             options: {
@@ -430,19 +438,28 @@ export const generatePrincipalPdf = async (req, res) => {
         }, {
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': process.env.API2PDF_KEY || '7361f879-1c09-42b0-aee9-56ec533ee754'
-            }
+                'Authorization': apiKey
+            },
+            timeout: 60000 // 60s timeout for large PDF conversion
         });
 
         if (!response.data || !response.data.FileUrl) {
-            throw new Error('PDF Generation failed');
+            console.error('Api2Pdf Error:', response.data);
+            throw new Error('PDF Generation failed: ' + (response.data?.error || 'No FileUrl returned'));
         }
 
         // Only return JSON if explicitly requested. 
-        // n8n HTTP Request node often sends Accept: application/json by default, 
-        // which was causing it to download the JSON metadata instead of the PDF file.
         if (json === 'true') {
             return res.json({ fileUrl: response.data.FileUrl });
+        }
+
+        // NEW: Direct Streaming for n8n stability (avoids redirect timeout issues)
+        if (stream === 'true' || req.headers.accept?.includes('application/pdf')) {
+            console.log('Streaming PDF directly to response...');
+            const fileRes = await axios.get(response.data.FileUrl, { responseType: 'stream' });
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename="${cleanSchoolId}.pdf"`);
+            return fileRes.data.pipe(res);
         }
 
         // Default behavior: Redirect to the temporary direct download link
@@ -450,7 +467,11 @@ export const generatePrincipalPdf = async (req, res) => {
 
     } catch (error) {
         console.error('Error generating PDF:', error.message);
-        res.status(500).json({ message: 'Failed to generate PDF', error: error.message });
+        res.status(500).json({ 
+            message: 'Failed to generate PDF', 
+            error: error.message,
+            details: error.response?.data || 'No further details'
+        });
     }
 };
 
@@ -757,7 +778,12 @@ export const updateSchoolsBatch = async (req, res) => {
             schoolsMap.set(s.schoolId, s);
         });
 
-        const uniqueSchools = Array.from(schoolsMap.values());
+        const uniqueSchools = Array.from(schoolsMap.values()).map(s => {
+            // Strip any accidental 'id' field that might come from Google Sheet/CSV
+            // which could conflict with Sequelize's internal ID management if it exists.
+            const { id, ...rest } = s;
+            return rest;
+        });
         console.log(`Processing ${uniqueSchools.length} unique schools (from ${schools.length} input rows)`);
 
         if (uniqueSchools.length === 0) {
@@ -810,12 +836,24 @@ export const updateSchoolsBatch = async (req, res) => {
         let newUsersCreatedCount = 0;
 
         if (newUsersData.length > 0) {
+            console.log(`Creating ${newUsersData.length} new principal accounts...`);
             // Speed Optimization: Pre-hash passwords manually to avoid slow individualHooks
             const salt = await bcrypt.genSalt(10);
-            const hashedUsers = await Promise.all(newUsersData.map(async (u) => ({
-                ...u,
-                password: await bcrypt.hash(u.password, salt)
-            })));
+            
+            // CHUNKED HASHING: Bcrypt is very CPU-heavy. 
+            // Running 50+ hashes simultaneously via Promise.all can crash Vercel/low-cpu environments.
+            // We hash in small batches of 5 to stay within resource limits.
+            const hashedUsers = [];
+            const hashBatchSize = 5;
+            for (let i = 0; i < newUsersData.length; i += hashBatchSize) {
+                const batch = newUsersData.slice(i, i + hashBatchSize);
+                const hashedBatch = await Promise.all(batch.map(async (u) => ({
+                    ...u,
+                    password: await bcrypt.hash(u.password, salt)
+                })));
+                hashedUsers.push(...hashedBatch);
+                console.log(`Hashed batch ${Math.floor(i/hashBatchSize) + 1}/${Math.ceil(newUsersData.length/hashBatchSize)}`);
+            }
 
             await User.bulkCreate(hashedUsers, { validate: true });
             newUsersCreatedCount = hashedUsers.length;
@@ -845,7 +883,8 @@ export const performSchoolSync = async () => {
     const url = 'https://docs.google.com/spreadsheets/d/1fl5NW2skc_8NC0x3vxE9Fcfm6HGF1-e2lOTy4IMs7N0/export?format=csv';
 
     console.log('[Sync] Fetching school data from Google Sheet...');
-    const response = await axios.get(url);
+    // Add 15s timeout to avoid Vercel hanging indefinitely
+    const response = await axios.get(url, { timeout: 15000 });
     const text = response.data;
 
     if (typeof text !== 'string' || text.includes('<html') || text.includes('<!DOCTYPE')) {
@@ -1003,7 +1042,7 @@ export const syncExternal = async (req, res) => {
         await axios.post(webhookUrl, {
             action: 'SYNC_DASHBOARD',
             reports: data
-        });
+        }, { timeout: 15000 }); // 15s timeout
 
         res.json({ message: 'Dashboard data synced to PSA Tracker successfully' });
     } catch (error) {
