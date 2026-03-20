@@ -25,7 +25,7 @@ const PROJECT_ID = 'prj_eq6k8MlefnfgdwUowtcq8nUbwthT'; // from VERCEL_OIDC_TOKEN
 const TEAM_ID = 'team_35IlGPazxrcNAu05e2bQ6od4'; // from VERCEL_OIDC_TOKEN
 
 const envVarsToSet = [
-    { key: 'API2PDF_KEY', value: '7361f879-1c09-42b0-aee9-56ec533ee754', target: ['production', 'preview', 'development'] },
+    { key: 'API2PDF_KEY', value: 'eac68149-5332-4534-83a2-d55fb9a62674', target: ['production', 'preview', 'development'] },
     { key: 'N8N_WEBHOOK_URL', value: 'https://pradeep1234.app.n8n.cloud/webhook/approve-school-report', target: ['production', 'preview', 'development'] },
     { key: 'N8N_WEBHOOK_SYNC_URL', value: 'https://pradeep1234.app.n8n.cloud/webhook/sync-schools', target: ['production', 'preview', 'development'] },
     { key: 'FORCE_DB_SYNC', value: 'true', target: ['production'] },
