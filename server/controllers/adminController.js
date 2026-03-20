@@ -427,7 +427,7 @@ export const generatePrincipalPdf = async (req, res) => {
 
         // 4. PDF generation using Api2Pdf
         const pdfApiUrl = `https://v2.api2pdf.com/chrome/pdf/html`;
-        const apiKey = process.env.API2PDF_KEY || '7361f879-1c09-42b0-aee9-56ec533ee754';
+        const apiKey = 'eac68149-5332-4534-83a2-d55fb9a62674'; // Forced new key to bypass stale Vercel env var
         
         const response = await axios.post(pdfApiUrl, {
             html: htmlString,
