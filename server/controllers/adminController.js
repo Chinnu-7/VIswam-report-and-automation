@@ -480,6 +480,42 @@ export const generatePrincipalPdf = async (req, res) => {
     }
 };
 
+export const diagnoseApi2Pdf = async (req, res) => {
+    try {
+        const pdfApiUrl = `https://v2.api2pdf.com/chrome/pdf/html`;
+        const apiKey = process.env.API2PDF_KEY || '7361f879-1c09-42b0-aee9-56ec533ee754';
+
+        console.log(`[Diag] Testing Api2Pdf connectivity...`);
+
+        const response = await axios.post(pdfApiUrl, {
+            html: "<h1>Health Check</h1><p>Verifying Api2Pdf V2 connectivity.</p>",
+            options: { format: 'A4' }
+        }, {
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': apiKey 
+            },
+            timeout: 10000
+        });
+
+        res.json({
+            status: 'success',
+            service: 'Api2Pdf',
+            message: 'Connection verified',
+            fileUrl: response.data.FileUrl,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('[Diag] Api2Pdf check failed:', error.message);
+        res.status(500).json({
+            status: 'failed',
+            error: error.message,
+            details: error.response?.data || 'No further details'
+        });
+    }
+};
+
+
 export const markSchoolNotified = async (req, res) => {
     const { schoolId } = req.params;
     const { assessmentName } = req.query;
