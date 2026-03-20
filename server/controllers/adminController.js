@@ -483,7 +483,7 @@ export const generatePrincipalPdf = async (req, res) => {
 export const diagnoseApi2Pdf = async (req, res) => {
     try {
         const pdfApiUrl = `https://v2.api2pdf.com/chrome/pdf/html`;
-        const apiKey = process.env.API2PDF_KEY || '7361f879-1c09-42b0-aee9-56ec533ee754';
+        const apiKey = 'eac68149-5332-4534-83a2-d55fb9a62674'; // Updated key
 
         console.log(`[Diag] Testing Api2Pdf connectivity...`);
 
