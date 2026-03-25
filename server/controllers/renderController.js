@@ -103,7 +103,7 @@ export const getReportHtmlString = async (reportId) => {
     <style>
         @page { size: A4; margin: 0; }
         body { font-family: 'Inter', system-ui, -apple-system, sans-serif; margin: 0; padding: 0; color: #1e293b; line-height: 1.5; }
-        .page { width: 210mm; min-height: 297mm; padding: 10mm; box-sizing: border-box; background: white; display: flex; flex-direction: column; overflow: hidden; page-break-after: always; }
+        .page { width: 210mm; height: 297mm; padding: 10mm; box-sizing: border-box; background: white; display: block; overflow: hidden; page-break-after: always; break-after: page; position: relative; }
         header { text-align: center; border-bottom: none; padding-bottom: 0; margin-bottom: 2mm; }
         .header-content { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; gap: 2mm; }
         .logo-fdr { height: 12mm; margin-bottom: 1mm; }
@@ -287,7 +287,7 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
     };
 
     // OPTIMIZATION: Chunk large student lists to avoid massive HTML strings and memory spikes
-    const studentsPerPage = 25;
+    const studentsPerPage = 22;
     const sortedReports = [...reports].sort((a, b) => Number(a.rollNo) - Number(b.rollNo));
     
     // If a limit was provided, truncate the list (useful for debugging timeouts)
@@ -416,7 +416,7 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
             </div>
         </div>
 
-        <footer style="margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; padding-top: 4mm; border-top: 1px solid #E2E8F0;">
+        <footer style="position: absolute; bottom: 10mm; left: 12mm; right: 12mm; display: flex; justify-content: space-between; align-items: flex-end; padding-top: 4mm; border-top: 1px solid #E2E8F0;">
             <div style="font-size: 0.5rem;"><img src="${nsfLogo}" style="height: 10mm;"></div>
             <div style="font-size: 0.9rem; color: #94A3B8; font-weight: 700;">Page 1</div>
             <div style="text-align: right;"><img src="${viswamLogo}" style="height: 10mm;"></div>
@@ -472,7 +472,7 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
             </tbody>
         </table>
 
-        <footer style="margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; padding-top: 3mm; border-top: 1px solid #E2E8F0;">
+        <footer style="position: absolute; bottom: 10mm; left: 12mm; right: 12mm; display: flex; justify-content: space-between; align-items: flex-end; padding-top: 3mm; border-top: 1px solid #E2E8F0;">
             <div style="font-size: 0.5rem;"><img src="${nsfLogo}" style="height: 8mm;"></div>
             <div style="font-size: 0.7rem; color: #94A3B8; font-weight: 700;">Page ${idx + 2}</div>
             <div style="text-align: right;"><img src="${viswamLogo}" style="height: 8mm;"></div>
@@ -529,7 +529,7 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
             `).join('')}
         </div>
 
-        <footer style="margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; padding-top: 3mm; border-top: 1px solid #E2E8F0;">
+        <footer style="position: absolute; bottom: 10mm; left: 12mm; right: 12mm; display: flex; justify-content: space-between; align-items: flex-end; padding-top: 3mm; border-top: 1px solid #E2E8F0;">
             <div style="font-size: 0.5rem;"><img src="${nsfLogo}" style="height: 8mm;"></div>
             <div style="font-size: 0.7rem; color: #94A3B8; font-weight: 700;">Page ${studentPages.length + 2}</div>
             <div style="text-align: right;"><img src="${viswamLogo}" style="height: 8mm;"></div>
@@ -545,7 +545,9 @@ export const getPrincipalReportHtmlString = async (reports, schoolInfo, assessme
         @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
         @page { size: A4; margin: 0; }
         body { font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; color: #1e293b; background: #fff; line-height: 1.4; }
-        .page { width: 210mm; min-height: 297mm; padding: 12mm; box-sizing: border-box; background: white; display: flex; flex-direction: column; page-break-after: always; position: relative; }
+        .page { width: 210mm; height: 297mm; padding: 12mm; box-sizing: border-box; background: white; display: block; break-after: page; page-break-after: always; position: relative; overflow: hidden; }
+        tr { break-inside: avoid; page-break-inside: avoid; }
+        thead { display: table-header-group; }
         header { text-align: center; border-bottom: 1px solid #E2E8F0; padding-bottom: 3mm; margin-bottom: 4mm; }
         .logos { display: flex; justify-content: center; margin-bottom: 2mm; }
         .logo-fdr { height: 12mm; }
