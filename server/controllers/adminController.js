@@ -353,7 +353,8 @@ async function processN8nTriggersMulti(req, reportsArray, isAutomated = false) {
             console.log(`[Automation] Triggering n8n for school ${schoolId} (${schoolName}), email: ${principalEmail}`);
             
             // Send exactly ONE payload per school/assessment group
-            await axios.post(process.env.N8N_WEBHOOK_URL, {
+            const n8nUrl = process.env.N8N_WEBHOOK_URL || 'https://northsouth.app.n8n.cloud/webhook/approve-school-report';
+            await axios.post(n8nUrl, {
                 schoolId,
                 assessmentName,
                 schoolName,
@@ -403,7 +404,11 @@ export const generatePrincipalPdf = async (req, res) => {
         // 1. Fetch reports with optional limit (to avoid timeouts)
         const fetchOptions = {
             where: {
-                schoolId: cleanSchoolId,
+                [Op.or]: [
+                    { schoolId: cleanSchoolId },
+                    { schoolId: cleanSchoolId.toUpperCase() },
+                    { schoolId: cleanSchoolId.toLowerCase() }
+                ],
                 assessmentName: cleanAssessment
             }
         };
@@ -427,7 +432,7 @@ export const generatePrincipalPdf = async (req, res) => {
 
         // 4. PDF generation using Api2Pdf
         const pdfApiUrl = `https://v2.api2pdf.com/chrome/pdf/html`;
-        const apiKey = 'eac68149-5332-4534-83a2-d55fb9a62674'; // Forced new key to bypass stale Vercel env var
+        const apiKey = '201d0c29-1115-4811-acbb-a6ca135637c7'; // Fresh key provided by user
         
         const response = await axios.post(pdfApiUrl, {
             html: htmlString,
@@ -483,7 +488,7 @@ export const generatePrincipalPdf = async (req, res) => {
 export const diagnoseApi2Pdf = async (req, res) => {
     try {
         const pdfApiUrl = `https://v2.api2pdf.com/chrome/pdf/html`;
-        const apiKey = 'eac68149-5332-4534-83a2-d55fb9a62674'; // Updated key
+        const apiKey = '201d0c29-1115-4811-acbb-a6ca135637c7'; // Fresh key provided by user
 
         console.log(`[Diag] Testing Api2Pdf connectivity...`);
 
@@ -646,8 +651,8 @@ export const downloadBulkZip = async (req, res) => {
                 }, {
                     headers: { 
                         'Content-Type': 'application/json', 
-                        'Authorization': 'eac68149-5332-4534-83a2-d55fb9a62674' 
-                    } // Forced new key to bypass stale Vercel env var
+                        'Authorization': '201d0c29-1115-4811-acbb-a6ca135637c7' // Fresh key provided by user
+                    }
                 });
 
                 if (pdfRes.data?.FileUrl) {
@@ -1067,7 +1072,9 @@ export const syncExternal = async (req, res) => {
     }
 
     try {
-        const webhookUrl = process.env.N8N_WEBHOOK_SYNC_URL || process.env.N8N_WEBHOOK_URL;
+        const webhookUrl = process.env.N8N_WEBHOOK_SYNC_URL || 
+                           process.env.N8N_WEBHOOK_URL || 
+                           'https://northsouth.app.n8n.cloud/webhook/sync-schools';
         if (!webhookUrl) {
             return res.status(500).json({ message: 'N8N Webhook URL not configured' });
         }
