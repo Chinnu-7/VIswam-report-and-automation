@@ -1,5 +1,5 @@
 {
-  "name": "Viswam Report Card Automation (V4.1 - Direct PDF Fix)",
+  "name": "Viswam Report Card Automation (V4.2 - Email Only)",
   "nodes": [
     {
       "parameters": {
@@ -15,36 +15,12 @@
     },
     {
       "parameters": {
-        "operation": "lookup",
-        "documentId": {
-          "__rl": true,
-          "mode": "id",
-          "value": "1vRb2tmmwhgc0qPTeP-ivAIMtNak3bet9bFL_6xqgvjnHH5XnWr5l-6JiF9MsFqiiISUQrxh4wueTXaS"
-        },
-        "sheetName": {
-          "__rl": true,
-          "mode": "name",
-          "value": "Sheet1"
-        },
-        "lookupColumn": "NSF User ID",
-        "lookupValue": "={{ $json.schoolId }}",
-        "options": {}
-      },
-      "name": "Fetch Contacts from Sheet",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.5,
-      "position": [200, 300],
-      "id": "fetch-contacts-id",
-      "continueOnFail": true
-    },
-    {
-      "parameters": {
-        "jsCode": "const webhook = $('Webhook').first().json;\nconst sheetItems = $('Fetch Contacts from Sheet').all();\nconst sheet = (sheetItems.length > 0 && sheetItems[0].json) ? sheetItems[0].json : {};\n\nconst schoolId = webhook.schoolId || '';\nconst assessmentName = webhook.assessmentName || 'Sodhana 1';\n\nconst encodedAssessment = encodeURIComponent(assessmentName);\nconst pdfUrl = `https://viswam-report-card.vercel.app/api/reports/school/${schoolId}/pdf?assessmentName=${encodedAssessment}`;\nconst jsonPdfUrl = `${pdfUrl}&json=true`;\n\nreturn [{\n  json: {\n    schoolId,\n    assessmentName,\n    pdfUrl,\n    jsonPdfUrl,\n    schoolName: webhook.schoolName || sheet['School Name'] || sheet['NSF School name'] || 'Unknown School',\n    principalEmail: sheet['School Email Id'] || sheet['Principal Email'] || webhook.principalEmail || '',\n    whatsappNo: webhook.whatsappNo || sheet['POC Contact No.'] || sheet['Whatsapp No'] || '',\n    studentCount: webhook.studentCount || 0\n  }\n}];"
+        "jsCode": "const rawWebhook = $('Webhook').first().json;\nconst webhook = rawWebhook.body || rawWebhook;\n\nconst schoolId = webhook.schoolId || '';\nconst assessmentName = webhook.assessmentName || 'Sodhana 1';\n\nif (!schoolId) {\n  throw new Error(\"Critical Error: 'schoolId' not found in Webhook data.\");\n}\n\nconst encodedAssessment = encodeURIComponent(assessmentName);\nconst pdfUrl = `https://viswam-report-card.vercel.app/api/reports/school/${schoolId}/pdf?assessmentName=${encodedAssessment}`;\nconst jsonPdfUrl = `${pdfUrl}&json=true`;\n\nreturn [{\n  json: {\n    schoolId,\n    assessmentName,\n    pdfUrl,\n    jsonPdfUrl,\n    schoolName: webhook.schoolName || 'Unknown School',\n    principalEmail: webhook.principalEmail || '',\n    whatsappNo: webhook.whatsappNo || '',\n    studentCount: webhook.studentCount || 0,\n    timestamp: new Date().toISOString()\n  }\n}];"
       },
       "name": "Consolidate Data",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [400, 300],
+      "position": [450, 300],
       "id": "consolidate-data-id"
     },
     {
@@ -57,27 +33,17 @@
               "outputPropertyName": "pdfData"
             }
           },
-          "timeout": 90000
+          "timeout": 95000,
+          "retryOnFail": true,
+          "maxRetries": 3,
+          "waitBetweenRetries": 5000
         }
       },
       "name": "Download PDF (Binary)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [600, 200],
+      "position": [700, 300],
       "id": "download-pdf-id"
-    },
-    {
-      "parameters": {
-        "url": "={{ $('Consolidate Data').first().json.jsonPdfUrl }}",
-        "options": {
-          "timeout": 30000
-        }
-      },
-      "name": "Get Direct PDF Link",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [600, 400],
-      "id": "get-link-id"
     },
     {
       "parameters": {
@@ -98,23 +64,8 @@
       "name": "Send Email",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
-      "position": [850, 200],
+      "position": [950, 300],
       "id": "send-email-id"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://crmapi.automatebusiness.com/campaign/t1/api/v2/recipient/send-message",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"apiKey\": \"YOUR_AISENSY_API_KEY\",\n  \"campaignName\": \"PDF1\",\n  \"destination\": \"{{ $('Consolidate Data').first().json.whatsappNo }}\",\n  \"userName\": \"{{ $('Consolidate Data').first().json.schoolName }}\",\n  \"template\": {\n    \"name\": \"PDF1\",\n    \"languageCode\": \"en\",\n    \"parameters\": [\n      \"{{ $('Consolidate Data').first().json.schoolName }}\",\n      \"{{ $('Get Direct PDF Link').first().json.fileUrl }}\"\n    ]\n  }\n}",
-        "options": {}
-      },
-      "name": "Send WhatsApp PDF1",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [850, 400],
-      "id": "send-whatsapp-id"
     },
     {
       "parameters": {
@@ -125,35 +76,55 @@
       "name": "Mark Notified",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1100, 300],
+      "position": [1200, 300],
       "id": "mark-notified-id",
       "continueOnFail": true
     }
   ],
   "connections": {
     "Webhook": {
-      "main": [[{ "node": "Fetch Contacts from Sheet", "type": "main", "index": 0 }]]
-    },
-    "Fetch Contacts from Sheet": {
-      "main": [[{ "node": "Consolidate Data", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Consolidate Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Consolidate Data": {
       "main": [
-        [{ "node": "Download PDF (Binary)", "type": "main", "index": 0 }],
-        [{ "node": "Get Direct PDF Link", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Download PDF (Binary)",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Download PDF (Binary)": {
-      "main": [[{ "node": "Send Email", "type": "main", "index": 0 }]]
-    },
-    "Get Direct PDF Link": {
-      "main": [[{ "node": "Send WhatsApp PDF1", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Send Email": {
-      "main": [[{ "node": "Mark Notified", "type": "main", "index": 0 }]]
-    },
-    "Send WhatsApp PDF1": {
-      "main": [[{ "node": "Mark Notified", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Mark Notified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   }
 }

@@ -26,8 +26,8 @@ const TEAM_ID = 'team_35IlGPazxrcNAu05e2bQ6od4'; // from VERCEL_OIDC_TOKEN
 
 const envVarsToSet = [
     { key: 'API2PDF_KEY', value: 'eac68149-5332-4534-83a2-d55fb9a62674', target: ['production', 'preview', 'development'] },
-    { key: 'N8N_WEBHOOK_URL', value: 'https://pradeep1234.app.n8n.cloud/webhook/approve-school-report', target: ['production', 'preview', 'development'] },
-    { key: 'N8N_WEBHOOK_SYNC_URL', value: 'https://pradeep1234.app.n8n.cloud/webhook/sync-schools', target: ['production', 'preview', 'development'] },
+    { key: 'N8N_WEBHOOK_URL', value: 'https://northsouth.app.n8n.cloud/webhook/approve-school-report', target: ['production', 'preview', 'development'] },
+    { key: 'N8N_WEBHOOK_SYNC_URL', value: 'https://northsouth.app.n8n.cloud/webhook/sync-schools', target: ['production', 'preview', 'development'] },
     { key: 'FORCE_DB_SYNC', value: 'true', target: ['production'] },
     { key: 'DATABASE_URL', value: 'postgresql://postgres:Chinnu123@viswam-report-db-pg.cp000iyam3nx.us-west-2.rds.amazonaws.com:5432/postgres?sslmode=no-verify', target: ['production', 'preview', 'development'] },
     { key: 'JWT_SECRET', value: 'secret123', target: ['production', 'preview', 'development'] },
