@@ -432,7 +432,7 @@ export const generatePrincipalPdf = async (req, res) => {
 
         // 4. PDF generation using Api2Pdf
         const pdfApiUrl = `https://v2.api2pdf.com/chrome/pdf/html`;
-        const apiKey = '201d0c29-1115-4811-acbb-a6ca135637c7'; // Fresh key provided by user
+        const apiKey = process.env.API2PDF_KEY || 'eac68149-5332-4534-83a2-d55fb9a62674'; // Fresh key provided by user
         
         const response = await axios.post(pdfApiUrl, {
             html: htmlString,
@@ -488,7 +488,7 @@ export const generatePrincipalPdf = async (req, res) => {
 export const diagnoseApi2Pdf = async (req, res) => {
     try {
         const pdfApiUrl = `https://v2.api2pdf.com/chrome/pdf/html`;
-        const apiKey = '201d0c29-1115-4811-acbb-a6ca135637c7'; // Fresh key provided by user
+        const apiKey = process.env.API2PDF_KEY || 'eac68149-5332-4534-83a2-d55fb9a62674'; // Fresh key provided by user
 
         console.log(`[Diag] Testing Api2Pdf connectivity...`);
 
@@ -651,7 +651,7 @@ export const downloadBulkZip = async (req, res) => {
                 }, {
                     headers: { 
                         'Content-Type': 'application/json', 
-                        'Authorization': '201d0c29-1115-4811-acbb-a6ca135637c7' // Fresh key provided by user
+                        'Authorization': process.env.API2PDF_KEY || 'eac68149-5332-4534-83a2-d55fb9a62674' // Fresh key provided by user
                     }
                 });
 
