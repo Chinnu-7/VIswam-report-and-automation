@@ -26,14 +26,14 @@ const sequelize = new Sequelize(dbUrl || '', {
     dialectModule: isMySQL ? mysql2 : pg,
     logging: false,
     dialectOptions: {
-        // SSL for RDS: Usually required for MySQL 8+, but we'll make it configurable 
-        ssl: (isLocal || (dbUrl && !dbUrl.includes('rds.amazonaws.com'))) ? false : {
+        // SSL for production environments
+        ssl: isLocal ? false : {
             require: true,
             rejectUnauthorized: false
         }
     },
     pool: {
-        max: 3, // Lower max connections for serverless + small RDS (t4g.micro)
+        max: 5, 
         min: 0,
         acquire: 60000,
         idle: 10000,
