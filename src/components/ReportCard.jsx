@@ -598,7 +598,11 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                                 <span style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' }}>Assessment Partner</span>
                                 <img src={nsfLogo} alt="NSF" style={{ height: '35px', objectFit: 'contain' }} />
                             </div>
-                            <span style={{ fontSize: '0.7rem', color: '#94A3B8', fontWeight: 'bold' }}>Page 1</span>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+                                <span style={{ fontSize: '0.7rem', color: '#94A3B8', fontWeight: 'bold' }}>Page 1</span>
+                                <span style={{ fontSize: '0.55rem', color: '#64748B' }}>Developed by Pradeep</span>
+                                <span style={{ fontSize: '0.55rem', color: '#64748B' }}>Copyrights to TechDeep</span>
+                            </div>
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
                                 <span style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' }}>Implementation Partner</span>
                                 <img src={viswamLogo} alt="Viswam" style={{ height: '30px', objectFit: 'contain' }} />
@@ -716,7 +720,11 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                                         <span style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' }}>Assessment Partner</span>
                                         <img src={nsfLogo} alt="NSF" style={{ height: '35px', objectFit: 'contain' }} />
                                     </div>
-                                    <span style={{ fontSize: '0.7rem', color: '#94A3B8', fontWeight: 'bold' }}>Page {index + 2}</span>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+                                        <span style={{ fontSize: '0.7rem', color: '#94A3B8', fontWeight: 'bold' }}>Page {index + 2}</span>
+                                        <span style={{ fontSize: '0.55rem', color: '#64748B' }}>Developed by Pradeep</span>
+                                        <span style={{ fontSize: '0.55rem', color: '#64748B' }}>Copyrights to TechDeep</span>
+                                    </div>
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
                                         <span style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' }}>Implementation Partner</span>
                                         <img src={viswamLogo} alt="Viswam" style={{ height: '30px', objectFit: 'contain' }} />
@@ -876,7 +884,11 @@ function ReportCardContent({ students, viewMode = 'principal', schoolName = 'Vig
                                 <span style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' }}>Assessment Partner</span>
                                 <img src={nsfLogo} alt="NSF" style={{ height: '35px', objectFit: 'contain' }} />
                             </div>
-                            <span style={{ fontSize: '0.7rem', color: '#94A3B8', fontWeight: 'bold' }}>Page {studentPages.length + 2}</span>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+                                <span style={{ fontSize: '0.7rem', color: '#94A3B8', fontWeight: 'bold' }}>Page {studentPages.length + 2}</span>
+                                <span style={{ fontSize: '0.55rem', color: '#64748B' }}>Developed by Pradeep</span>
+                                <span style={{ fontSize: '0.55rem', color: '#64748B' }}>Copyrights to TechDeep</span>
+                            </div>
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
                                 <span style={{ fontSize: '0.6rem', color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' }}>Implementation Partner</span>
                                 <img src={viswamLogo} alt="Viswam" style={{ height: '30px', objectFit: 'contain' }} />
